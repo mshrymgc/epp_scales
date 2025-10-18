@@ -58,6 +58,7 @@
       "@jspsych/plugin-survey": "https://unpkg.com/@jspsych/plugin-survey@1.0.1/dist/index.js",
       "@jspsych/plugin-survey-likert": "https://cdn.jsdelivr.net/npm/@jspsych/plugin-survey-likert@2.0.0/dist/index.js"
     }
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
   }
   </script>
 
@@ -82,6 +83,10 @@
     import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
     import jsPsychSurvey from '@jspsych/plugin-survey';
     import jsPsychSurveyLikert from '@jspsych/plugin-survey-likert';
+
+    const subject_id = jsPsych.randomization.randomID(10);
+    const filename = `${subject_id}.csv`;
+            
 
     // ====== 出典（ノーム） ======
     const normCitation = {
@@ -629,6 +634,14 @@
       }
     });
 
+              const save_data = {
+                type: jsPsychPipe,
+                action: "save",
+                experiment_id: "YjdIQj8B8qkF",
+                filename: filename,
+                data_string: ()=>jsPsych.data.get().csv()
+              };
+    
     // 実行
     jsPsych.run(timeline);
   </script>
