@@ -53,6 +53,8 @@
   <script src="./dist/plugin-html-button-response.js"></script>
   <script src="./dist/plugin-survey.js"></script>
   <script src="./dist/plugin-survey-likert.js"></script>
+  <!-- Datapipe helper -->
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
 </head>
 <body>
   <div id="jspsych-target"></div>
@@ -63,9 +65,14 @@
     const jsPsychHtmlButtonResponse = window.jsPsychHtmlButtonResponse;
     const jsPsychSurvey = window.jsPsychSurvey;
     const jsPsychSurveyLikert = window.jsPsychSurveyLikert;
+    const jsPsychPipe = window.jsPsychPipe;
 
     if (!initJsPsych || !jsPsychHtmlButtonResponse || !jsPsychSurvey || !jsPsychSurveyLikert) {
       console.error('必要な jsPsych コンポーネントが読み込まれていません。dist/ 内のファイルパスを確認してください。');
+      return;
+    }
+    if (!jsPsychPipe || typeof jsPsychPipe.saveData !== 'function') {
+      console.error('jsPsych Pipe プラグインが読み込まれていません。<script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"> を確認してください。');
       return;
     }
 
@@ -462,48 +469,35 @@
       });
     });
 
-    // === Datapipe REST API 直接呼び出し：「結果を見る」押下直後に保存してから結果表示 ===
+    // === Datapipe: 公式 Pipe プラグインで OSF に保存 ===
     const save_data = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `
+      type: jsPsychPipe,
+      action: 'save',
+      experiment_id: 'TY0B485foupj',
+      filename: filename,
+      wait_message: `
         <div class="card">
           <h3>データ保存中...</h3>
           <p class="small muted">数秒お待ちください。</p>
         </div>
       `,
-      choices: [],
-      trial_duration: 1000,
-      on_start: async () => {
+      data_string: () => jsPsych.data.get().csv(),
+      on_start: () => {
         jsPsych.data.addProperties({ timestamp_end: new Date().toISOString() });
-        const csv_data = jsPsych.data.get().csv();
-        console.log('[HEXACO-60] Start saving data via Datapipe REST API:', { filename, experiment_id: 'TY0B485foupj' });
-        
-        try {
-          // Datapipe REST API に POST
-          const response = await fetch('https://pipe.jspsych.org/api/v1/participants', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              experiment_id: 'TY0B485foupj',
-              filename: filename,
-              data: csv_data
-            })
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            console.log('[HEXACO-60] Data saved to OSF successfully:', result);
-            window.__pipe_result = { success: true, url: result.url || '' };
-          } else {
-            console.warn('[HEXACO-60] OSF save failed with status:', response.status);
-            window.__pipe_result = { success: false, error: `HTTP ${response.status}` };
-          }
-        } catch (e) {
-          console.error('[HEXACO-60] OSF save error:', e);
-          window.__pipe_result = { success: false, error: e.message };
+        console.log('[HEXACO-60] Saving data via jsPsych Pipe:', { filename, experiment_id: 'TY0B485foupj' });
+      },
+      on_finish: (data) => {
+        const result = data?.result || {};
+        if (data?.success && !result.error) {
+          console.log('[HEXACO-60] Data saved to OSF successfully:', result);
+        } else {
+          console.warn('[HEXACO-60] OSF save reported error:', result.error);
         }
+        window.__pipe_result = {
+          success: data?.success === true && !result.error,
+          error: result.error || null,
+          url: result.url || ''
+        };
       }
     };
     
