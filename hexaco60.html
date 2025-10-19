@@ -522,10 +522,8 @@
       choices: ['終了'],
       on_load: () => {
         setTimeout(() => {
-          const card = document.querySelector('#jspsych-content .card');
-          if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
+          // 現在の位置から下にスクロール
+          window.scrollBy({ top: 300, behavior: 'smooth' });
         }, 150);
         // responses 再構築
         const trials = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
