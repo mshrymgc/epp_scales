@@ -335,6 +335,13 @@
     // ========== ユーティリティ ==========
     const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
     const reverseScore = (raw) => 6 - raw; // raw: 1..5
+    const updateProgressBar = (fraction) => {
+      const barInner = document.querySelector('#jspsych-progressbar-inner');
+      if (barInner) {
+        const clamped = Math.max(0, Math.min(1, fraction));
+        barInner.style.width = `${Math.round(clamped * 100)}%`;
+      }
+    };
 
     function computeScores(responses) {
       const get = (n) => responses[n-1];
@@ -460,8 +467,7 @@
           name: `Q${start + i}`
         })),
         on_finish: () => {
-          const progress = (end / totalItems);
-          jsPsych.setProgressBar(progress);
+          updateProgressBar(end / totalItems);
           if (!isLastPage) {
             window.scrollTo(0, 0);
           }
@@ -485,6 +491,7 @@
       on_start: () => {
         jsPsych.data.addProperties({ timestamp_end: new Date().toISOString() });
         console.log('[HEXACO-60] Saving data via jsPsych Pipe:', { filename, experiment_id: 'TY0B485foupj' });
+        updateProgressBar(1);
       },
       on_finish: (data) => {
         const result = data?.result || {};
@@ -510,6 +517,7 @@
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: () => {
+        updateProgressBar(1);
         // Likert の全レスポンス取得（0ベース→+1）
         const trials = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
         const responses = new Array(60).fill(null);
