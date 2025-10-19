@@ -6,9 +6,9 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>HEXACO-60</title>
   <!-- jsPsych base CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspsych@7.3.3/css/jspsych.css" />
+  <link rel="stylesheet" href="./dist/jspsych.css" />
   <!-- Survey (for demographics only) -->
-  <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css" />
+  <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
     
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif; }
@@ -46,33 +46,29 @@
 }
   </style>
 
-  <!-- Polyfill for import maps -->
-  <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.min.js"></script>
-
-  <!-- Import map -->
-  <script type="importmap">
-  {
-    "imports": {
-      "jspsych": "https://cdn.jsdelivr.net/npm/jspsych@7.3.3/dist/index.js",
-      "@jspsych/plugin-html-button-response": "https://cdn.jsdelivr.net/npm/@jspsych/plugin-html-button-response@2.0.0/dist/index.js",
-      "@jspsych/plugin-survey": "https://unpkg.com/@jspsych/plugin-survey@1.0.1/dist/index.js",
-      "@jspsych/plugin-survey-likert": "https://cdn.jsdelivr.net/npm/@jspsych/plugin-survey-likert@2.0.0/dist/index.js"
-    }
-  }
-  </script>
-
   <!-- Chart.js for radar chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Local jsPsych core & plugins -->
+  <script src="./dist/jspsych.js"></script>
+  <script src="./dist/plugin-html-button-response.js"></script>
+  <script src="./dist/plugin-survey.js"></script>
+  <script src="./dist/plugin-survey-likert.js"></script>
 </head>
 <body>
   <div id="jspsych-target"></div>
 
-  <script type="module">
-  import { initJsPsych } from 'jspsych';
-  import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
-  import jsPsychSurvey from '@jspsych/plugin-survey';
-  import jsPsychSurveyLikert from '@jspsych/plugin-survey-likert';
-  
+  <script>
+  (function(){
+    const { initJsPsych } = window.jsPsychModule || {};
+    const jsPsychHtmlButtonResponse = window.jsPsychHtmlButtonResponse;
+    const jsPsychSurvey = window.jsPsychSurvey;
+    const jsPsychSurveyLikert = window.jsPsychSurveyLikert;
+
+    if (!initJsPsych || !jsPsychHtmlButtonResponse || !jsPsychSurvey || !jsPsychSurveyLikert) {
+      console.error('必要な jsPsych コンポーネントが読み込まれていません。dist/ 内のファイルパスを確認してください。');
+      return;
+    }
+
   // ===== Theme (default light; allow manual dark with ?theme=dark) =====
   (function setTheme(){
     try {
@@ -718,6 +714,7 @@
 
     // 実行
     jsPsych.run(timeline);
+  })();
   </script>
 </body>
 </html>
