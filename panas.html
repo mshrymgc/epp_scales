@@ -24,8 +24,29 @@
     th, td { padding: .4rem .3rem; border-bottom: 1px solid #eee; }
 
     /* Likert ラベルを小さめに */
-    .jspsych-survey-likert .jspsych-survey-likert-opt-label { font-size: 12px; line-height: 1.2; }
+    .jspsych-survey-likert .jspsych-survey-likert-opt-label { font-size: 12px; line-height: 1.2; cursor: pointer; }
     .jspsych-survey-likert .jspsych-survey-likert-statement { font-size: 0.95rem; }
+    
+    /* ツールチップ */
+    .likert-label-tooltip { position: relative; }
+    .likert-label-tooltip::after { 
+      content: attr(data-tooltip); 
+      position: absolute; 
+      bottom: 110%; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      background: #333; 
+      color: #fff; 
+      padding: 6px 10px; 
+      border-radius: 4px; 
+      font-size: 11px; 
+      white-space: nowrap; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.2s;
+      z-index: 1000;
+    }
+    .likert-label-tooltip:hover::after { opacity: 1; }
 
     /* ===== Dark theme support (default light; allow optional dark via ?theme=dark) ===== */
     :root { color-scheme: light; }
@@ -129,22 +150,8 @@
     ];
 
     // ラベル（6件法）
-    const LABELS_STATE = [
-      '全く<br>当てはまらない',
-      '当てはまらない',
-      'どちらかといえば<br>当てはまらない',
-      'どちらかといえば<br>当てはまる',
-      '当てはまる',
-      '非常に<br>よく当てはまる'
-    ];
-    const LABELS_MONTH = [
-      '全くなかった',
-      'めったになかった',
-      'ときどきあった',
-      'しばしばあった',
-      'ほとんどいつもだった',
-      'いつもそうだった'
-    ];
+    const LABELS_STATE = ['1', '2', '3', '4', '5', '6'];
+    const LABELS_MONTH = ['1', '2', '3', '4', '5', '6'];
 
     // ===== 実験本体 =====
     const jsPsych = initJsPsych({
@@ -216,7 +223,13 @@
 
     timeline.push({
       type: jsPsychSurveyLikert,
-      preamble: `<div class="card"><b>現在の気分（16項目 / 6件法）</b><div class="small muted">今この瞬間のあなたの気分について、最も近い選択肢を選んでください。</div></div>`,
+      preamble: `<div class="card"><b>現在の気分（16項目 / 6件法）</b><div class="small muted">今この瞬間のあなたの気分について、最も近い選択肢を選んでください。<br><br>
+      1=全く当てはまらない<br>
+      2=当てはまらない<br>
+      3=どちらかといえば当てはまらない<br>
+      4=どちらかといえば当てはまる<br>
+      5=当てはまる<br>
+      6=非常によく当てはまる</div></div>`,
       randomize_question_order: true,
       button_label: '次へ',
       questions: STATE_ITEMS.map(({key, txt}) => ({
@@ -225,6 +238,17 @@
         required: true,
         name: key
       })),
+      on_load: () => {
+        const tooltips_state = ['全く当てはまらない', '当てはまらない', 'どちらかといえば当てはまらない', 'どちらかといえば当てはまる', '当てはまる', '非常によく当てはまる'];
+        setTimeout(() => {
+          document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
+            if (!label.classList.contains('likert-label-tooltip')) {
+              label.classList.add('likert-label-tooltip');
+              label.setAttribute('data-tooltip', tooltips_state[i % 6]);
+            }
+          });
+        }, 100);
+      },
       on_finish: () => { updateProgressBar(0.5); window.scrollTo({top:0, behavior:'smooth'}); }
     });
 
@@ -236,7 +260,13 @@
 
     timeline.push({
       type: jsPsychSurveyLikert,
-      preamble: `<div class="card"><b>過去1か月の頻度（16項目 / 6件法）</b><div class="small muted">この1か月のあいだに、それぞれの気分をどの程度経験したかを選んでください。</div></div>`,
+      preamble: `<div class="card"><b>過去1か月の頻度（16項目 / 6件法）</b><div class="small muted">この1か月のあいだに、それぞれの気分をどの程度経験したかを選んでください。<br><br>
+      1=全くなかった<br>
+      2=めったになかった<br>
+      3=ときどきあった<br>
+      4=しばしばあった<br>
+      5=ほとんどいつもだった<br>
+      6=いつもそうだった</div></div>`,
       randomize_question_order: true,
       button_label: '結果を見る',
       questions: MONTH_ITEMS.map(({key, txt}) => ({
@@ -245,6 +275,17 @@
         required: true,
         name: key
       })),
+      on_load: () => {
+        const tooltips_month = ['全くなかった', 'めったになかった', 'ときどきあった', 'しばしばあった', 'ほとんどいつもだった', 'いつもそうだった'];
+        setTimeout(() => {
+          document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
+            if (!label.classList.contains('likert-label-tooltip')) {
+              label.classList.add('likert-label-tooltip');
+              label.setAttribute('data-tooltip', tooltips_month[i % 6]);
+            }
+          });
+        }, 100);
+      },
       on_finish: () => { updateProgressBar(0.9); window.scrollTo({top:0, behavior:'smooth'}); }
     });
 
