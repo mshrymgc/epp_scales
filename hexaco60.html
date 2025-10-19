@@ -145,7 +145,7 @@
       { key:'E_Dependence', label:'依存傾向', dom:'E' },
       { key:'E_Sentimentality', label:'感傷性', dom:'E' },
 
-      { key:'X_Expressiveness', label:'表出性（Expressiveness）', dom:'X' },
+      { key:'X_Expressiveness', label:'表出性', dom:'X' },
       { key:'X_SocialBoldness', label:'社会的大胆さ', dom:'X' },
       { key:'X_Sociability', label:'社交性', dom:'X' },
       { key:'X_Liveliness', label:'活発さ', dom:'X' },
@@ -269,7 +269,7 @@
         '感傷性': [23,47,59]
       },
       'X': {
-        '表出性（Expressiveness）': [4,28,52],
+        '表出性': [4,28,52],
         '社会的大胆さ': [10,34,58],
         '社交性': [16,40],
         '活発さ': [22,46]
@@ -513,15 +513,20 @@
             </details>
 
             <div class=\"footer muted" style="margin-top:1rem">
-              <div>ノーム出典：${normCitation.label_base}（<a href="${normCitation.url}" target="_blank" rel="noopener noreferrer">PDF</a>）</div>
-              <div>備考：ノームは HEXACO-PI-R 100（8項目/ファセット, 32項目/ドメイン）の<strong>合計得点の平均値（Table 1 の M）</strong>を用いています。<br>参加者のスコアは HEXACO-60 の<strong>合計得点</strong>（ドメイン=10項目合計、ファセット=該当項目合計）です。<br>※ 尺度の項目数が異なるため絶対値は一致しません。</div>
-              <div>参考：Ashton, M. C., & Lee, K. (2009). The HEXACO–60. JPA, 91(4), 340–345.</div>
+              <div>備考：ノームは HEXACO-60（2~4項目/ファセット, 10項目/ドメイン）の<strong>合計得点の平均値（Table 1 の M）</strong>を用いています。<br>参加者のスコアは HEXACO-60 の<strong>合計得点</strong>（ドメイン=10項目合計、ファセット=該当項目合計）です。<br>※ 尺度の項目数が異なるため絶対値は一致しません。</div>
+              <div>参考：Wakabayashi, A. (2014). A sixth personality domain that is independent of the Big Five domains: The psychometric properties of the HEXACO Personality Inventory in a Japanese sample. Japanese Psychological Research, 56(3), 211–223. https://doi.org/10.1111/jpr.12045</div>
             </div>
           </div>
         `;
       },
       choices: ['終了'],
       on_load: () => {
+        setTimeout(() => {
+          const card = document.querySelector('#jspsych-content .card');
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 150);
         // responses 再構築
         const trials = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
         const responses = new Array(60).fill(null);
