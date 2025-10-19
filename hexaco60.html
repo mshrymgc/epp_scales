@@ -542,9 +542,9 @@
         // 参加者の性別に応じてノームを選択
         const meta = jsPsych.data.get().values().find(v => v.gender !== undefined) || {};
         const g = (meta.gender || '').trim();
-        let normSet = norms.total; let normLabel = '日本人サンプル（全体）';
-        if (g === '男性') { normSet = norms.male; normLabel = '日本人サンプル（男性）'; }
-        else if (g === '女性') { normSet = norms.female; normLabel = '日本人サンプル（女性）'; }
+        let normSet = norms.total; let normLabel = '日本人平均（全体）';
+        if (g === '男性') { normSet = norms.male; normLabel = '日本人平均（男性）'; }
+        else if (g === '女性') { normSet = norms.female; normLabel = '日本人平均（女性）'; }
 
         const { domains, facets } = computeScores(responses);
 
