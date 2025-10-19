@@ -130,12 +130,12 @@
 
     // ラベル（6件法）
     const LABELS_STATE = [
-      '全く\n当てはまらない',
+      '全く<br>当てはまらない',
       '当てはまらない',
-      'どちらかといえば\n当てはまらない',
-      'どちらかといえば\n当てはまる',
+      'どちらかといえば<br>当てはまらない',
+      'どちらかといえば<br>当てはまる',
       '当てはまる',
-      '非常に\nよく当てはまる'
+      '非常に<br>よく当てはまる'
     ];
     const LABELS_MONTH = [
       '全くなかった',
@@ -172,13 +172,13 @@
             <h2>PANAS 日本語版</h2>
             <h3>現在の気分 & 過去1か月の頻度</h3>
             <p class="note">
-              この課題は <b>ポジティブ情動（PA）</b> と <b>ネガティブ情動（NA）</b> を簡便に測定する尺度（佐藤・安田, 2001）を、
-              <b>現在の気分</b>と<b>過去1か月の頻度</b>の2つの時間枠で実施します。<br>
-              いずれも<b>6件法</b>で、全項目に回答してください（未回答不可）。
+              このアンケートは <b>ポジティブ情動（PA）</b> と <b>ネガティブ情動（NA）</b> を簡便に測定する尺度です。<br>
+              <b>現在の気分</b>と<b>過去1か月の頻度</b>の2つの時間についてあなたの気分を確認します。<br>
             </p>
             <ul class="small muted">
               目安時間：5〜8分<br>
-              研究・授業目的で利用（個人は特定されません）<br>
+              このアンケートは講義内容の理解を促進するために利用されます。<br>
+              データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br>
               参考：佐藤徳・安田朝子（2001）「日本語版PANASの作成」性格心理学研究, 9(2), 138-139.
             </ul>
           </div>
@@ -281,7 +281,7 @@
       filename: filename,
       wait_message: `
         <div class="card">
-          <h3>データを保存しています...</h3>
+          <h3>計算中です...</h3>
           <p class="small muted">数秒お待ちください。</p>
         </div>
       `,
@@ -320,7 +320,7 @@
         try {
           const pr = window.__pipe_result;
           if (pr && pr.success === true) {
-            saveNote = `<div class="small muted">✓ データ保存が完了しました。</div>`;
+            saveNote = `<div class="small muted">✓ 計算が完了しました。</div>`;
           } else if (pr && pr.success === false) {
             saveNote = `<div class="small danger">⚠ データ保存に失敗しました（${pr.error || 'unknown error'}）。ブラウザには結果が表示されています。</div>`;
           } else {
@@ -352,6 +352,9 @@
         `;
       },
       choices: ['終了'],
+      on_finish: () => {
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+      },
       on_load: () => {
         // Chart 描画
         const isDark = document.body.classList.contains('dark');
