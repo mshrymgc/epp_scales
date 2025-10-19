@@ -24,8 +24,29 @@
     table { border-collapse: collapse; }
     th, td { padding: .4rem .3rem; border-bottom: 1px solid #eee; }
     /* Likert ラベルを小さめに */
-    .jspsych-survey-likert .jspsych-survey-likert-opt-label { font-size: 12px; line-height: 1.2; }
+    .jspsych-survey-likert .jspsych-survey-likert-opt-label { font-size: 12px; line-height: 1.2; cursor: pointer; }
     .jspsych-survey-likert .jspsych-survey-likert-statement { font-size: 0.95rem; }
+    
+    /* ツールチップ */
+    .likert-label-tooltip { position: relative; }
+    .likert-label-tooltip::after { 
+      content: attr(data-tooltip); 
+      position: absolute; 
+      bottom: 110%; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      background: #333; 
+      color: #fff; 
+      padding: 6px 10px; 
+      border-radius: 4px; 
+      font-size: 11px; 
+      white-space: nowrap; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.2s;
+      z-index: 1000;
+    }
+    .likert-label-tooltip:hover::after { opacity: 1; }
     /* ===== Dark theme support (force white text on black bg) ===== */
     :root { color-scheme: light; } /* ダークモードを無効化 */
     body.dark { background:#000; color:#fff; }
@@ -34,11 +55,12 @@
     body.dark .muted { color:#bbb }
     body.dark table th, body.dark table td { border-color:#333; }
     /* Chart responsive wrappers */
-    .chart-wrap{ position:relative; width:100%; height:46vh; max-height:420px; }
-    .chart-wrap.facet{ height:60vh; max-height:560px; }
+    .chart-wrap{ position:relative; width:100%; max-width:500px; height:46vh; max-height:420px; margin: 0 auto; }
+    .chart-wrap.facet{ max-width:700px; height:70vh; max-height:650px; }
+    .chart-wrap canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; }
     @media (max-width: 600px){
       .chart-wrap{ height:48vh; max-height:360px; }
-      .chart-wrap.facet{ height:64vh; max-height:520px; }
+      .chart-wrap.facet{ height:75vh; max-height:580px; }
       .jspsych-content { padding: 0 16px; }
       .card{ padding: .9rem; }
       .jspsych-survey-likert .jspsych-survey-likert-opt-label{ font-size: 11px; }
@@ -63,6 +85,8 @@
 
   <!-- Chart.js for radar charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- jsPsych Pipe for data saving -->
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
 </head>
 <body>
   <div id="jspsych-target"></div>
@@ -87,11 +111,11 @@
     const SURVEY2_DOMAIN_MEANS = { E: 2.48, A: 3.25, C: 3.02, N: 3.10, O: 2.98 };
     // Survey 2 facet means (Table S19)
     const SURVEY2_FACET_MEANS = {
-      "E_社交性": 2.63, "E_自己主張性": 2.20, "E_活力": 2.61,
-      "A_思いやり": 3.29, "A_敬意": 3.48, "A_信用": 2.97,
-      "C_秩序": 3.15, "C_生産性": 3.17, "C_責任感": 2.73,
-      "N_不安": 3.27, "N_抑うつ": 3.03, "N_情緒不安定性": 3.00,
-      "O_知的好奇心": 3.13, "O_美的感性": 3.00, "O_創造的想像力": 2.81
+      "E：社交性": 2.63, "E：自己主張性": 2.20, "E：活力": 2.61,
+      "A：思いやり": 3.29, "A：敬意": 3.48, "A：信用": 2.97,
+      "C：秩序": 3.15, "C：生産性": 3.17, "C：責任感": 2.73,
+      "N：不安": 3.27, "N：抑うつ": 3.03, "N：情緒不安定性": 3.00,
+      "O：知的好奇心": 3.13, "O：美的感性": 3.00, "O：創造的想像力": 2.81
     };
 
     // ===== Items (BFI-2-S-J 30) =====
@@ -131,21 +155,21 @@
     const REVERSED = new Set([1,3,7,8,10,14,17,19,20,21,24,26,27,28,30]);
     const DOMAINS = { E: [1,6,11,16,21,26], A: [2,7,12,17,22,27], C: [3,8,13,18,23,28], N: [4,9,14,19,24,29], O: [5,10,15,20,25,30] };
     const FACETS = {
-      "E_社交性": [1,16], "E_自己主張性": [6,21], "E_活力": [11,26],
-      "A_思いやり": [2,17], "A_敬意": [7,22], "A_信用": [12,27],
-      "C_秩序": [3,18], "C_生産性": [8,23], "C_責任感": [13,28],
-      "N_不安": [4,19], "N_抑うつ": [9,24], "N_情緒不安定性": [14,29],
-      "O_美的感性": [5,20], "O_知的好奇心": [10,25], "O_創造的想像力": [15,30]
+      "E：社交性": [1,16], "E：自己主張性": [6,21], "E：活力": [11,26],
+      "A：思いやり": [2,17], "A：敬意": [7,22], "A：信用": [12,27],
+      "C：秩序": [3,18], "C：生産性": [8,23], "C：責任感": [13,28],
+      "N：不安": [4,19], "N：抑うつ": [9,24], "N：情緒不安定性": [14,29],
+      "O：美的感性": [5,20], "O：知的好奇心": [10,25], "O：創造的想像力": [15,30]
     };
     const DOMAIN_LABELS = {E:"外向性",A:"協調性",C:"勤勉性",N:"神経症傾向（否定的情動性）",O:"開放性"};
 
     // Likert labels: compact like HEXACO-60
     const LIKERT = [
-      '全く<br>当てはまらない',
-      'あまり<br>当てはまらない',
-      'どちらとも<br>言えない',
-      'やや<br>当てはまる',
-      'とても<br>当てはまる'
+      '1',
+      '2',
+      '3',
+      '4',
+      '5'
     ];
 
     const jsPsych = initJsPsych({
@@ -217,7 +241,12 @@
 
     const surveyTimeline = pageGroups.map((groupNums, idx) => ({
       type: surveyLikert,
-      preamble: `<div class="card"><b>質問 ${groupNums[0]}–${groupNums[groupNums.length-1]} / 30</b><div class="small muted">各項目について最も近い選択肢を1つ選んでください。</div></div>`,
+      preamble: `<div class="card"><b>質問 ${groupNums[0]}–${groupNums[groupNums.length-1]} / 30</b><div class="small muted">各項目について最も近い選択肢を1つ選んでください。<br><br>
+      1=全く当てはまらない<br>
+      2=あまり当てはまらない<br>
+      3=どちらとも言えない<br>
+      4=やや当てはまる<br>
+      5=とても当てはまる</div></div>`,
       questions: groupNums.map(num => ({
         prompt: `${ITEMS[num-1]}`,
         labels: LIKERT,
@@ -225,8 +254,22 @@
         required: true
       })),
       randomize_question_order: false,
-      button_label: '次へ',
-      on_finish: () => { jsPsych.setProgressBar((groupNums[groupNums.length-1])/30); }
+      button_label: idx === pageGroups.length - 1 ? '結果を見る' : '次へ',
+      on_finish: () => {
+        jsPsych.setProgressBar((groupNums[groupNums.length-1])/30);
+        window.scrollTo(0, 0);
+      },
+      on_load: () => {
+        const tooltips = ['全く当てはまらない', 'あまり当てはまらない', 'どちらとも言えない', 'やや当てはまる', 'とても当てはまる'];
+        setTimeout(() => {
+          document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
+            if (!label.classList.contains('likert-label-tooltip')) {
+              label.classList.add('likert-label-tooltip');
+              label.setAttribute('data-tooltip', tooltips[i % 5]);
+            }
+          });
+        }, 100);
+      }
     }));
 
     // === Scoring helpers ===
@@ -267,18 +310,18 @@
       stimulus: `
         <div class="grid cols-2">
           <div class="card">
-            <h2>結果（ドメイン）</h2>
+            <h2>ドメイン</h2>
             <div class="chart-wrap"><canvas id="chart-domain"></canvas></div>
-            <p class="small muted">外周=5。青: あなた／橙: 日本人平均。</p>
+            <p class="small muted">青: あなた／橙: 日本人平均。</p>
             <table style="width:100%">
               <thead><tr><th style="text-align:left">ドメイン</th><th>あなた（平均）</th><th>日本人平均</th><th>差分</th></tr></thead>
               <tbody id="dom-tbody"></tbody>
             </table>
           </div>
           <div class="card">
-            <h2>結果（ファセット）</h2>
+            <h2>ファセット</h2>
             <div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div>
-            <p class="small muted">外周=5。ファセットは各2項目の平均。灰：日本人平均。</p>
+            <p class="small muted">ファセットは各2項目の平均。灰：日本人平均。</p>
             <table style="width:100%">
               <thead><tr><th style="text-align:left">ドメイン</th><th>ファセット</th><th>あなた（平均）</th></tr></thead>
               <tbody id="facet-tbody"></tbody>
@@ -341,15 +384,70 @@
         new Chart(facetCtx, {
           type:'radar',
           data:{ labels:flabels, datasets:[
-            {label:'あなた（ファセット）', data:fdata, pointRadius: 1.5, fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth:1.6, tension:0},
-            {label:'日本人平均', data: fnorm, pointRadius: 1.5, fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth:1.6, tension:0}
+            {label:'あなた（ファセット）', data:fdata, pointRadius: 2, fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth:1.8, tension:0},
+            {label:'日本人平均', data: fnorm, pointRadius: 2, fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth:1.8, tension:0}
           ]},
-          options:{ responsive:true, scales:{ r:{ suggestedMin:1, suggestedMax:5, ticks:{ stepSize:1 } } }, plugins:{ legend:{ position:'bottom' } }, elements:{ line:{ tension:0 } } }
+          options:{ responsive:true, scales:{ r:{ suggestedMin:1, suggestedMax:5, ticks:{ stepSize:1, font:{ size:12 } }, padding:60 } }, plugins:{ legend:{ position:'bottom', labels:{ padding:15, font:{ size:13 } } }, tooltip:{ titleFont:{ size:13 }, bodyFont:{ size:12 } } }, elements:{ line:{ tension:0 } } }
         });
       }
     };
 
-    const timeline = [intro, demographics, ...surveyTimeline, results];
+    // === Button to trigger data save (before displaying results) ===
+    const viewResultsButton = {
+      type: htmlButton,
+      stimulus: `
+        <div class="card">
+          <h3>アンケートが完了しました</h3>
+          <p class="note">結果を表示してデータを保存します。</p>
+        </div>
+      `,
+      choices: ['結果を見る']
+    };
+
+    // === Datapipe: unique subject_id & filename ===
+    const subject_id = jsPsych.randomization.randomID(10);
+    const filename   = `${subject_id}.csv`;
+    jsPsych.data.addProperties({
+      subject_id,
+      timestamp_start: new Date().toISOString()
+    });
+
+    // === Datapipe: save data via jsPsych Pipe ===
+    // ⚠️ experiment_id を Datapipe のプロジェクトIDに置き換えてください
+    // Datapipe プロジェクトはここで作成します：https://pipe.jspsych.org/
+    // 作成後、experiment_id に割り当てられたIDを入力するとデータが自動的に送信されます
+    const save_data = {
+      type: jsPsychPipe || htmlButton,
+      action: 'save',
+      experiment_id: 'DUMMY_EXPERIMENT_ID', // ← ここを実際のIDに置き換える
+      filename: filename,
+      wait_message: `
+        <div class="card">
+          <h3>結果をまとめています...</h3>
+          <p class="small muted">数秒お待ちください。</p>
+        </div>
+      `,
+      data_string: () => jsPsych.data.get().csv(),
+      on_start: () => {
+        jsPsych.data.addProperties({ timestamp_end: new Date().toISOString() });
+        console.log('[BFI-2-S-J] Saving data via jsPsych Pipe:', { filename, experiment_id: 'DUMMY_EXPERIMENT_ID' });
+      },
+      on_finish: (data) => {
+        const result = data?.result || {};
+        if (data?.success && !result.error) {
+          console.log('[BFI-2-S-J] Data saved to OSF successfully:', result);
+        } else {
+          console.warn('[BFI-2-S-J] OSF save reported error:', result.error);
+        }
+        window.__pipe_result = {
+          success: data?.success === true && !result.error,
+          error: result.error || null,
+          url: result.url || ''
+        };
+      }
+    };
+
+    const timeline = [intro, demographics, ...surveyTimeline, save_data, results];
     jsPsych.run(timeline);
   </script>
 </body>
