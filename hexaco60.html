@@ -669,7 +669,10 @@
           <p class="small muted">ID: <code>${subject_id}</code> ／ ファイル名: <code>${filename}</code></p>
         </div>
       `,
-      choices: ['閉じる']
+      choices: ['終了'],
+      on_finish: function() {
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+      }
     });
 
     jsPsych.run(timeline);
