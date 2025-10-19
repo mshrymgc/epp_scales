@@ -543,7 +543,7 @@
         try {
           const pr = window.__pipe_result;
           if (pr && pr.success === true) {
-            saveNote = `<div class="small muted">✓ データはOSFに保存されました（${filename}）。</div>`;
+            saveNote = `<div class="small muted">✓ 計算が完了しました。</div>`;
           } else if (pr && pr.success === false) {
             saveNote = `<div class="small danger">⚠ データ保存に失敗しました（${pr.error || 'unknown error'}）。ただしブラウザに結果が表示されています。</div>`;
           } else {
