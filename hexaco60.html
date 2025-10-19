@@ -63,7 +63,18 @@
 
   <!-- Chart.js for radar chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
+  <!-- plugin-pipe: 保証のため defer で読み込み -->
+  <script defer src="https://unpkg.com/@jspsych-contrib/plugin-pipe@1"></script>
+  <!-- 初期化待機のためのフラグ -->
+  <script>
+    window.__pipeReady = false;
+    window.addEventListener('load', function(){
+      setTimeout(function(){
+        window.__pipeReady = !!(typeof window !== 'undefined' && window.jsPsychPipe);
+        console.log('[HEXACO-60 init] plugin-pipe ready:', window.__pipeReady, typeof window.jsPsychPipe);
+      }, 100);
+    });
+  </script>
 </head>
 <body>
   <div id="jspsych-target"></div>
@@ -474,22 +485,24 @@
       experiment_id: "TY0B485foupj",
       filename: filename,
       data_string: () => jsPsych.data.get().csv(),
-      // 念のためのタイムアウト（ミリ秒）。この時間を超えたら結果へ進む。
-      trial_duration: 12000,
+      // 念のためのタイムアウト（ミリ秒）
+      trial_duration: 10000,
       on_start: () => {
-        // 結果保存直前のタイムスタンプ
         jsPsych.data.addProperties({ timestamp_end: new Date().toISOString() });
-        console.log('[HEXACO-60] Start saving data via Pipe:', { filename });
+        console.log('[HEXACO-60] Start saving data via Pipe:', { filename, pipe_available: !!window.jsPsychPipe });
       },
       on_finish: (data) => {
-        console.log('[HEXACO-60] Save trial finished.', data?.pipe || {});
+        console.log('[HEXACO-60] Save trial finished.', data);
         try {
-          window.__pipe_status = data && data.pipe ? data.pipe : { unknown: true };
-        } catch(e) {}
+          window.__pipe_result = data;
+        } catch(e) {
+          console.error('[HEXACO-60] Error storing pipe result:', e);
+        }
       }
     };
-    // Likert全ページの直後に保存を挿入（プラグイン未ロード時はスキップ）
-    timeline.push({
+    
+    // 保存を試みるが、プラグイン未ロードなら短いスキップを入れて結果へ
+    const pipe_or_skip = {
       timeline: [
         {
           type: jsPsychHtmlButtonResponse,
@@ -500,19 +513,21 @@
             </div>
           `,
           choices: [],
-          trial_duration: 1500
+          trial_duration: 800
         },
+        // プラグイン利用可能なら保存を実行
         save_data
       ],
       conditional_function: function(){
-        const available = typeof window !== 'undefined' && !!window.jsPsychPipe;
-        if (!available) {
-          console.warn('[HEXACO-60] jsPsychPipe plugin not available. Skipping save and proceeding to results.');
-          try { window.__pipe_status = { skipped: true }; } catch(e) {}
-        }
+        // プラグイン利用不可なら、このネストタイムラインは実行されない
+        const available = window.__pipeReady || (typeof window !== 'undefined' && window.jsPsychPipe);
+        console.log('[HEXACO-60 conditional] pipe available:', available);
         return available;
       }
-    });
+    };
+    timeline.push(pipe_or_skip);
+    
+    // 保存有無に関わらず結果を表示（常に実行される）
 
     // 保存成功後に結果（チャート）を表示
     timeline.push({
@@ -538,17 +553,22 @@
           <tr><td>${domainLabelsJA[dom]} (${dom})</td><td style=\"text-align:right\">${v.sum}</td></tr>
         `).join('');
 
-        // レーダー用キャンバス
-        // 保存ステータス（任意表示）
-        const ps = (typeof window !== 'undefined' && window.__pipe_status) ? window.__pipe_status : null;
+        // 保存ステータスの確認
         let saveNote = '';
-        if (ps && ps.url) {
-          saveNote = `<div class=\"small muted\">データはOSFに保存されました（${filename}）。</div>`;
-        } else if (ps && ps.skipped) {
-          saveNote = `<div class=\"small danger\">注意：通信環境の都合でデータ保存をスキップしました。</div>`;
-        } else if (ps) {
-          saveNote = `<div class=\"small danger\">注意：データ保存の成否を確認できませんでした。</div>`;
+        try {
+          const pr = window.__pipe_result;
+          if (pr && pr.pipe && pr.pipe.url) {
+            saveNote = `<div class=\"small muted\">✓ データはOSFに保存されました（${filename}）。</div>`;
+          } else if (window.__pipeReady === false || !window.jsPsychPipe) {
+            saveNote = `<div class=\"small danger\">⚠ 通信環境の都合でデータ保存をスキップしました。ブラウザに結果が表示されています。</div>`;
+          } else if (pr) {
+            saveNote = `<div class=\"small danger\">⚠ データ保存の成否を確認できませんでした。ブラウザに結果が表示されています。</div>`;
+          }
+        } catch(e) {
+          console.error('[HEXACO-60] Error reading pipe result:', e);
         }
+
+        // レーダー用キャンバス
         return `
           <div class="card">
             <h3>回答ありがとうございました。</h3>
@@ -708,8 +728,32 @@
       }
     });
 
-    // 実行
-    jsPsych.run(timeline);
+    // 実行前に plugin-pipe ロードを確認
+    const waitForPipeAndRun = function(){
+      const maxAttempts = 50; // 最大5秒待機
+      let attempts = 0;
+      const checkPipe = setInterval(function(){
+        attempts++;
+        const pipeReady = !!window.jsPsychPipe;
+        if (pipeReady) {
+          console.log('[HEXACO-60] plugin-pipe detected after', attempts * 100, 'ms');
+          clearInterval(checkPipe);
+          jsPsych.run(timeline);
+        } else if (attempts >= maxAttempts) {
+          console.warn('[HEXACO-60] plugin-pipe not loaded after max wait. Proceeding without pipe.');
+          window.__pipeReady = false;
+          clearInterval(checkPipe);
+          jsPsych.run(timeline);
+        }
+      }, 100);
+    };
+    
+    // DOMContentLoaded または即座に実行
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', waitForPipeAndRun);
+    } else {
+      waitForPipeAndRun();
+    }
   </script>
 </body>
 </html>
