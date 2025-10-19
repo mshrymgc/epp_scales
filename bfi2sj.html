@@ -6,11 +6,11 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>BFI-2-S-J</title>
   <!-- jsPsych base CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspsych@7.3.3/css/jspsych.css" />
+  <link rel="stylesheet" href="./dist/jspsych.css" />
   <!-- Survey (for demographics) -->
-  <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css" />
+  <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
-    /* ===== style：HEXACO-60.html に合わせる ===== */
+
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif; }
     .note { font-size: 0.95rem; color: #333; line-height: 1.6; }
     .small { font-size: 0.85rem; }
@@ -68,49 +68,35 @@
     }
   </style>
 
-  <!-- Polyfill for import maps -->
-  <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.min.js"></script>
-
-  <!-- Import map -->
-  <script type="importmap">
-  {
-    "imports": {
-      "jspsych": "https://cdn.jsdelivr.net/npm/jspsych@7.3.3/dist/index.js",
-      "@jspsych/plugin-html-button-response": "https://cdn.jsdelivr.net/npm/@jspsych/plugin-html-button-response@2.0.0/dist/index.js",
-      "@jspsych/plugin-survey": "https://unpkg.com/@jspsych/plugin-survey@1.0.1/dist/index.js",
-      "@jspsych/plugin-survey-likert": "https://cdn.jsdelivr.net/npm/@jspsych/plugin-survey-likert@2.0.0/dist/index.js"
-    }
-  }
-  </script>
-
-  <!-- Chart.js for radar charts -->
+  <!-- Chart.js for radar chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- jsPsych (UMD) to expose window.jsPsychModule for Pipe plugin -->
-  <script src="https://cdn.jsdelivr.net/npm/jspsych@7.3.3/dist/index.browser.min.js"></script>
-  <!-- jsPsych Pipe for data saving -->
+  <!-- Local jsPsych core & plugins -->
+  <script src="./dist/jspsych.js"></script>
+  <script src="./dist/plugin-html-button-response.js"></script>
+  <script src="./dist/plugin-survey.js"></script>
+  <script src="./dist/plugin-survey-likert.js"></script>
+  <!-- Datapipe helper -->
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
 </head>
 <body>
   <div id="jspsych-target"></div>
 
-  <script type="module">
-    // ===== Theme (default light; allow manual dark with ?theme=dark) =====
-    (function setTheme(){
-      try {
-        const params = new URLSearchParams(location.search);
-        if ((params.get('theme')||'').toLowerCase() === 'dark') {
-          document.body.classList.add('dark');
-        }
-      } catch(e){}
-    })();
-
-    import { initJsPsych } from 'jspsych';
-    import htmlButton from '@jspsych/plugin-html-button-response';
-    import survey from '@jspsych/plugin-survey';
-    import surveyLikert from '@jspsych/plugin-survey-likert';
-
-    // ===== Datapipe: Access from global scope (loaded via script tag in head) =====
+  <script>
+  (function(){
+    const { initJsPsych } = window.jsPsychModule || {};
+    const jsPsychHtmlButtonResponse = window.jsPsychHtmlButtonResponse;
+    const jsPsychSurvey = window.jsPsychSurvey;
+    const jsPsychSurveyLikert = window.jsPsychSurveyLikert;
     const jsPsychPipe = window.jsPsychPipe;
+
+    if (!initJsPsych || !jsPsychHtmlButtonResponse || !jsPsychSurvey || !jsPsychSurveyLikert) {
+      console.error('必要な jsPsych コンポーネントが読み込まれていません。dist/ 内のファイルパスを確認してください。');
+      return;
+    }
+    if (!jsPsychPipe || typeof jsPsychPipe.saveData !== 'function') {
+      console.error('jsPsych Pipe プラグインが読み込まれていません。<script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"> を確認してください。');
+      return;
+    }
 
     // ===== Norms =====
     const SURVEY2_DOMAIN_MEANS = { E: 2.48, A: 3.25, C: 3.02, N: 3.10, O: 2.98 };
@@ -198,7 +184,7 @@
 
     // === Intro ===
     const intro = {
-      type: htmlButton,
+      type: jsPsychHtmlButtonResponse,
       stimulus: `
         <div class="grid">
           <div class="card">
@@ -219,7 +205,7 @@
 
     // === Demographics (age & gender) ===
     const demographics = {
-      type: survey,
+      type: jsPsychSurvey,
       survey_json: {
         showQuestionNumbers: false,
         pages: [{
@@ -245,7 +231,7 @@
     ];
 
     const surveyTimeline = pageGroups.map((groupNums, idx) => ({
-      type: surveyLikert,
+      type: jsPsychSurveyLikert,
       preamble: `<div class="card"><b>質問 ${groupNums[0]}–${groupNums[groupNums.length-1]} / 30</b><div class="small muted">各項目について最も近い選択肢を1つ選んでください。<br><br>
       1=全く当てはまらない<br>
       2=あまり当てはまらない<br>
@@ -311,7 +297,7 @@
 
     // === Results (static HTML; populate on_load) ===
     const results = {
-      type: htmlButton,
+      type: jsPsychHtmlButtonResponse,
       stimulus: `
         <div class="grid cols-2">
           <div class="card">
@@ -399,7 +385,7 @@
 
     // === Button to trigger data save (before displaying results) ===
     const viewResultsButton = {
-      type: htmlButton,
+      type: jsPsychHtmlButtonResponse,
       stimulus: `
         <div class="card">
           <h3>アンケートが完了しました</h3>
@@ -451,6 +437,7 @@
 
     const timeline = [intro, demographics, ...surveyTimeline, save_data, results];
     jsPsych.run(timeline);
+  })();
   </script>
 </body>
 </html>
