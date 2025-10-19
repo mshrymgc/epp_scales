@@ -444,13 +444,15 @@
     pages.forEach((pageItems, pageIdx) => {
       const start = pageIdx * perPage + 1;
       const end = Math.min(totalItems, (pageIdx + 1) * perPage);
+      const isLastPage = pageIdx === pages.length - 1;
+
       timeline.push({
         type: jsPsychSurveyLikert,
         preamble: `<div class="card"><b>質問 ${start}–${end} / ${totalItems}</b><div class="small muted">各項目に対して最も近い選択肢を選んでください。</div></div>`,
         randomize_question_order: false,
-        button_label: '次へ',
+        button_label: isLastPage ? '結果を見る' : '次へ',
         questions: pageItems.map((txt, i) => ({
-          prompt: `<div class=\"note\">${txt}</div>`,
+          prompt: `<div class="note">${txt}</div>`,
           labels: likertLabelsJA,
           required: true,
           name: `Q${start + i}`
@@ -458,6 +460,9 @@
         on_finish: () => {
           const progress = (end / totalItems);
           jsPsych.setProgressBar(progress);
+          if (!isLastPage) {
+            window.scrollTo(0, 0);
+          }
         }
       });
     });
