@@ -100,6 +100,9 @@
       return `<div class="card"><h2>結果</h2><div class="chart-wrap"><canvas id="sd3-radar"></canvas></div><table><thead><tr><th>特性</th><th>あなた</th><th>論文の平均</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
     },
     choices: ['終了'],
+      on_finish: () => {
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+      },
     on_load: () => {
       const trials = jsPsych.data.get().filter({trial_type:'survey-likert'}).values();
       const responses = new Array(27).fill(null);

@@ -7,7 +7,12 @@
   <link rel="stylesheet" href="./dist/jspsych.css" />
   <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
-    body { font-family: system-ui, sans-serif; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif; }
+    .note { font-size: 0.95rem; color: #333; line-height: 1.6; }
+    .small { font-size: 0.85rem; }
+    .muted { color:#666 }
+    .footer { margin-top: 2rem; font-size: .8rem; color:#666 }
+    .jspsych-content { max-width: 1150px; }
     .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
     .grid { display:grid; gap:1rem; }
     .chart-wrap { position:relative; width:100%; max-width:500px; height:46vh; max-height:420px; margin:0 auto; }
@@ -60,14 +65,27 @@
     return { domainMeans, facetMeans };
   }
   
-  const intro = { type: window.jsPsychHtmlButtonResponse, stimulus: '<div class="card"><h2>BFI-2-S-J</h2><p>大五性格特性モデルの30項目版です。</p></div>', choices: ['次へ'] };
+  const intro = { type: window.jsPsychHtmlButtonResponse,
+     stimulus: `<div class="card"><h2>BFI-2-S-J</h2><h3>日本語版Big Five Inventory-2短縮版</h3><h4>「感情・人格心理学」受講者用</h4><p class="note">
+              これはBig Fiveパーソナリティモデルを評価するアンケートであり，講義内容の理解を促進するために利用されます。データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。</p>
+            <ul class="small muted">
+              回答時間の目安：5〜7分 <br>
+              出典<br>吉野伸哉・下司忠大・橋本泰央・上野雄己・三枝高大・小塩真司. (2026). 日本語版Big Five Inventory-2の短縮版の検討. 心理学研究, https://doi.org/10.4992/jjpsy.96.24214
+
+            </ul></div>`, choices: ['次へ'] };
   
   const demographics = { type: window.jsPsychSurvey, survey_json: { showQuestionNumbers: false, pages: [{name: 'demographics', elements: [{type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true}, {type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答']}]}], pageNextText: '次へ', completeText: '次へ' }, on_finish: (data) => { const r = data.response||{}; jsPsych.data.addProperties({ age: r.age||'', gender: r.gender||'' }); } };
   
   const pageGroups = [Array.from({length:12}, (_,i)=>i+1), Array.from({length:12}, (_,i)=>i+13), Array.from({length:6}, (_,i)=>i+25)];
   const surveyTimeline = pageGroups.map((groupNums, idx) => ({
     type: window.jsPsychSurveyLikert,
-    preamble: `<div class="card"><b>質問 ${groupNums[0]}–${groupNums[groupNums.length-1]} / 30</b></div>`,
+    preamble: `<div class="card"><b>質問 ${groupNums[0]}–${groupNums[groupNums.length-1]} / 30</b><div class="small muted">以下の項目は,あなたにどの程度あてはまりますか。各項目について「1. 全くあてはまらない」から 「5. とてもよくあてはまる」までの選択肢で最も近いと思うものを選んでください。<br><br>
+      選択肢：<br>
+      1=全くあてはまらない<br>
+      2=あてはまらない<br>
+      3=どちらかともいえない<br>
+      4=あてはまる<br>
+      5=とてもよくあてはまる</div></div>`,
     questions: groupNums.map(num => ({ prompt: ITEMS[num-1], labels: ['1','2','3','4','5'], name: `Q${num}`, required: true })),
     button_label: idx === pageGroups.length - 1 ? '結果を見る' : '次へ',
     on_finish: () => { updateProgressBar((groupNums[groupNums.length-1])/30); }
@@ -78,8 +96,11 @@
   
   const results = {
     type: window.jsPsychHtmlButtonResponse,
-    stimulus: () => `<div class="grid"><div class="card"><h2>ドメイン</h2><div class="chart-wrap"><canvas id="chart-domain"></canvas></div><table id="dom-table"><thead><tr><th>ドメイン</th><th>スコア</th><th>平均</th></tr></thead><tbody></tbody></table></div><div class="card"><h2>ファセット</h2><div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div><table id="facet-table"><thead><tr><th>ファセット</th><th>スコア</th></tr></thead><tbody></tbody></table></div></div>`,
+    stimulus: () => `<div class="grid"><div class="card"><h2>ドメイン</h2><div class="chart-wrap"><canvas id="chart-domain"></canvas></div><table id="dom-table"><thead><tr><th>ドメイン</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div><div class="card"><h2>ファセット</h2><div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div><table id="facet-table"><thead><tr><th>ファセット</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div></div>`,
     choices: ['終了'],
+      on_finish: () => {
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+      },
     on_load: () => {
       const trials = jsPsych.data.get().filter({trial_type:'survey-likert'}).values();
       const responses = new Array(30).fill(null);
@@ -96,7 +117,7 @@
       const domRows = Object.entries(domainMeans).map(([d,m]) => `<tr><td>${DOMAIN_LABELS[d]}</td><td>${m?.toFixed(2)??'-'}</td><td>${SURVEY2_DOMAIN_MEANS[d]?.toFixed(2)??'-'}</td></tr>`).join('');
       document.querySelector('#dom-table tbody').innerHTML = domRows;
       
-      const facetRows = Object.entries(facetMeans).map(([f,m]) => `<tr><td>${f}</td><td>${m?.toFixed(2)??'-'}</td></tr>`).sort().join('');
+      const facetRows = Object.entries(facetMeans).map(([f,m]) => `<tr><td>${f}</td><td>${m?.toFixed(2)??'-'}</td><td>${SURVEY2_FACET_MEANS[f]?.toFixed(2)??'-'}</td></tr>`).sort().join('');
       document.querySelector('#facet-table tbody').innerHTML = facetRows;
       
       const palette = {selfBorder:'#1976D2', selfFill:'rgba(25,118,210,0.15)', normBorder:'#D32F2F', normFill:'rgba(211,47,47,0.15)'};
