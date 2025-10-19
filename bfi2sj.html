@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>BFI-2-S-J（日本語版 Big Five Inventory-2 短縮版・30項目）</title>
+  <!-- jsPsych base CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspsych@7.3.3/css/jspsych.css" />
+  <!-- Survey (for demographics) -->
+  <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css" />
+  <style>
+    /* ===== style：HEXACO-60.html に合わせる ===== */
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif; }
+    .note { font-size: 0.95rem; color: #333; line-height: 1.6; }
+    .small { font-size: 0.85rem; }
+    .muted { color:#666 }
+    .footer { margin-top: 2rem; font-size: .8rem; color:#666 }
+    .jspsych-content { max-width: 1150px; }
+    .grid { display:grid; gap: 1rem }
+    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,.04) }
+    .danger { color:#b00020 }
+    details summary { cursor: pointer; }
+    table { border-collapse: collapse; }
+    th, td { padding: .4rem .3rem; border-bottom: 1px solid #eee; }
+    /* Likert ラベルを小さめに */
+    .jspsych-survey-likert .jspsych-survey-likert-opt-label { font-size: 12px; line-height: 1.2; }
+    .jspsych-survey-likert .jspsych-survey-likert-statement { font-size: 0.95rem; }
+    /* ===== Dark theme support (force white text on black bg) ===== */
+    :root { color-scheme: light; } /* ダークモードを無効化 */
+    body.dark { background:#000; color:#fff; }
+    body.dark .card { background:#111; border-color:#333; color:#fff; }
+    body.dark a { color:#9cd3ff; }
+    body.dark .muted { color:#bbb }
+    body.dark table th, body.dark table td { border-color:#333; }
+    /* Chart responsive wrappers */
+    .chart-wrap{ position:relative; width:100%; height:46vh; max-height:420px; }
+    .chart-wrap.facet{ height:60vh; max-height:560px; }
+    @media (max-width: 600px){
+      .chart-wrap{ height:48vh; max-height:360px; }
+      .chart-wrap.facet{ height:64vh; max-height:520px; }
+      .jspsych-content { padding: 0 16px; }
+      .card{ padding: .9rem; }
+      .jspsych-survey-likert .jspsych-survey-likert-opt-label{ font-size: 11px; }
+      .jspsych-survey-likert .jspsych-survey-likert-statement{ font-size: .95rem; }
+    }
+  </style>
+
+  <!-- Polyfill for import maps -->
+  <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.min.js"></script>
+
+  <!-- Import map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "jspsych": "https://cdn.jsdelivr.net/npm/jspsych@7.3.3/dist/index.js",
+      "@jspsych/plugin-html-button-response": "https://cdn.jsdelivr.net/npm/@jspsych/plugin-html-button-response@2.0.0/dist/index.js",
+      "@jspsych/plugin-survey": "https://unpkg.com/@jspsych/plugin-survey@1.0.1/dist/index.js",
+      "@jspsych/plugin-survey-likert": "https://cdn.jsdelivr.net/npm/@jspsych/plugin-survey-likert@2.0.0/dist/index.js"
+    }
+  }
+  </script>
+
+  <!-- Chart.js for radar charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+
+  <script type="module">
+    // ===== Theme (default light; allow manual dark with ?theme=dark) =====
+    (function setTheme(){
+      try {
+        const params = new URLSearchParams(location.search);
+        if ((params.get('theme')||'').toLowerCase() === 'dark') {
+          document.body.classList.add('dark');
+        }
+      } catch(e){}
+    })();
+
+    import { initJsPsych } from 'jspsych';
+    import htmlButton from '@jspsych/plugin-html-button-response';
+    import survey from '@jspsych/plugin-survey';
+    import surveyLikert from '@jspsych/plugin-survey-likert';
+
+    // ===== Norms =====
+    const SURVEY2_DOMAIN_MEANS = { E: 2.48, A: 3.25, C: 3.02, N: 3.10, O: 2.98 };
+    // Survey 2 facet means (Table S19)
+    const SURVEY2_FACET_MEANS = {
+      "E_社交性": 2.63, "E_自己主張性": 2.20, "E_活力": 2.61,
+      "A_思いやり": 3.29, "A_敬意": 3.48, "A_信用": 2.97,
+      "C_秩序": 3.15, "C_生産性": 3.17, "C_責任感": 2.73,
+      "N_不安": 3.27, "N_抑うつ": 3.03, "N_情緒不安定性": 3.00,
+      "O_知的好奇心": 3.13, "O_美的感性": 3.00, "O_創造的想像力": 2.81
+    };
+
+    // ===== Items (BFI-2-S-J 30) =====
+    const ITEMS = [
+      "無口な方だ。",
+      "思いやりがあり，優しい。",
+      "行き当たりばったりな方だ。",
+      "多くの悩みごとを抱えている。",
+      "芸術，音楽，文学に魅了されている。",
+      "上に立つ方で，リーダーとして活動する。",
+      "他人を見下すことがある。",
+      "なかなか作業に取り掛かることができない。",
+      "憂うつになり，落胆する方だ。",
+      "抽象的な知識にはほとんど関心がない。",
+      "活力にあふれている。",
+      "人々のいちばん良いところを思い浮かべる。",
+      "ちゃんとしていて，いつも周りから当てにされる。",
+      "情緒が安定しており，簡単には取り乱さない。",
+      "個性的で，新しいアイディアを思いつく。",
+      "積極的で，社交的である。",
+      "冷淡で思いやりに欠けることがある。",
+      "物事をきれいに揃えたりまとめたりする。",
+      "リラックスしていて，ストレスにうまく対処している。",
+      "芸術的関心があまりない。",
+      "他の人にリーダーシップを発揮してもらうほうが良いと思う。",
+      "礼儀正しく，他人に敬意をもって接する。",
+      "根気強く，与えられた課題が終わるまで取り組む。",
+      "安心感を抱いており，心地よい。",
+      "考え方が複雑で，深く考える人間だ。",
+      "他の人と比べて活発ではない。",
+      "他人の欠点を見つけ出す方だ。",
+      "少し不注意なところがある。",
+      "神経質で，感情的になりやすい。",
+      "創造性がほとんどない。"
+    ];
+
+    const REVERSED = new Set([1,3,7,8,10,14,17,19,20,21,24,26,27,28,30]);
+    const DOMAINS = { E: [1,6,11,16,21,26], A: [2,7,12,17,22,27], C: [3,8,13,18,23,28], N: [4,9,14,19,24,29], O: [5,10,15,20,25,30] };
+    const FACETS = {
+      "E_社交性": [1,16], "E_自己主張性": [6,21], "E_活力": [11,26],
+      "A_思いやり": [2,17], "A_敬意": [7,22], "A_信用": [12,27],
+      "C_秩序": [3,18], "C_生産性": [8,23], "C_責任感": [13,28],
+      "N_不安": [4,19], "N_抑うつ": [9,24], "N_情緒不安定性": [14,29],
+      "O_美的感性": [5,20], "O_知的好奇心": [10,25], "O_創造的想像力": [15,30]
+    };
+    const DOMAIN_LABELS = {E:"外向性",A:"協調性",C:"勤勉性",N:"神経症傾向（否定的情動性）",O:"開放性"};
+
+    // Likert labels: compact like HEXACO-60
+    const LIKERT = [
+      '全く<br>当てはまらない',
+      'あまり<br>当てはまらない',
+      'どちらとも<br>言えない',
+      'やや<br>当てはまる',
+      'とても<br>当てはまる'
+    ];
+
+    const jsPsych = initJsPsych({
+      display_element: 'jspsych-target',
+      show_progress_bar: true,
+      auto_update_progress_bar: false
+    });
+
+    // 進捗バーのラベル差し替え（"Completion Progress" → "進捗状況"）
+    (function setProgressLabel(){
+      const setLabel = () => {
+        const span = document.querySelector('#jspsych-progressbar-container span');
+        if (span) { span.innerHTML = '進捗状況'; return true; }
+        return false;
+      };
+      if (!setLabel()) {
+        const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+        mo.observe(document.body, { childList: true, subtree: true });
+      }
+    })();
+
+    // === Intro ===
+    const intro = {
+      type: htmlButton,
+      stimulus: `
+        <div class="grid">
+          <div class="card">
+            <h2>BFI-2-S-J（30項目）</h2>
+            <p class="note">
+              これはBig Fiveパーソナリティモデルを評価する30項目のアンケートであり，講義内容の理解を促進するために利用されます。データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br><br>
+              以下の項目は，あなたにどの程度あてはまりますか。各項目について「全くあてはまらない」から「とてもよくあてはまる」までの選択肢で最も近いと思うものを選んでください。<br>
+            </p>
+            <ul class="small muted">
+              回答時間の目安：3〜5分 <br>
+              出典<br>吉野伸哉・下司忠大・橋本泰央・上野雄己・三枝高大・小塩真司. (2026). 日本語版Big Five Inventory-2の短縮版の検討. 心理学研究, https://doi.org/10.4992/jjpsy.96.24214
+            </ul>
+          </div>
+        </div>
+      `,
+      choices: ['次へ']
+    };
+
+    // === Demographics (age & gender) ===
+    const demographics = {
+      type: survey,
+      survey_json: {
+        showQuestionNumbers: false,
+        pages: [{
+          name: 'demographics',
+          elements: [
+            { type: 'text', name: 'age', title: '年齢', inputType: 'number', min: 0, max: 120, isRequired: true },
+            { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
+          ]
+        }],
+        pageNextText: '次へ', pagePrevText: '戻る', completeText: '次へ'
+      },
+      on_finish: (data) => {
+        const r = data.response || {};
+        jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
+      }
+    };
+
+    // === Questionnaire pages (ascending order; 3 pages: 1-12 / 13-24 / 25-30) ===
+    const pageGroups = [
+      Array.from({length:12}, (_,i)=>i+1),
+      Array.from({length:12}, (_,i)=>i+13),
+      Array.from({length:6},  (_,i)=>i+25)
+    ];
+
+    const surveyTimeline = pageGroups.map((groupNums, idx) => ({
+      type: surveyLikert,
+      preamble: `<div class="card"><b>質問 ${groupNums[0]}–${groupNums[groupNums.length-1]} / 30</b><div class="small muted">各項目について最も近い選択肢を1つ選んでください。</div></div>`,
+      questions: groupNums.map(num => ({
+        prompt: `${ITEMS[num-1]}`,
+        labels: LIKERT,
+        name: `Q${num}`,
+        required: true
+      })),
+      randomize_question_order: false,
+      button_label: '次へ',
+      on_finish: () => { jsPsych.setProgressBar((groupNums[groupNums.length-1])/30); }
+    }));
+
+    // === Scoring helpers ===
+    function computeScores(trialData){
+      // Normalize raw responses to 1..5 regardless of plugin returning 0..4 or labeled strings
+      const raw = {};
+      for (let i=1;i<=30;i++){
+        const v = trialData[`Q${i}`];
+        if (v === undefined || v === null) { raw[i] = null; continue; }
+        if (typeof v === 'number' && isFinite(v)) {
+          raw[i] = v + 1; // jsPsych survey-likert stores 0..4 → convert to 1..5
+        } else {
+          const m = String(v).match(/^\s*(\d+)/);
+          raw[i] = m ? parseInt(m[1],10) : null; // fallback for label strings like "3. ..."
+        }
+      }
+      const scored = {};
+      for (let i=1;i<=30;i++){
+        const val = raw[i];
+        scored[i] = (val==null) ? null : (REVERSED.has(i) ? (6 - val) : val);
+      }
+      const domainMeans = {};
+      for (const d of Object.keys(DOMAINS)){
+        const values = DOMAINS[d].map(i => scored[i]).filter(x=>x!=null);
+        domainMeans[d] = values.length ? values.reduce((a,b)=>a+b,0)/values.length : null;
+      }
+      const facetMeans = {};
+      for (const f of Object.keys(FACETS)){
+        const values = FACETS[f].map(i => scored[i]).filter(x=>x!=null);
+        facetMeans[f] = values.length ? values.reduce((a,b)=>a+b,0)/values.length : null;
+      }
+      return { raw, scored, domainMeans, facetMeans };
+    }
+
+    // === Results (static HTML; populate on_load) ===
+    const results = {
+      type: htmlButton,
+      stimulus: `
+        <div class="grid cols-2">
+          <div class="card">
+            <h2>結果（ドメイン）</h2>
+            <div class="chart-wrap"><canvas id="chart-domain"></canvas></div>
+            <p class="small muted">外周=5。青: あなた／橙: 日本人平均。</p>
+            <table style="width:100%">
+              <thead><tr><th style="text-align:left">ドメイン</th><th>あなた（平均）</th><th>日本人平均</th><th>差分</th></tr></thead>
+              <tbody id="dom-tbody"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <h2>結果（ファセット）</h2>
+            <div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div>
+            <p class="small muted">外周=5。ファセットは各2項目の平均。灰：日本人平均。</p>
+            <table style="width:100%">
+              <thead><tr><th style="text-align:left">ドメイン</th><th>ファセット</th><th>あなた（平均）</th></tr></thead>
+              <tbody id="facet-tbody"></tbody>
+            </table>
+            <p class="footer">
+              備考：日本人平均は，吉野ら（2026）のsurvey2のデータに基づく。<br>
+          </div>
+        </div>`,
+      choices: ['終了'],
+      on_load: () => {
+        // すべての survey-likert 回答をマージ
+        const all = jsPsych.data.get().filter({trial_type:'survey-likert'}).values();
+        const merged = Object.assign({}, ...all.map(v => v.response));
+        const { domainMeans, facetMeans } = computeScores(merged);
+
+        // --- populate tables ---
+        const domRows = Object.entries(domainMeans).map(([d,m]) => {
+          const label = DOMAIN_LABELS[d]; const norm = SURVEY2_DOMAIN_MEANS[d];
+          const diff = (m!=null && norm!=null) ? (m - norm) : null;
+          const diffTxt = (diff==null) ? '' : (diff>=0?`+${diff.toFixed(2)}`:diff.toFixed(2));
+          return `<tr><td style="text-align:left">${label} (${d})</td><td>${m?.toFixed(2) ?? '-'}</td><td>${norm?.toFixed(2) ?? '-'}</td><td class="muted">${diffTxt}</td></tr>`;
+        }).join('');
+        document.getElementById('dom-tbody').innerHTML = domRows;
+
+        const facetRows = Object.entries(facetMeans).map(([f,m]) => {
+          const [d,label] = f.split('_');
+          return `<tr><td style="text-align:left">${DOMAIN_LABELS[d]} (${d})</td><td>${label}</td><td>${m?.toFixed(2) ?? '-'}</td></tr>`;
+        }).sort().join('');
+        document.getElementById('facet-tbody').innerHTML = facetRows;
+
+        // ===== Charts =====
+        const isDark = document.body.classList.contains('dark');
+        const palette = isDark
+          ? { selfBorder:'#4FC3F7', selfFill:'rgba(79,195,247,0.18)', normBorder:'#FFB74D', normFill:'rgba(255,183,77,0.18)' }
+          : { selfBorder:'#1976D2', selfFill:'rgba(25,118,210,0.15)', normBorder:'#D32F2F', normFill:'rgba(211,47,47,0.15)' };
+
+        // ドメイン・レーダー
+        const domCtx = document.getElementById('chart-domain').getContext('2d');
+        const domLabels = ["外向性(E)","協調性(A)","勤勉性(C)","神経症傾向(N)","開放性(O)"];
+        const yourData = ["E","A","C","N","O"].map(d => domainMeans[d] ?? null);
+        const normData  = ["E","A","C","N","O"].map(d => SURVEY2_DOMAIN_MEANS[d] ?? null);
+        new Chart(domCtx, {
+          type: 'radar',
+          data: {
+            labels: domLabels,
+            datasets: [
+              { label: 'あなた', data: yourData, pointRadius: 2, fill: true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 2.2, tension: 0 },
+              { label: '日本人平均', data: normData, pointRadius: 2, fill: true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 2.2, tension: 0 }
+            ]
+          },
+          options: { responsive: true, scales: { r: { suggestedMin: 1, suggestedMax: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'bottom' } }, elements: { line: { tension: 0 } } }
+        });
+
+        // ファセット・レーダー（自分 vs Survey2平均）
+        const facetCtx = document.getElementById('chart-facet').getContext('2d');
+        // ★ ラベルは FACETS のキー順を採用して、SURVEY2_FACET_MEANS とのキー一致を保証
+        const flabels = Object.keys(FACETS);
+        const fdata = flabels.map(k => facetMeans[k] ?? null);
+        const fnorm = flabels.map(k => (SURVEY2_FACET_MEANS[k] ?? SURVEY2_DOMAIN_MEANS[k.split('_')[0]] ?? null));
+        new Chart(facetCtx, {
+          type:'radar',
+          data:{ labels:flabels, datasets:[
+            {label:'あなた（ファセット）', data:fdata, pointRadius: 1.5, fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth:1.6, tension:0},
+            {label:'日本人平均', data: fnorm, pointRadius: 1.5, fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth:1.6, tension:0}
+          ]},
+          options:{ responsive:true, scales:{ r:{ suggestedMin:1, suggestedMax:5, ticks:{ stepSize:1 } } }, plugins:{ legend:{ position:'bottom' } }, elements:{ line:{ tension:0 } } }
+        });
+      }
+    };
+
+    const timeline = [intro, demographics, ...surveyTimeline, results];
+    jsPsych.run(timeline);
+  </script>
+</body>
+</html>
