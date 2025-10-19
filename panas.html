@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>PANAS 日本語版（現在気分 & 1か月頻度）</title>
+  <!-- jsPsych base CSS -->
+  <link rel="stylesheet" href="./dist/jspsych.css" />
+  <!-- Survey (for demographics only) -->
+  <link rel="stylesheet" href="./dist/survey.min.css" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif; }
+    .note { font-size: 0.95rem; color: #333; line-height: 1.6; }
+    .small { font-size: 0.85rem; }
+    .muted { color:#666 }
+    .footer { margin-top: 2rem; font-size: .8rem; color:#666 }
+    .jspsych-content { max-width: 1150px; }
+    .grid { display:grid; gap: 1rem }
+    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,.04) }
+    .danger { color:#b00020 }
+    details summary { cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: .4rem .3rem; border-bottom: 1px solid #eee; }
+
+    /* Likert ラベルを小さめに */
+    .jspsych-survey-likert .jspsych-survey-likert-opt-label { font-size: 12px; line-height: 1.2; }
+    .jspsych-survey-likert .jspsych-survey-likert-statement { font-size: 0.95rem; }
+
+    /* ===== Dark theme support (default light; allow optional dark via ?theme=dark) ===== */
+    :root { color-scheme: light; }
+    body.dark { background:#000; color:#fff; }
+    body.dark .card { background:#111; border-color:#333; color:#fff; }
+    body.dark a { color:#9cd3ff; }
+    body.dark .muted { color:#bbb }
+    body.dark table th, body.dark table td { border-color:#333; }
+
+    /* Chart responsive wrappers */
+    .chart-wrap{ position:relative; width:100%; height:46vh; max-height:420px; }
+    @media (max-width: 600px){
+      .chart-wrap{ height:48vh; max-height:360px; }
+      .jspsych-content { padding: 0 16px; }
+      .card{ padding: .9rem; }
+      .jspsych-survey-likert .jspsych-survey-likert-opt-label{ font-size: 11px; }
+      .jspsych-survey-likert .jspsych-survey-likert-statement{ font-size: .95rem; }
+    }
+  </style>
+
+  <!-- Chart.js for charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Local jsPsych core & plugins -->
+  <script src="./dist/jspsych.js"></script>
+  <script src="./dist/plugin-html-button-response.js"></script>
+  <script src="./dist/plugin-survey.js"></script>
+  <script src="./dist/plugin-survey-likert.js"></script>
+  <!-- Datapipe helper -->
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+
+  <script>
+  (function(){
+    const { initJsPsych } = window.jsPsychModule || {};
+    const jsPsychHtmlButtonResponse = window.jsPsychHtmlButtonResponse;
+    const jsPsychSurvey = window.jsPsychSurvey;
+    const jsPsychSurveyLikert = window.jsPsychSurveyLikert;
+    const jsPsychPipe = window.jsPsychPipe;
+
+    if (!initJsPsych || !jsPsychHtmlButtonResponse || !jsPsychSurvey || !jsPsychSurveyLikert) {
+      console.error('必要な jsPsych コンポーネントが読み込まれていません。dist/ 内のファイルパスを確認してください。');
+      return;
+    }
+    if (!jsPsychPipe || typeof jsPsychPipe.saveData !== 'function') {
+      console.error('jsPsych Pipe プラグインが読み込まれていません。<script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"> を確認してください。');
+      return;
+    }
+
+    // ===== Optional Theme (default light; allow manual dark with ?theme=dark) =====
+    (function setTheme(){
+      try {
+        const params = new URLSearchParams(location.search);
+        if (params.get('theme') && params.get('theme').toLowerCase() === 'dark') {
+          document.body.classList.add('dark');
+        }
+      } catch(e){}
+    })();
+
+    // 「Completion Progress」を「進捗状況」に置換（進捗バーが生成されたら処理）
+    (function setProgressLabel(){
+      const setLabel = () => {
+        const span = document.querySelector('#jspsych-progressbar-container span');
+        if (span) { span.innerHTML = '進捗状況'; return true; }
+        return false;
+      };
+      if (!setLabel()) {
+        const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+        mo.observe(document.body, { childList: true, subtree: true });
+      }
+    })();
+
+    const updateProgressBar = (fraction) => {
+      const barInner = document.querySelector('#jspsych-progressbar-inner');
+      if (barInner) { const clamped = Math.max(0, Math.min(1, fraction)); barInner.style.width = `${Math.round(clamped * 100)}%`; }
+    };
+
+    // ===== PANAS 日本語版（佐藤・安田, 2001）16項目 =====
+    // NA（8）
+    const NA_ITEMS = [
+      'びくびくした',
+      'おびえた',
+      'うろたえた',
+      '心配した',
+      '苦悩した',
+      'ぴりぴりした',
+      '恥じた',
+      'いらだった'
+    ];
+    // PA（8）
+    const PA_ITEMS = [
+      '活気のある',
+      '誇らしい',
+      '強気な',
+      '気合いの入った',
+      'きっぱりとした',
+      'わくわくした',
+      '機敏な',
+      '熱狂した'
+    ];
+
+    // ラベル（6件法）
+    const LABELS_STATE = [
+      '全く\n当てはまらない',
+      '当てはまらない',
+      'どちらかといえば\n当てはまらない',
+      'どちらかといえば\n当てはまる',
+      '当てはまる',
+      '非常に\nよく当てはまる'
+    ];
+    const LABELS_MONTH = [
+      '全くなかった',
+      'めったになかった',
+      'ときどきあった',
+      'しばしばあった',
+      'ほとんどいつもだった',
+      'いつもそうだった'
+    ];
+
+    // ===== 実験本体 =====
+    const jsPsych = initJsPsych({
+      display_element: 'jspsych-target',
+      show_progress_bar: true,
+      auto_update_progress_bar: false
+    });
+
+    // Datapipe: unique subject_id & filename
+    const subject_id = jsPsych.randomization.randomID(10);
+    const filename   = `${subject_id}.csv`;
+    jsPsych.data.addProperties({
+      subject_id,
+      timestamp_start: new Date().toISOString()
+    });
+
+    const timeline = [];
+
+    // ウェルカム
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="grid">
+          <div class="card">
+            <h2>PANAS 日本語版</h2>
+            <h3>現在の気分 & 過去1か月の頻度</h3>
+            <p class="note">
+              この課題は <b>ポジティブ情動（PA）</b> と <b>ネガティブ情動（NA）</b> を簡便に測定する尺度（佐藤・安田, 2001）を、
+              <b>現在の気分</b>と<b>過去1か月の頻度</b>の2つの時間枠で実施します。<br>
+              いずれも<b>6件法</b>で、全項目に回答してください（未回答不可）。
+            </p>
+            <ul class="small muted">
+              目安時間：5〜8分<br>
+              研究・授業目的で利用（個人は特定されません）<br>
+              参考：佐藤徳・安田朝子（2001）「日本語版PANASの作成」性格心理学研究, 9(2), 138-139.
+            </ul>
+          </div>
+        </div>
+      `,
+      choices: ['はじめる']
+    });
+
+    // 属性（年齢・性別のみ）
+    timeline.push({
+      type: jsPsychSurvey,
+      survey_json: {
+        showQuestionNumbers: false,
+        pages: [{
+          name: 'demographics',
+          elements: [
+            { type: 'text', name: 'age', title: '年齢', inputType: 'number', min: 0, max: 120, isRequired: true },
+            { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
+          ]
+        }],
+        pageNextText: '次へ', pagePrevText: '戻る', completeText: '次へ'
+      },
+      on_finish: (data) => {
+        const r = data.response || {};
+        jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
+        updateProgressBar(0.1);
+      }
+    });
+
+    // ===== 現在の気分（STATE） =====
+    const STATE_ITEMS = [
+      ...NA_ITEMS.map((txt, i) => ({ key: `S_NA_${i+1}`, txt, group: 'NA' })),
+      ...PA_ITEMS.map((txt, i) => ({ key: `S_PA_${i+1}`, txt, group: 'PA' })),
+    ];
+
+    timeline.push({
+      type: jsPsychSurveyLikert,
+      preamble: `<div class="card"><b>現在の気分（16項目 / 6件法）</b><div class="small muted">今この瞬間のあなたの気分について、最も近い選択肢を選んでください。</div></div>`,
+      randomize_question_order: true,
+      button_label: '次へ',
+      questions: STATE_ITEMS.map(({key, txt}) => ({
+        prompt: `<div class="note">${txt}</div>`,
+        labels: LABELS_STATE,
+        required: true,
+        name: key
+      })),
+      on_finish: () => { updateProgressBar(0.5); window.scrollTo({top:0, behavior:'smooth'}); }
+    });
+
+    // ===== 過去1か月の頻度（MONTH） =====
+    const MONTH_ITEMS = [
+      ...NA_ITEMS.map((txt, i) => ({ key: `M_NA_${i+1}`, txt, group: 'NA' })),
+      ...PA_ITEMS.map((txt, i) => ({ key: `M_PA_${i+1}`, txt, group: 'PA' })),
+    ];
+
+    timeline.push({
+      type: jsPsychSurveyLikert,
+      preamble: `<div class="card"><b>過去1か月の頻度（16項目 / 6件法）</b><div class="small muted">この1か月のあいだに、それぞれの気分をどの程度経験したかを選んでください。</div></div>`,
+      randomize_question_order: true,
+      button_label: '結果を見る',
+      questions: MONTH_ITEMS.map(({key, txt}) => ({
+        prompt: `<div class="note">${txt}</div>`,
+        labels: LABELS_MONTH,
+        required: true,
+        name: key
+      })),
+      on_finish: () => { updateProgressBar(0.9); window.scrollTo({top:0, behavior:'smooth'}); }
+    });
+
+    // ===== スコア計算 =====
+    function getScores() {
+      const all = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
+      const resp = {};
+      all.forEach(tr => {
+        const r = tr.response || {};
+        Object.entries(r).forEach(([k, v]) => { resp[k] = Number(v) + 1; /* 1..6 */ });
+      });
+
+      const sum = keys => keys.reduce((a, k) => a + (resp[k] || 0), 0);
+
+      const S_NA_KEYS = STATE_ITEMS.filter(x=>x.group==='NA').map(x=>x.key);
+      const S_PA_KEYS = STATE_ITEMS.filter(x=>x.group==='PA').map(x=>x.key);
+      const M_NA_KEYS = MONTH_ITEMS.filter(x=>x.group==='NA').map(x=>x.key);
+      const M_PA_KEYS = MONTH_ITEMS.filter(x=>x.group==='PA').map(x=>x.key);
+
+      const scores = {
+        state: { PA: sum(S_PA_KEYS), NA: sum(S_NA_KEYS) },
+        month: { PA: sum(M_PA_KEYS), NA: sum(M_NA_KEYS) },
+        raw: resp
+      };
+
+      return scores;
+    }
+
+    // ===== Datapipe 保存（DUMMY を差し替えて使用） =====
+    const save_data = {
+      type: jsPsychPipe,
+      action: 'save',
+      experiment_id: 'DUMMY_EXPERIMENT_ID', // ← Datapipe の実験IDに置き換えてください
+      filename: filename,
+      wait_message: `
+        <div class="card">
+          <h3>データを保存しています...</h3>
+          <p class="small muted">数秒お待ちください。</p>
+        </div>
+      `,
+      data_string: () => jsPsych.data.get().csv(),
+      on_start: () => {
+        const sc = getScores();
+        jsPsych.data.addProperties({
+          pa_state: sc.state.PA, na_state: sc.state.NA,
+          pa_month: sc.month.PA, na_month: sc.month.NA,
+          timestamp_end: new Date().toISOString()
+        });
+        updateProgressBar(1);
+        console.log('[PANAS] Saving via Pipe', { filename });
+      },
+      on_finish: (data) => {
+        const result = data?.result || {};
+        window.__pipe_result = {
+          success: data?.success === true && !result.error,
+          error: result.error || null,
+          url: result.url || ''
+        };
+      }
+    };
+
+    timeline.push(save_data);
+
+    // ===== 結果表示 =====
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        updateProgressBar(1);
+        const sc = getScores();
+
+        // 保存ステータス
+        let saveNote = '';
+        try {
+          const pr = window.__pipe_result;
+          if (pr && pr.success === true) {
+            saveNote = `<div class="small muted">✓ データ保存が完了しました。</div>`;
+          } else if (pr && pr.success === false) {
+            saveNote = `<div class="small danger">⚠ データ保存に失敗しました（${pr.error || 'unknown error'}）。ブラウザには結果が表示されています。</div>`;
+          } else {
+            saveNote = `<div class="small muted">データ保存の状態を確認できませんでした。ブラウザには結果が表示されています。</div>`;
+          }
+        } catch(e) { saveNote = `<div class="small danger">⚠ 保存状態の確認に失敗しました。</div>`; }
+
+        const tbl = `
+          <table>
+            <thead><tr><th style="text-align:left">尺度</th><th style="text-align:right">PA</th><th style="text-align:right">NA</th></tr></thead>
+            <tbody>
+              <tr><td>現在の気分</td><td style="text-align:right">${sc.state.PA}</td><td style="text-align:right">${sc.state.NA}</td></tr>
+              <tr><td>過去1か月の頻度</td><td style="text-align:right">${sc.month.PA}</td><td style="text-align:right">${sc.month.NA}</td></tr>
+            </tbody>
+          </table>`;
+
+        return `
+          <div class="card">
+            <h3>回答ありがとうございました。</h3>
+            ${saveNote}
+            <p>合計スコア（各 8項目 × 1〜6点 = 最大48点）</p>
+            ${tbl}
+            <h4 style="margin-top:1rem">比較チャート（PA/NA × 現在 vs 1か月）</h4>
+            <div class="chart-wrap"><canvas id="panas-bar"></canvas></div>
+            <div class="footer muted" style="margin-top:1rem">
+              <div>参考：佐藤徳・安田朝子（2001）日本語版PANAS。性格心理学研究, 9(2), 138-139。／ Watson, Clark, & Tellegen（1988）。</div>
+            </div>
+          </div>
+        `;
+      },
+      choices: ['終了'],
+      on_load: () => {
+        // Chart 描画
+        const isDark = document.body.classList.contains('dark');
+        const txtColor = isDark ? '#ffffff' : '#000000';
+        const gridColor = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
+        const palette = isDark
+          ? { s:'#4FC3F7', m:'#FFB74D' }
+          : { s:'#1976D2', m:'#D32F2F' };
+
+        const sc = getScores();
+        const dataNow = [sc.state.PA, sc.state.NA];
+        const dataMon = [sc.month.PA, sc.month.NA];
+
+        const ctx = document.getElementById('panas-bar');
+        if (ctx) new window.Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['PA','NA'],
+            datasets: [
+              { label: '現在の気分', data: dataNow, borderColor: palette.s, backgroundColor: palette.s, borderWidth: 1 },
+              { label: '過去1か月', data: dataMon, borderColor: palette.m, backgroundColor: palette.m, borderWidth: 1 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { ticks: { color: txtColor }, grid: { color: gridColor } },
+              y: { beginAtZero: true, max: 48, ticks: { color: txtColor }, grid: { color: gridColor } }
+            },
+            plugins: { legend: { position: 'bottom', labels: { color: txtColor } }, tooltip: { enabled: true } }
+          }
+        });
+      }
+    });
+
+    // 実行
+    jsPsych.run(timeline);
+  })();
+  </script>
+</body>
+</html>
