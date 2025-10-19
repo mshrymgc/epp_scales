@@ -474,13 +474,45 @@
       experiment_id: "TY0B485foupj",
       filename: filename,
       data_string: () => jsPsych.data.get().csv(),
+      // 念のためのタイムアウト（ミリ秒）。この時間を超えたら結果へ進む。
+      trial_duration: 12000,
       on_start: () => {
         // 結果保存直前のタイムスタンプ
         jsPsych.data.addProperties({ timestamp_end: new Date().toISOString() });
+        console.log('[HEXACO-60] Start saving data via Pipe:', { filename });
+      },
+      on_finish: (data) => {
+        console.log('[HEXACO-60] Save trial finished.', data?.pipe || {});
+        try {
+          window.__pipe_status = data && data.pipe ? data.pipe : { unknown: true };
+        } catch(e) {}
       }
     };
-    // Likert全ページの直後に保存を挿入
-    timeline.push(save_data);
+    // Likert全ページの直後に保存を挿入（プラグイン未ロード時はスキップ）
+    timeline.push({
+      timeline: [
+        {
+          type: jsPsychHtmlButtonResponse,
+          stimulus: `
+            <div class="card">
+              <h3>データ保存中...</h3>
+              <p class="small muted">数秒お待ちください。</p>
+            </div>
+          `,
+          choices: [],
+          trial_duration: 1500
+        },
+        save_data
+      ],
+      conditional_function: function(){
+        const available = typeof window !== 'undefined' && !!window.jsPsychPipe;
+        if (!available) {
+          console.warn('[HEXACO-60] jsPsychPipe plugin not available. Skipping save and proceeding to results.');
+          try { window.__pipe_status = { skipped: true }; } catch(e) {}
+        }
+        return available;
+      }
+    });
 
     // 保存成功後に結果（チャート）を表示
     timeline.push({
@@ -507,9 +539,20 @@
         `).join('');
 
         // レーダー用キャンバス
+        // 保存ステータス（任意表示）
+        const ps = (typeof window !== 'undefined' && window.__pipe_status) ? window.__pipe_status : null;
+        let saveNote = '';
+        if (ps && ps.url) {
+          saveNote = `<div class=\"small muted\">データはOSFに保存されました（${filename}）。</div>`;
+        } else if (ps && ps.skipped) {
+          saveNote = `<div class=\"small danger\">注意：通信環境の都合でデータ保存をスキップしました。</div>`;
+        } else if (ps) {
+          saveNote = `<div class=\"small danger\">注意：データ保存の成否を確認できませんでした。</div>`;
+        }
         return `
           <div class="card">
             <h3>回答ありがとうございました。</h3>
+            ${saveNote}
             <p>6 因子の<strong>合計スコア</strong>（各因子10項目・1〜5点×10＝最大50点）</p>
             <table style="width:100%">
               <thead><tr><th style="text-align:left">因子</th><th style="text-align:right">合計</th></tr></thead>
