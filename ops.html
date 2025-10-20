@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>楽観・悲観性尺度</title>
+  <link rel="stylesheet" href="./dist/jspsych.css" />
+  <link rel="stylesheet" href="./dist/survey.min.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
+    .grid { display:grid; gap:1rem; }
+    .result-grid { display:grid; gap:1.2rem; margin-top:1.5rem; }
+    @media (min-width: 780px) { .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+    .chart-wrap { position:relative; width:100%; max-width:500px; margin:0 auto; }
+    .chart-small { height:260px; max-height:320px; }
+    .chart-wrap canvas { display:block; width:100%; height:100%; }
+    table { border-collapse:collapse; width:100%; }
+    th, td { padding:0.45rem 0.4rem; border-bottom:1px solid #eee; text-align:left; font-size:0.95rem; }
+    th { font-weight:600; background:#fafafa; }
+    .small { font-size:0.85rem; }
+    .muted { color:#666; }
+    .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
+    .description-box .score-label { font-weight:700; font-size:1rem; color:#0d47a1; margin-bottom:0.25rem; }
+    .description-box p { margin:0 0 0.6rem 0; line-height:1.45; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="./dist/jspsych.js"></script>
+  <script src="./dist/plugin-html-button-response.js"></script>
+  <script src="./dist/plugin-survey.js"></script>
+  <script src="./dist/plugin-survey-likert.js"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+  <script>
+(function(){
+  const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
+
+  (function setProgressLabel(){
+    const setLabel = () => {
+      const span = document.querySelector('#jspsych-progressbar-container span');
+      if (span) { span.innerHTML = '進捗状況'; return true; }
+      return false;
+    };
+    if (!setLabel()) {
+      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+  })();
+
+  const OPS = {
+    optimism: [
+      { id: 1, text: '将来、良いことが起こると期待する。', reverse: false },
+      { id: 2, text: '困難な状況でも、うまくいくと信じている。', reverse: false },
+      { id: 3, text: '将来に対して希望を持っている。', reverse: false },
+      { id: 4, text: '物事が良い方向に進むと予想する。', reverse: false },
+      { id: 5, text: '自分の努力が成果を生むだろうと考える。', reverse: false }
+    ],
+    pessimism: [
+      { id: 1, text: '将来について悲観的である。', reverse: false },
+      { id: 2, text: '何か悪いことが起こるのではないかと心配する。', reverse: false },
+      { id: 3, text: 'たいていのことはうまくいかないと感じる。', reverse: false },
+      { id: 4, text: '良い結果を期待するのは難しい。', reverse: false },
+      { id: 5, text: '自分には良いことが起こるとは思えない。', reverse: false }
+    ]
+  };
+
+  const TOTAL_ITEMS = OPS.optimism.length + OPS.pessimism.length;
+  const PAGE_SIZE = 5;
+
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = `
+    .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
+    .description-box .score-label { font-weight:700; font-size:1rem; color:#0d47a1; margin-bottom:0.25rem; }
+    .description-box p { margin:0 0 0.6rem 0; line-height:1.45; }
+  `;
+  document.head.appendChild(styleEl);
+
+  const updateProgressBar = (fraction) => {
+    const barInner = document.querySelector('#jspsych-progressbar-inner');
+    if (barInner) barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
+  };
+
+  const chunk = (arr, size) => {
+    const res = [];
+    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+    return res;
+  };
+
+  const allItems = [];
+  OPS.optimism.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'O', id: i + 1 }));
+  OPS.pessimism.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'P', id: i + 1 }));
+
+  function shuffleInPlace(a) { for (let i=a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  shuffleInPlace(allItems);
+
+  jsPsych.data.addProperties({ ops_item_order: JSON.stringify(allItems.map(it => ({ domain: it.domain, id: it.id, text: it.text }))) });
+
+  const pages = chunk(allItems, PAGE_SIZE);
+
+  const intro = {
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: `<div class="card"><h2>楽観・悲観性尺度</h2><p style="margin:0.6rem 0 0;">以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。<br>最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。</p><p style="margin:0.6rem 0 0;">回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。</p><ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">回答時間の目安：3〜5分<br>出典：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256
+</ul></div>`,
+    choices: ['開始']
+  };
+
+  const demographics = {
+    type: window.jsPsychSurvey,
+    survey_json: {
+      showQuestionNumbers: false,
+      pages: [{
+        name: 'demographics',
+        elements: [
+          { type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true },
+          { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
+        ]
+      }],
+      pageNextText: '次へ',
+      completeText: '次へ'
+    },
+    on_finish: (data) => {
+      const r = data.response || {};
+      jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
+    }
+  };
+
+  const likertPages = pages.map((items, k) => {
+    const pageNum = k;
+    const pageStart = pageNum * PAGE_SIZE + 1;
+    const pageEnd = pageNum * PAGE_SIZE + items.length;
+    const page = {
+      type: window.jsPsychSurvey,
+      survey_json: {
+        showQuestionNumbers: false,
+        pages: [
+          {
+            name: `page_${pageNum}`,
+            elements: ([
+              {
+                type: 'html',
+                name: `preamble_${pageNum}`,
+                html: `<div class="card"><b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b><p style="margin:0.5rem 0 0;">以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。直感的に答えて構いません。</p></div>`
+              }
+            ]).concat(items.map(item => ({
+              type: 'radiogroup',
+              name: `${item.domain}${item.id}`,
+              title: item.text,
+              isRequired: true,
+              choices: [
+                { value: 1, text: '1 = 全く当てはまらない' },
+                { value: 2, text: '2 = 当てはまらない' },
+                { value: 3, text: '3 = どちらともいえない' },
+                { value: 4, text: '4 = 当てはまる' },
+                { value: 5, text: '5 = よく当てはまる' }
+              ]
+            })))
+          }
+        ],
+        pageNextText: '次へ',
+        completeText: pageNum === pages.length - 1 ? '結果を見る' : '次へ'
+      },
+      on_load: () => {
+        updateProgressBar((pageEnd) / TOTAL_ITEMS);
+      }
+    };
+    return page;
+  });
+
+  const getResponses = () => {
+    const res = { O: {}, P: {} };
+    const surveyTrials = jsPsych.data.get().filter(tr => tr.trial_type && (tr.trial_type === 'survey-likert' || tr.trial_type === 'survey')).values();
+    surveyTrials.forEach(tr => {
+      const resp = tr.response || {};
+      Object.entries(resp).forEach(([name, val]) => {
+        const m = String(name).match(/^([OP])(\d+)$/);
+        if (!m) return;
+        const domain = m[1];
+        const n = parseInt(m[2], 10);
+        let numeric = null;
+        if (typeof val === 'number') {
+          numeric = val + 1;
+        } else if (typeof val === 'string') {
+          const parsed = parseInt(val, 10);
+          if (!Number.isNaN(parsed)) numeric = parsed;
+        } else if (val && typeof val === 'object') {
+          if ('value' in val) {
+            const parsed = parseInt(val.value, 10);
+            if (!Number.isNaN(parsed)) numeric = parsed;
+          } else {
+            const parsed = parseInt(JSON.stringify(val), 10);
+            if (!Number.isNaN(parsed)) numeric = parsed;
+          }
+        }
+        if (numeric != null) res[domain][n] = numeric;
+      });
+    });
+    return res;
+  };
+
+  const computeSummary = () => {
+    const responses = getResponses();
+    const base = {
+      optimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] },
+      pessimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] }
+    };
+
+    const findItem = (domain, id) => {
+      if (domain === 'O') return OPS.optimism[id - 1];
+      if (domain === 'P') return OPS.pessimism[id - 1];
+      return null;
+    };
+
+    ['O','P'].forEach(domain => {
+      const bucket = domain === 'O' ? base.optimism : base.pessimism;
+      const respObj = responses[domain] || {};
+      Object.entries(respObj).forEach(([k, rawVal]) => {
+        const id = parseInt(k, 10);
+        if (Number.isNaN(id)) return;
+        const raw = Number(rawVal);
+        if (!raw) return;
+        bucket.count += 1;
+        if (raw >=1 && raw <=5) bucket.counts[raw - 1] += 1;
+        const meta = findItem(domain, id);
+        const scored = meta && meta.reverse ? 6 - raw : raw;
+        bucket.sum += scored;
+      });
+      if (bucket.count) bucket.mean = bucket.sum / bucket.count;
+    });
+
+    return base;
+  };
+
+  let lastSummary = null;
+
+  const fmtInt = (val) => (val == null ? '-' : Math.round(val).toString());
+  const fmtMean = (val) => (val == null ? '-' : val.toFixed(2));
+
+  const subject_id = jsPsych.randomization.randomID(10);
+  jsPsych.data.addProperties({ subject_id });
+
+  const save_data = {
+    type: window.jsPsychPipe,
+    action: 'save',
+    experiment_id: 'rEHu7dVHdN1Z',
+    filename: `${subject_id}.csv`,
+    data_string: () => jsPsych.data.get().csv()
+  };
+
+  const results = {
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: () => {
+      const summary = computeSummary();
+      lastSummary = summary;
+      const optRow = `<tr><td>楽観性 (Optimism)</td><td>${fmtInt(summary.optimism.sum)} / 25</td><td>${fmtMean(summary.optimism.mean)}</td></tr>`;
+      const pesRow = `<tr><td>悲観性 (Pessimism)</td><td>${fmtInt(summary.pessimism.sum)} / 25</td><td>${fmtMean(summary.pessimism.mean)}</td></tr>`;
+      return `<div class="card"><h2>結果</h2><p style="margin:0.4rem 0 0.8rem;">各尺度は5項目・5件法で構成され，合計得点の範囲は5〜25です。平均値（1〜5）は逆転項目を処理した後に算出しています。</p><table><thead><tr><th>特性</th><th>合計得点</th><th>平均 (1〜5)</th></tr></thead><tbody>${optRow}${pesRow}</tbody></table><div class="result-grid"><div style="grid-column:1/-1"><h3 style="margin:1rem 0 0.5rem;">楽観性と悲観性の合計得点</h3><div class="chart-wrap chart-small"><canvas id="ops-chart"></canvas></div>
+      <div class="description-box" style="margin-top:0.8rem;">
+        <div class="score-label">楽観性（Optimism）</div>
+        <p style="margin:0.2rem 0 0;">将来に対して肯定的な期待を持ち，良い結果を期待する傾向。楽観性が高いほど，困難な状況でも前向きに対処しようとする傾向が強いことを示します。</p>
+        <div class="score-label" style="margin-top:0.6rem;">悲観性（Pessimism）</div>
+        <p style="margin:0.2rem 0 0;">将来に対して否定的な予期を持ち，悪い結果を期待する傾向。悲観性が高いほど，ネガティブな結果を想定しやすいことを示します。</p>
+      </div></div></div><div class="small muted" style="margin-top:1rem;">注：WaiShan (2013) に基づき実施。</div></div>`;
+    },
+    choices: ['終了'],
+    on_finish: () => {
+      window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+    },
+    on_load: () => {
+      const summary = lastSummary;
+      if (!summary) return;
+      const meansCanvas = document.getElementById('ops-chart');
+      if (meansCanvas) {
+        new Chart(meansCanvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['楽観性 (O)', '悲観性 (P)'],
+            datasets: [
+              { label: '合計得点 (5〜25)', data: [summary.optimism.sum || 0, summary.pessimism.sum || 0], backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(211,47,47,0.85)'] }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 5, max: 25, ticks: { stepSize: 5 }, title: { display: true, text: '合計得点 (5〜25)' } }
+            }
+          }
+        });
+      }
+    }
+  };
+
+  jsPsych.run([intro, demographics, ...likertPages, save_data, results]);
+})();
+  </script>
+</body>
+</html>
