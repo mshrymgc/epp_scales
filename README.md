@@ -1,134 +1,88 @@
-# EPP Scales - オンライン心理学アンケート
+# EPP Scales - 感情・人格心理学のオンライン尺度集
 
-複数の心理尺度（HEXACO-60, BFI-2-S/J, SD3-J など）をオンラインで実施し、jsPsych を使用して結果をリアルタイム分析・表示するシステムです。
+感情・人格心理学の授業で扱った心理尺度を、ブラウザから体験・学習できるようにまとめた静的サイトです。各尺度は jsPsych を用いて実装され、回答完了後には即時フィードバックと OSF（jsPsych Pipe）へのデータ保存が行われます。
 
-## 🚀 特徴
+## 主な特徴
+- jsPsych 7 系と公式プラグインを `dist/` に同梱し、ビルド不要でそのまま動作
+- HEXACO-60 / BFI-2-S-J / SD3-J / PANAS (JP) の 4 尺度を同一レポジトリで管理
+- Chart.js 4.4.1 を用いたドメイン別チャート表示とダークテーマ切り替え（`?theme=dark`）
+- OSF Datapipe（@jspsych-contrib/plugin-pipe v0.5.0）による CSV 保存フローを各尺度に搭載
+- GitHub Pages などの静的ホスティングに配置するだけで公開可能
 
-- ✅ **CDN 依存なし**: jsPsych・Chart.js を dist/ でホスト
-- ✅ **OSF (Datapipe) 統合**: 回答データを自動保存
-- ✅ **リアルタイム結果表示**: Chart.js でレーダーチャート表示
-- ✅ **複数スケール対応**: 各スケールが独立した HTML ファイル
-- ✅ **GitHub Pages 公開**: 追加サーバー不要
-
-## 📋 構成
+## リポジトリ構成
 
 ```
-epp_scales/
-├── hexaco60.html        # HEXACO-60（6因子・24ファセット）
-├── bfi2sj.html          # BFI-2-S/J（ビッグファイブ）
+.
+├── index.html           # ポータル（授業で扱った尺度一覧）
+├── panas.html           # PANAS 日本語版（現在気分／1か月頻度）
+├── hexaco60.html        # HEXACO-60（6領域・24ファセット）
+├── bfi2sj.html          # BFI-2-S-J（ビッグファイブ短縮版）
 ├── sd3j.html            # SD3-J（ダークトライアド）
-├── index.html           # ポータルページ
-├── dist/                # jsPsych・Chart.js・プラグインのホスト
-│   ├── jspsych.js
-│   ├── jspsych.css
-│   ├── plugin-*.js      # 各プラグイン
-│   ├── chart.umd.min.js
-│   └── ...
-├── README.md
-└── .gitignore
+├── dist/                # jsPsych 本体・プラグイン・CSS（オフライン対応用）
+│   ├── jspsych.js / jspsych.css
+│   ├── plugin-*.js      # survey、html-button-response など公式プラグイン
+│   ├── extension-*.js   # optional extension (mouse-tracking など)
+│   └── survey*.css      # 調査フォーム用スタイル
+└── README.md
 ```
 
-## � クイックスタート
+## 各ファイルの役割
 
-### GitHub Pages で公開
+| ファイル | 内容 | Datapipe experiment_id | 外部依存 |
+|---------|------|------------------------|----------|
+| `index.html` | 各尺度へのリンクをまとめたランディングページ | なし | なし |
+| `panas.html` | PANAS 日本語版 16 項目（状態＋1か月頻度） | `TZPhTMQhxHSu` | Chart.js 4.4.1 (CDN), @jspsych-contrib/plugin-pipe 0.5.0 (CDN) |
+| `hexaco60.html` | HEXACO-60 (ドメイン別・ファセット別スコア可視化) | `TY0B485foupj` | Chart.js 4.4.1 (CDN), @jspsych-contrib/plugin-pipe 0.5.0 (CDN) |
+| `bfi2sj.html` | BFI-2-S-J（15 項目 × 5 因子） | `d5cclNdXjcZX` | Chart.js 4.4.1 (CDN), @jspsych-contrib/plugin-pipe 0.5.0 (CDN) |
+| `sd3j.html` | SD3-J（ダークトライアド 27 項目） | `GyvSHLaKTiph` | Chart.js 4.4.1 (CDN), @jspsych-contrib/plugin-pipe 0.5.0 (CDN) |
 
-ブラウザで以下にアクセス:
-- **ポータル**: https://mshrymgc.github.io/epp_scales/
-- **HEXACO-60**: https://mshrymgc.github.io/epp_scales/hexaco60.html
-- **BFI-2-S/J**: https://mshrymgc.github.io/epp_scales/bfi2sj.html
-- **SD3-J**: https://mshrymgc.github.io/epp_scales/sd3j.html
+> Chart.js は CDN から読み込んでいるため、完全オフライン運用を行う場合は `dist/` にファイルを追加し、各 HTML の `<script>` パスを書き換えてください。
 
-## � 新しいアンケートを追加する
+## ローカルでの確認手順
 
-### ステップ 1: HTML ファイルを作成
+1. 任意のディレクトリにクローンまたはダウンロードします。
+2. ルートディレクトリで簡易 HTTP サーバーを起動します。
+   ```bash
+   # 例: Python 3
+   python3 -m http.server 8000
+   ```
+3. ブラウザで `http://localhost:8000/index.html` にアクセスします。
+4. それぞれの尺度ページを開くと、jsPsych のタイムラインが起動し、結果表示まで一連の流れを確認できます。
 
-`src/templates/hexaco60.html` や `hexaco60.html` を参考に、新しいスケール用の HTML ファイルを作成します。
+ローカルファイルを直接開く（`file://` スキーム）場合、ブラウザによっては Datapipe への保存処理がブロックされることがあります。検証時は HTTP 経由でのアクセスを推奨します。
 
-例: `mynewscale.html`
+## 公開方法 (GitHub Pages 例)
 
-```html
-<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <title>My New Scale</title>
-  <script src="./dist/jspsych.js"></script>
-  <script src="./dist/plugin-survey-likert.js"></script>
-  <!-- その他のプラグイン・ライブラリ -->
-</head>
-<body>
-  <div id="jspsych-target"></div>
-  <script>
-    // スケール実装
-  </script>
-</body>
-</html>
-```
+1. `main` ブランチを GitHub にプッシュします（ビルド工程は不要）。
+2. GitHub Pages の公開設定で「Deploy from a branch」を選択し、`main` / `/root` を指定します。
+3. 数分後、`https://<ユーザー名>.github.io/epp_scales/` で `index.html` が閲覧可能になります。
+4. 各尺度ページは `https://<ユーザー名>.github.io/epp_scales/<scale>.html` で参照できます。
 
-### ステップ 2: dist/ のファイルを確認
+## データ保存フロー（OSF Datapipe）
 
-以下のファイルがホスト済みか確認:
-- `jspsych.js`, `jspsych.css`
-- `plugin-*.js`（必要なプラグイン）
-- `survey.min.css`
-- `chart.umd.min.js`（グラフを使う場合）
-- `@jspsych-contrib/plugin-pipe` の CDN リンク（OSF 保存を使う場合）
+1. 参加者が全設問を完了すると、jsPsych が集計した CSV 文字列を生成します。
+2. `@jspsych-contrib/plugin-pipe` が OSF Datapipe API に POST し、`experiment_id` ごとにファイルを保存します。
+3. 成功時は結果画面にステータスが表示され、失敗時にはエラーと再送ボタンが表示されます。
+4. 保存先は OSF プロジェクト内の Datapipe 用フォルダにまとめて配置されます。
 
-足りない場合は dist/ に追加し、Git にコミットします。
+### experiment_id を変更する場合
 
-### ステップ 3: ファイルを公開
+1. OSF で Datapipe アドオンを有効にしたプロジェクトを用意し、`experiment_id` を新規発行します。
+2. 対象 HTML 内の保存トライアルを検索し、`experiment_id: '...'` を新しい値に差し替えます。（例: `rg "experiment_id" hexaco60.html`）
+3. 必要に応じて上表のメモも更新してください。
 
-新しい HTML ファイルをリポジトリのルートに追加:
+## 新しい尺度を追加する手順
 
-```bash
-git add mynewscale.html
-git commit -m "feat: add my new scale"
-git push
-```
+1. 既存ファイル（例: `panas.html`）をコピーし、タイムライン・設問・集計処理を目的の尺度に合わせて編集します。
+2. 利用する jsPsych プラグインが `dist/` に含まれているか確認し、足りない場合は公式配布物を追加します。
+3. Datapipe を利用する場合は OSF 側で `experiment_id` を発行し、保存トライアルに設定します。
+4. `index.html` のカードリストに新しい尺度へのリンクを追記します。
+5. GitHub へコミットし、Pages を利用している場合は push するだけで公開が更新されます。
 
-結果:
-- https://mshrymgc.github.io/epp_scales/mynewscale.html
-
-### ステップ 4: ポータルに追加（オプション）
-
-`index.html` に新しいスケールへのリンクを追加し、ユーザーが容易にアクセスできるようにします。
-
-## 📡 OSF (Datapipe) の設定
-
-### 現在の experiment_id
-
-| スケール | experiment_id |
-|---------|---------------|
-| **HEXACO-60** | `TY0B485foupj` |
-| **BFI-2-S/J** | TBD |
-| **SD3-J** | TBD |
-
-### データ保存フロー
-
-1. 参加者が全項目に回答
-2. 「結果を見る」または「完了」をクリック
-3. CSV データを OSF に POST
-4. 結果画面に保存ステータスを表示
-5. OSF プロジェクトの File セクションに CSV が保存
-
-### experiment_id の設定
-
-各 HTML ファイルの以下の部分を編集:
-
-```javascript
-// OSF Datapipe 設定
-experiment_id: 'YOUR_EXPERIMENT_ID_HERE'
-```
-
-新しい experiment_id を取得するには:
-1. https://osf.io/ でプロジェクトを作成
-2. Datapipe 設定から experiment_id を生成
-3. 上記の表を更新
-
-## 📝 ライセンス
+## ライセンス
 
 ISC
 
-## 🤝 貢献
+## コンタクト
 
-改善提案やバグ報告は Issues にお願いします。
+改善提案やバグ報告は Issues へお寄せください。
