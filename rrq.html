@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RRQ 日本語版</title>
+  <link rel="stylesheet" href="./dist/jspsych.css" />
+  <link rel="stylesheet" href="./dist/survey.min.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
+    .grid { display:grid; gap:1rem; }
+    .result-grid { display:grid; gap:1.2rem; margin-top:1.5rem; }
+    @media (min-width: 780px) { .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+    .chart-wrap { position:relative; width:100%; max-width:500px; margin:0 auto; }
+    .chart-small { height:260px; max-height:320px; }
+    .chart-wrap canvas { display:block; width:100%; height:100%; }
+    table { border-collapse:collapse; width:100%; }
+    th, td { padding:0.45rem 0.4rem; border-bottom:1px solid #eee; text-align:left; font-size:0.95rem; }
+    th { font-weight:600; background:#fafafa; }
+    .small { font-size:0.85rem; }
+    .muted { color:#666; }
+    .likert-label-tooltip { position: relative; }
+    .likert-label-tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.4rem 0.6rem; border-radius: 4px; white-space: nowrap; font-size: 0.8rem; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; z-index: 10; }
+    .likert-label-tooltip:hover::after { opacity: 1; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="./dist/jspsych.js"></script>
+  <script src="./dist/plugin-html-button-response.js"></script>
+  <script src="./dist/plugin-survey.js"></script>
+  <script src="./dist/plugin-survey-likert.js"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+  <script>
+(function(){
+  const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
+
+  (function setProgressLabel(){
+    const setLabel = () => {
+      const span = document.querySelector('#jspsych-progressbar-container span');
+      if (span) { span.innerHTML = '進捗状況'; return true; }
+      return false;
+    };
+    if (!setLabel()) {
+      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+  })();
+
+  const RRQ = {
+    rumination: [
+      { id: 1, text: '自分のある側面について考えるのをやめたいと思っていても，そこに注意が向くことが多い。', reverse: false },
+      { id: 2, text: '最近自分が言ったことやしたことについて，頭の中でいつも思い返しているように思う。', reverse: false },
+      { id: 3, text: '時々，自分自身について考えるのをなかなかやめることができない。', reverse: false },
+      { id: 4, text: '口論や意見の不一致があると，その後長い間私は起こったことを考えつづける。', reverse: false },
+      { id: 5, text: '本当に長い間，自分に起こったことを繰り返し考えたり，つくづくと考えたりしがちだ。', reverse: false },
+      { id: 6, text: '終わったことやしてしまったことを思い返すために時間を使うことはない。', reverse: true },
+      { id: 7, text: '過去にあった場面で，自分がどう振舞ったかを頭の中でよく思い返している。', reverse: false },
+      { id: 8, text: '自分がしたことについて，自らもう一度評価をしていることに気が付くことがよくある。', reverse: false },
+      { id: 9, text: 'あまり長い間，自分自身のことを繰り返し考えたり，じっくり考えたりすることは決してない。', reverse: true },
+      { id: 10, text: '不愉快な考えを頭の中から外へ出すことはたやすい。', reverse: true },
+      { id: 11, text: 'もはや関心を持つべきではない人生の出来事について熟考することがよくある。', reverse: false },
+      { id: 12, text: '私は，恥ずかしい，あるいはがっかりした瞬間を思い返すのに，非常に多くの時間を費やしている。', reverse: false }
+    ],
+    reflection: [
+      { id: 13, text: '哲学的，抽象的な考えは，それほど私の興味を引くものではない。', reverse: true },
+      { id: 14, text: '私はそれほど物事を深く考えるタイプの人ではない。', reverse: true },
+      { id: 15, text: '「内的な」自己を探るのがとても好きだ。', reverse: false },
+      { id: 16, text: '物事に対する自分の態度や気持ちに，強い興味がある。', reverse: false },
+      { id: 17, text: '内省的，自省的な考え方は本当に好きではない。', reverse: true },
+      { id: 18, text: 'なぜそうするのかを分析するのがとても好きだ。', reverse: false },
+      { id: 19, text: '私は，「深い」，内省的なタイプの人だとよく人に言われる。', reverse: false },
+      { id: 20, text: '自己分析はあまり好きではない。', reverse: true },
+      { id: 21, text: 'もともと自己をとても探求したいと思っている。', reverse: false },
+      { id: 22, text: 'ものごとの本質や意味について深く考えることがとても好きだ。', reverse: false },
+      { id: 23, text: '自分の人生を哲学的に見ることがとても好きだとしばしば思う。', reverse: false },
+      { id: 24, text: '自分自身についてじっくり考えることは，楽しいとは思わない。', reverse: true }
+    ]
+  };
+
+  const TOTAL_ITEMS = RRQ.rumination.length + RRQ.reflection.length;
+  // RRQは6項目ずつ（反芻・省察の区切りがわかりやすいため）
+  const PAGE_SIZE = 6;
+
+  // improved description styles
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = `
+    .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
+    .description-box .score-label { font-weight:700; font-size:1rem; color:#0d47a1; margin-bottom:0.25rem; }
+    .description-box p { margin:0 0 0.6rem 0; line-height:1.45; }
+  `;
+  document.head.appendChild(styleEl);
+
+  const updateProgressBar = (fraction) => {
+    const barInner = document.querySelector('#jspsych-progressbar-inner');
+    if (barInner) barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
+  };
+
+  const chunk = (arr, size) => {
+    const res = [];
+    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+    return res;
+  };
+
+  // create annotated items with domain and local id (R1..R12, F1..F12)
+  const allItems = [];
+  RRQ.rumination.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'R', id: i + 1 }));
+  RRQ.reflection.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'F', id: i + 1 }));
+
+  // shuffle items so their presentation order is randomized
+  function shuffleInPlace(a) { for (let i=a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  shuffleInPlace(allItems);
+
+  // save the randomized mapping so saved data can be interpreted
+  jsPsych.data.addProperties({ rrq_item_order: JSON.stringify(allItems.map(it => ({ domain: it.domain, id: it.id, text: it.text }))) });
+
+  const pages = chunk(allItems, PAGE_SIZE);
+
+  const intro = {
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: `<div class="card"><h2>RRQ 日本語版</h2><h3>Rumination–Reflection Questionnaire</h3><h4>「感情・人格心理学」受講者用</h4><p style="margin:0.6rem 0 0;">以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。</p><p style="margin:0.6rem 0 0;">回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。</p><ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">回答時間の目安：4〜6分<br>出典：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.</ul></div>`,
+    choices: ['開始']
+  };
+
+  const demographics = {
+    type: window.jsPsychSurvey,
+    survey_json: {
+      showQuestionNumbers: false,
+      pages: [{
+        name: 'demographics',
+        elements: [
+          { type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true },
+          { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
+        ]
+      }],
+      pageNextText: '次へ',
+      completeText: '次へ'
+    },
+    on_finish: (data) => {
+      const r = data.response || {};
+      jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
+    }
+  };
+
+  const likertLabels = ['1','2','3','4','5'];
+  const likertTooltips = ['全く当てはまらない','当てはまらない','どちらともいえない','当てはまる','よく当てはまる'];
+
+  // Build pages using the standard survey plugin (radiogroup) for better cross-version compatibility
+  const likertPages = pages.map((items, k) => {
+    const pageNum = k;
+    const pageStart = pageNum * PAGE_SIZE + 1;
+    const pageEnd = pageNum * PAGE_SIZE + items.length;
+    const page = {
+      type: window.jsPsychSurvey,
+      survey_json: {
+        showQuestionNumbers: false,
+        pages: [
+          {
+            name: `page_${pageNum}`,
+            elements: ([
+              {
+                type: 'html',
+                name: `preamble_${pageNum}`,
+                html: `<div class="card"><b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b><p style="margin:0.5rem 0 0;">以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。直感的に答えて構いません。</p></div>`
+              }
+            ]).concat(items.map(item => ({
+              type: 'radiogroup',
+              // name encodes domain (R or F) and local id, e.g. R1, F3
+              name: `${item.domain}${item.id}`,
+              title: item.text,
+              isRequired: true,
+              choices: [
+                { value: 1, text: '1 = 全く当てはまらない' },
+                { value: 2, text: '2 = 当てはまらない' },
+                { value: 3, text: '3 = どちらともいえない' },
+                { value: 4, text: '4 = 当てはまる' },
+                { value: 5, text: '5 = よく当てはまる' }
+              ]
+            })))
+          }
+        ],
+        pageNextText: '次へ',
+        completeText: pageNum === pages.length - 1 ? '結果を見る' : '次へ'
+      },
+      on_load: () => {
+        // logging for debugging
+        console.log('RRQ survey page loaded', { pageNum, pageStart, pageEnd, itemsLength: items.length });
+        updateProgressBar((pageEnd) / TOTAL_ITEMS);
+      }
+    };
+    return page;
+  });
+
+  const getResponses = () => {
+    const trials = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
+    // try to get data from both survey-likert and survey trials
+    const res = { R: {}, F: {} };
+    const surveyTrials = jsPsych.data.get().filter(tr => tr.trial_type && (tr.trial_type === 'survey-likert' || tr.trial_type === 'survey')).values();
+    surveyTrials.forEach(tr => {
+      const resp = tr.response || {};
+      Object.entries(resp).forEach(([name, val]) => {
+        // parse domain letter and item number, e.g. R1 or F3
+        const m = String(name).match(/^([RF])(\d+)$/);
+        if (!m) return;
+        const domain = m[1];
+        const n = parseInt(m[2], 10);
+        // val might be numeric index (0-based), or an object/value depending on plugin
+        let numeric = null;
+        if (typeof val === 'number') {
+          // survey-likert: idx is 0-based index
+          numeric = val + 1;
+        } else if (typeof val === 'string') {
+          const parsed = parseInt(val, 10);
+          if (!Number.isNaN(parsed)) numeric = parsed;
+        } else if (val && typeof val === 'object') {
+          // survey (radiogroup) stores selected value directly (number or string)
+          if ('value' in val) {
+            const parsed = parseInt(val.value, 10);
+            if (!Number.isNaN(parsed)) numeric = parsed;
+          } else {
+            // sometimes radiogroup returns the chosen value directly
+            const parsed = parseInt(JSON.stringify(val), 10);
+            if (!Number.isNaN(parsed)) numeric = parsed;
+          }
+        }
+        if (numeric != null) res[domain][n] = numeric;
+      });
+    });
+    return res;
+  };
+
+  const computeSummary = () => {
+    const responses = getResponses();
+    const base = {
+      rumination: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] },
+      reflection: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] }
+    };
+
+    // helper to look up original item metadata (to find reverse flags)
+    const findItem = (domain, id) => {
+      if (domain === 'R') return RRQ.rumination[id - 1];
+      if (domain === 'F') return RRQ.reflection[id - 1];
+      return null;
+    };
+
+    // process R and F responses stored as responses.R and responses.F
+    ['R','F'].forEach(domain => {
+      const bucket = domain === 'R' ? base.rumination : base.reflection;
+      const respObj = responses[domain] || {};
+      Object.entries(respObj).forEach(([k, rawVal]) => {
+        const id = parseInt(k, 10);
+        if (Number.isNaN(id)) return;
+        const raw = Number(rawVal);
+        if (!raw) return;
+        bucket.count += 1;
+        if (raw >=1 && raw <=5) bucket.counts[raw - 1] += 1;
+        const meta = findItem(domain, id);
+        const scored = meta && meta.reverse ? 6 - raw : raw;
+        bucket.sum += scored;
+      });
+      if (bucket.count) bucket.mean = bucket.sum / bucket.count;
+    });
+
+    return base;
+  };
+
+  let lastSummary = null;
+
+  const fmtInt = (val) => (val == null ? '-' : Math.round(val).toString());
+  const fmtMean = (val) => (val == null ? '-' : val.toFixed(2));
+
+  const subject_id = jsPsych.randomization.randomID(10);
+  jsPsych.data.addProperties({ subject_id });
+
+  const save_data = {
+    type: window.jsPsychPipe,
+    action: 'save',
+    experiment_id: 'LtNw0mBEbED7',
+    filename: `${subject_id}.csv`,
+    data_string: () => jsPsych.data.get().csv()
+  };
+
+  const results = {
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: () => {
+    const summary = computeSummary();
+    lastSummary = summary;
+    const rumRow = `<tr><td>反芻 (Rumination)</td><td>${fmtInt(summary.rumination.sum)} / 60</td><td>${fmtMean(summary.rumination.mean)}</td></tr>`;
+    const refRow = `<tr><td>省察 (Reflection)</td><td>${fmtInt(summary.reflection.sum)} / 60</td><td>${fmtMean(summary.reflection.mean)}</td></tr>`;
+      return `<div class="card"><h2>結果</h2><p style="margin:0.4rem 0 0.8rem;">各下位尺度は12項目・5件法で構成され，合計得点の範囲は12〜60です。平均値（1〜5）は逆転項目を処理した後に算出しています。</p><table><thead><tr><th>特性</th><th>合計得点</th><th>平均 (1〜5)</th></tr></thead><tbody>${rumRow}${refRow}</tbody></table><div class="result-grid"><div style="grid-column:1/-1"><h3 style="margin:1rem 0 0.5rem;">反芻と省察の平均得点</h3><div class="chart-wrap chart-small"><canvas id="rrq-means-chart"></canvas></div>
+      <div class="description-box" style="margin-top:0.8rem;">
+        <div class="score-label">反芻（Rumination）</div>
+        <p style="margin:0.2rem 0 0;">ネガティブな出来事や気分に対して，同じことを繰り返し考え続ける傾向。問題解決に向かわず反芻が強いほど心理的負担が増す場合があります。</p>
+        <div class="score-label" style="margin-top:0.6rem;">省察（Reflection）</div>
+        <p style="margin:0.2rem 0 0;">自分の感情や行動を分析し，経験から学ぼうとする傾向。建設的な内省が高い場合は成長志向が強いことを示します。</p>
+      </div></div></div><div class="small muted" style="margin-top:1rem;">注：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.／RRQ尺度使用マニュアルに基づき実施。</div></div>`;
+    },
+    choices: ['終了'],
+    on_finish: () => {
+      window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+    },
+    on_load: () => {
+      const summary = lastSummary;
+      if (!summary) return;
+      const labels = ['1','2','3','4','5'];
+      const palette = { rum:'#1976D2', ref:'#388E3C' };
+      // 平均得点チャート（1〜5）
+      const meansCanvas = document.getElementById('rrq-means-chart');
+      if (meansCanvas) {
+        // show total score (12-60) for each domain
+        new Chart(meansCanvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['反芻 (R)', '省察 (F)'],
+            datasets: [
+              { label: '合計得点 (12〜60)', data: [summary.rumination.sum || 0, summary.reflection.sum || 0], backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(56,142,60,0.85)'] }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 12, max: 60, ticks: { stepSize: 6 }, title: { display: true, text: '合計得点 (12〜60)' } }
+            }
+          }
+        });
+      }
+    }
+  };
+
+  jsPsych.run([intro, demographics, ...likertPages, save_data, results]);
+})();
+  </script>
+</body>
+</html>
