@@ -14,6 +14,8 @@
     .chart-wrap canvas { display:block; margin:0 auto; }
     table { border-collapse:collapse; width:100%; }
     th, td { padding:0.4rem 0.3rem; border-bottom:1px solid #eee; text-align:left; }
+    .small { font-size: 0.85rem; }
+    .muted { color:#666 }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./dist/jspsych.js"></script>
@@ -27,6 +29,19 @@
   <script>
 (function(){
   const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
+  
+  // 「Completion Progress」を「進捗状況」に置換（進捗バーが生成されたら処理）
+  (function setProgressLabel(){
+    const setLabel = () => {
+      const span = document.querySelector('#jspsych-progressbar-container span');
+      if (span) { span.innerHTML = '進捗状況'; return true; }
+      return false;
+    };
+    if (!setLabel()) {
+      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+  })();
   
   const SD3 = {
     M: ["他の誰かに自分の秘密を教えないということは賢明なことだ。","自分の思い通りになるように，賢く周りの人々を扱いたい。","とにかく，重要な人物は自分の味方に付けておいたほうが良い。","将来その人が自分の役に立つかもしれないので，人との直接の争いは避けるようにしている。","後になって誰かに対して利用できるような情報に目を配っておくことは賢明なことだ。","誰かに復讐するなら，それに最適な時が来るまでじっと待つべきだ。","自分の良い評判を守るために，他の人に秘密にしなければならないことがある。","自分の計画が，他の誰かの利益ではなく自分の利益になるように取り計らっている。","ほとんどの人々は簡単に騙されたり，操られたりしてしまうものだ。"],
@@ -74,7 +89,7 @@
   const likertPages = pages.map((items, k) => ({
     type: window.jsPsychSurveyLikert,
     preamble: `<div class="card"><b>質問 ${k*9+1}–${k*9+items.length} / 27</b></div>`,
-    questions: items.map(it => ({prompt: it.text, labels: ['1','2','3','4','5'], name: `Q${it.idx}`, required: true})),
+    questions: items.map(it => ({prompt: it.text, labels: ['全くそう思わない','','','','非常にそう思う'], name: `Q${it.idx}`, required: true})),
     button_label: k === 2 ? '結果を見る' : '次へ',
     on_finish: () => { updateProgressBar((k*9 + items.length) / 27); }
   }));
@@ -97,7 +112,7 @@
       const s = computeScores(responses);
       const fmt = v => (v == null ? '-' : v.toFixed(2));
       const rowsHtml = `<tr><td>マキャベリアニズム (M)</td><td>${fmt(s.M)}</td><td>${fmt(PAPER_MEANS.M)}</td></tr><tr><td>自己愛傾向 (N)</td><td>${fmt(s.N)}</td><td>${fmt(PAPER_MEANS.N)}</td></tr><tr><td>サイコパシー傾向 (P)</td><td>${fmt(s.P)}</td><td>${fmt(PAPER_MEANS.P)}</td></tr>`;
-      return `<div class="card"><h2>結果</h2><div class="chart-wrap"><canvas id="sd3-radar"></canvas></div><table><thead><tr><th>特性</th><th>あなた</th><th>論文の平均</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+      return `<div class="card"><h2>結果</h2><div class="chart-wrap"><canvas id="sd3-radar"></canvas></div><div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">注：「論文の平均」は Jonason & Webster (2010) の値を参照</div><table><thead><tr><th>特性</th><th>あなた</th><th>論文の平均</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
     },
     choices: ['終了'],
       on_finish: () => {
@@ -130,7 +145,7 @@
             {label: '論文の平均', data: [PAPER_MEANS.M, PAPER_MEANS.N, PAPER_MEANS.P], fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 2.2, tension: 0, pointRadius: 2}
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { r: {min: 1, max: 5, ticks: {stepSize: 1}} }, plugins: {legend: {position: 'bottom'}}, elements: {line: {tension: 0}} }
+        options: { responsive: false, maintainAspectRatio: false, scales: { r: {min: 1, max: 5, ticks: {stepSize: 1}} }, plugins: {legend: {position: 'bottom'}}, elements: {line: {tension: 0}} }
       });
     }
   };
