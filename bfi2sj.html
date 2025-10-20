@@ -15,11 +15,35 @@
     .jspsych-content { max-width: 1150px; }
     .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
     .grid { display:grid; gap:1rem; }
-    .chart-wrap { position:relative; width:100%; max-width:500px; height:46vh; max-height:420px; margin:0 auto; }
-    .chart-wrap.facet { max-width:700px; height:70vh; max-height:650px; }
+    .chart-wrap { position:relative; width:100%; max-width:600px; height:50vh; max-height:500px; margin:0 auto; }
+    .chart-wrap.facet { max-width:750px; height:70vh; max-height:700px; }
     .chart-wrap canvas { display:block; margin:0 auto; }
     table { border-collapse:collapse; width:100%; }
     th, td { padding:0.4rem 0.3rem; border-bottom:1px solid #eee; }
+    .jspsych-survey-likert-opt label { cursor: help; position: relative; }
+    .jspsych-survey-likert-opt label:hover::after { content: attr(data-label); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.5rem 0.8rem; border-radius: 4px; white-space: nowrap; font-size: 0.9rem; z-index: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    /* Fallback tooltip style matching PANAS implementation: apply to inner label span when present */
+    .likert-label-tooltip { position: relative; }
+    .likert-label-tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 1000;
+    }
+    .likert-label-tooltip:hover::after { opacity: 1; }
+    .jspsych-progressbar-container .jspsych-progressbar-text { visibility: hidden; position: relative; }
+    .jspsych-progressbar-container .jspsych-progressbar-text::after { content: "進捗状況"; visibility: visible; position: absolute; left: 0; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./dist/jspsych.js"></script>
@@ -34,6 +58,19 @@
 (function(){
   const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
   
+  // 「Completion Progress」を「進捗状況」に置換（進捗バーが生成されたら処理）
+  (function setProgressLabel(){
+    const setLabel = () => {
+      const span = document.querySelector('#jspsych-progressbar-container span');
+      if (span) { span.innerHTML = '進捗状況'; return true; }
+      return false;
+    };
+    if (!setLabel()) {
+      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+  })();
+  
   const ITEMS = ["無口な方だ。","思いやりがあり，優しい。","行き当たりばったりな方だ。","多くの悩みごとを抱えている。","芸術，音楽，文学に魅了されている。","上に立つ方で，リーダーとして活動する。","他人を見下すことがある。","なかなか作業に取り掛かることができない。","憂うつになり，落胆する方だ。","抽象的な知識にはほとんど関心がない。","活力にあふれている。","人々のいちばん良いところを思い浮かべる。","ちゃんとしていて，いつも周りから当てにされる。","情緒が安定しており，簡単には取り乱さない。","個性的で，新しいアイディアを思いつく。","積極的で，社交的である。","冷淡で思いやりに欠けることがある。","物事をきれいに揃えたりまとめたりする。","リラックスしていて，ストレスにうまく対処している。","芸術的関心があまりない。","他の人にリーダーシップを発揮してもらうほうが良いと思う。","礼儀正しく，他人に敬意をもって接する。","根気強く，与えられた課題が終わるまで取り組む。","安心感を抱いており，心地よい。","考え方が複雑で，深く考える人間だ。","他の人と比べて活発ではない。","他人の欠点を見つけ出す方だ。","少し不注意なところがある。","神経質で，感情的になりやすい。","創造性がほとんどない。"];
   const REVERSED = new Set([1,3,7,8,10,14,17,19,20,21,24,26,27,28,30]);
   const DOMAINS = { E: [1,6,11,16,21,26], A: [2,7,12,17,22,27], C: [3,8,13,18,23,28], N: [4,9,14,19,24,29], O: [5,10,15,20,25,30] };
@@ -46,6 +83,69 @@
     const barInner = document.querySelector('#jspsych-progressbar-inner');
     if (barInner) barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
   };
+
+  // Ensure Likert labels have data-label attributes for hover tooltips.
+  const LIKERT_LABELS = ['全くあてはまらない','あてはまらない','どちらかともいえない','あてはまる','とてもよくあてはまる'];
+  function ensureLikertTooltips() {
+    // Prefer the inner option label element if present (jsPsych uses .jspsych-survey-likert-opt-label)
+    document.querySelectorAll('.jspsych-survey-likert-opt').forEach(opt => {
+      const innerLabels = opt.querySelectorAll('.jspsych-survey-likert-opt-label');
+      if (innerLabels && innerLabels.length) {
+        innerLabels.forEach((ilabel, i) => {
+          try {
+            const idx = i % LIKERT_LABELS.length;
+            if (!ilabel.classList.contains('likert-label-tooltip')) ilabel.classList.add('likert-label-tooltip');
+            if (!ilabel.getAttribute('data-tooltip') || ilabel.getAttribute('data-tooltip') !== LIKERT_LABELS[idx]) {
+              ilabel.setAttribute('data-tooltip', LIKERT_LABELS[idx]);
+            }
+            // Also ensure outer <label> has data-label for existing CSS that relies on it
+            const outer = ilabel.closest('label');
+            if (outer) {
+              if (!outer.classList.contains('likert-label-tooltip')) outer.classList.add('likert-label-tooltip');
+              if (!outer.getAttribute('data-label') || outer.getAttribute('data-label') !== LIKERT_LABELS[idx]) {
+                outer.setAttribute('data-label', LIKERT_LABELS[idx]);
+              }
+            }
+          } catch(e){}
+        });
+      } else {
+        // fallback to applying to the <label> elements
+        const labels = opt.querySelectorAll('label');
+        labels.forEach((label, i) => {
+          try {
+            const idx = i % LIKERT_LABELS.length;
+            if (!label.classList.contains('likert-label-tooltip')) label.classList.add('likert-label-tooltip');
+            if (!label.getAttribute('data-tooltip') || label.getAttribute('data-tooltip') !== LIKERT_LABELS[idx]) {
+              label.setAttribute('data-tooltip', LIKERT_LABELS[idx]);
+            }
+            if (!label.getAttribute('data-label') || label.getAttribute('data-label') !== LIKERT_LABELS[idx]) {
+              label.setAttribute('data-label', LIKERT_LABELS[idx]);
+            }
+          } catch(e){}
+        });
+      }
+    });
+    console.debug('[bfi2sj] ensureLikertTooltips applied');
+  }
+
+  // Observe DOM mutations and re-apply data-labels whenever likert option groups are added/changed.
+  const likertObserver = new MutationObserver(mutations => {
+    let needsCheck = false;
+    for (const m of mutations) {
+      if (m.addedNodes && m.addedNodes.length) {
+        for (const n of m.addedNodes) {
+          if (n.nodeType === 1 && (n.classList?.contains('jspsych-survey-likert-opt') || n.querySelector?.('.jspsych-survey-likert-opt'))) {
+            needsCheck = true; break;
+          }
+        }
+      }
+      if (needsCheck) break;
+    }
+    if (needsCheck) {
+      setTimeout(() => { ensureLikertTooltips(); }, 100);
+    }
+  });
+  likertObserver.observe(document.body, { childList: true, subtree: true });
   
   function computeScores(responses) {
     const scored = {}, domainMeans = {}, facetMeans = {};
@@ -67,7 +167,7 @@
   
   const intro = { type: window.jsPsychHtmlButtonResponse,
      stimulus: `<div class="card"><h2>BFI-2-S-J</h2><h3>日本語版Big Five Inventory-2短縮版</h3><h4>「感情・人格心理学」受講者用</h4><p class="note">
-              これはBig Fiveパーソナリティモデルを評価するアンケートであり，講義内容の理解を促進するために利用されます。データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。</p>
+              これはBig Fiveパーソナリティモデルを評価するアンケートであり，講義内容の理解を促進するために利用されます。<br>データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。</p>
             <ul class="small muted">
               回答時間の目安：5〜7分 <br>
               出典<br>吉野伸哉・下司忠大・橋本泰央・上野雄己・三枝高大・小塩真司. (2026). 日本語版Big Five Inventory-2の短縮版の検討. 心理学研究, https://doi.org/10.4992/jjpsy.96.24214
@@ -88,6 +188,18 @@
       5=とてもよくあてはまる</div></div>`,
     questions: groupNums.map(num => ({ prompt: ITEMS[num-1], labels: ['1','2','3','4','5'], name: `Q${num}`, required: true })),
     button_label: idx === pageGroups.length - 1 ? '結果を見る' : '次へ',
+    on_load: () => { 
+      const opts = ['全くあてはまらない','あてはまらない','どちらかともいえない','あてはまる','とてもよくあてはまる'];
+      setTimeout(() => {
+        document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
+          if (!label.classList.contains('likert-label-tooltip')) {
+            label.classList.add('likert-label-tooltip');
+          }
+          label.setAttribute('data-tooltip', opts[i % 5]);
+          label.setAttribute('data-label', opts[i % 5]);
+        });
+      }, 100);
+    },
     on_finish: () => { updateProgressBar((groupNums[groupNums.length-1])/30); }
   }));
   
@@ -96,7 +208,7 @@
   
   const results = {
     type: window.jsPsychHtmlButtonResponse,
-    stimulus: () => `<div class="grid"><div class="card"><h2>ドメイン</h2><div class="chart-wrap"><canvas id="chart-domain"></canvas></div><table id="dom-table"><thead><tr><th>ドメイン</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div><div class="card"><h2>ファセット</h2><div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div><table id="facet-table"><thead><tr><th>ファセット</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div></div>`,
+    stimulus: () => `<div class="grid"><div class="card"><h2>ドメイン</h2><div class="chart-wrap"><canvas id="chart-domain"></canvas></div><div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">注：「日本人平均」は吉野他（2026）Table S5のSurvey2の平均値</div><table id="dom-table"><thead><tr><th>ドメイン</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div><div class="card"><h2>ファセット</h2><div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div><div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">注：「日本人平均」は吉野他（2026）Table S19のSurvey2の平均値</div><table id="facet-table"><thead><tr><th>ファセット</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div></div>`,
     choices: ['終了'],
       on_finish: () => {
         window.location.href = 'https://mshrymgc.github.io/epp_scales/';
@@ -122,19 +234,29 @@
       
       const palette = {selfBorder:'#1976D2', selfFill:'rgba(25,118,210,0.15)', normBorder:'#D32F2F', normFill:'rgba(211,47,47,0.15)'};
       
-      new Chart(document.getElementById('chart-domain').getContext('2d'), {
+      const canvasDom = document.getElementById('chart-domain');
+      const wrapDom = canvasDom.parentElement;
+      canvasDom.width = wrapDom.offsetWidth;
+      canvasDom.height = wrapDom.offsetHeight;
+      
+      new Chart(canvasDom.getContext('2d'), {
         type: 'radar',
         data: {
           labels: ['E','A','C','N','O'].map(d => DOMAIN_LABELS[d]),
           datasets: [
-            {label: 'あなた', data: ['E','A','C','N','O'].map(d => domainMeans[d]??null), fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 2.2, tension: 0, pointRadius: 2},
-            {label: '平均', data: ['E','A','C','N','O'].map(d => SURVEY2_DOMAIN_MEANS[d]??null), fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 2.2, tension: 0, pointRadius: 2}
+            {label: 'あなた', data: ['E','A','C','N','O'].map(d => domainMeans[d]??null), fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 2.2, tension: 0, pointRadius: 3},
+            {label: '平均', data: ['E','A','C','N','O'].map(d => SURVEY2_DOMAIN_MEANS[d]??null), fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 2.2, tension: 0, pointRadius: 3}
           ]
         },
-        options: { responsive: true, scales: { r: { suggestedMin: 1, suggestedMax: 5, ticks: {stepSize: 1}} }, plugins: {legend: {position: 'bottom'}}, elements: {line: {tension: 0}} }
+        options: { responsive: false, maintainAspectRatio: false, scales: { r: { suggestedMin: 1, suggestedMax: 5, ticks: {stepSize: 1, font: {size: 12}} } }, plugins: {legend: {position: 'bottom', labels: {font: {size: 12}, padding: 15}}}, elements: {line: {tension: 0}} }
       });
       
-      new Chart(document.getElementById('chart-facet').getContext('2d'), {
+      const canvasFacet = document.getElementById('chart-facet');
+      const wrapFacet = canvasFacet.parentElement;
+      canvasFacet.width = wrapFacet.offsetWidth;
+      canvasFacet.height = wrapFacet.offsetHeight;
+      
+      new Chart(canvasFacet.getContext('2d'), {
         type: 'radar',
         data: {
           labels: Object.keys(FACETS),
@@ -143,7 +265,7 @@
             {label: '平均', data: Object.keys(FACETS).map(k => SURVEY2_FACET_MEANS[k]??null), fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 1.8, tension: 0, pointRadius: 2}
           ]
         },
-        options: { responsive: true, scales: { r: {suggestedMin: 1, suggestedMax: 5, ticks: {stepSize: 1}, padding: 60}}, plugins: {legend: {position: 'bottom'}}, elements: {line: {tension: 0}} }
+        options: { responsive: false, maintainAspectRatio: false, scales: { r: {suggestedMin: 1, suggestedMax: 5, ticks: {stepSize: 1, font: {size: 10}}, padding: 40} }, plugins: {legend: {position: 'bottom', labels: {font: {size: 11}, padding: 10}}}, elements: {line: {tension: 0}} }
       });
     }
   };
