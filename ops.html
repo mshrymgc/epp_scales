@@ -20,9 +20,9 @@
     th { font-weight:600; background:#fafafa; }
     .small { font-size:0.85rem; }
     .muted { color:#666; }
-    .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
-    .description-box .score-label { font-weight:700; font-size:1rem; color:#0d47a1; margin-bottom:0.25rem; }
-    .description-box p { margin:0 0 0.6rem 0; line-height:1.45; }
+    .likert-label-tooltip { position: relative; }
+    .likert-label-tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.4rem 0.6rem; border-radius: 4px; white-space: nowrap; font-size: 0.8rem; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; z-index: 10; }
+    .likert-label-tooltip:hover::after { opacity: 1; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./dist/jspsych.js"></script>
@@ -51,24 +51,35 @@
 
   const OPS = {
     optimism: [
-      { id: 1, text: '将来、良いことが起こると期待する。', reverse: false },
-      { id: 2, text: '困難な状況でも、うまくいくと信じている。', reverse: false },
-      { id: 3, text: '将来に対して希望を持っている。', reverse: false },
-      { id: 4, text: '物事が良い方向に進むと予想する。', reverse: false },
-      { id: 5, text: '自分の努力が成果を生むだろうと考える。', reverse: false }
+      { id: 1, text: '自分の将来は、良いことが起こると思う', reverse: false },
+      { id: 3, text: '将来、幸せになれると思う', reverse: false },
+      { id: 5, text: '私は将来に対して、前向きに考えている', reverse: false },
+      { id: 7, text: '自分の将来は、恵まれていると思う', reverse: false },
+      { id: 9, text: '自分の将来に期待がもてる', reverse: false },
+      { id: 11, text: 'これからの人生は良いものになるだろうと思う', reverse: false },
+      { id: 13, text: '結果が予想できない時は、良い方向に期待する', reverse: false },
+      { id: 15, text: '私には、悪いことよりも良いことが起こると思う', reverse: false },
+      { id: 17, text: '何かに取りかかる時は、成功するだろうと考える', reverse: false },
+      { id: 19, text: '自分の将来を楽しみにしている', reverse: false }
     ],
     pessimism: [
-      { id: 1, text: '将来について悲観的である。', reverse: false },
-      { id: 2, text: '何か悪いことが起こるのではないかと心配する。', reverse: false },
-      { id: 3, text: 'たいていのことはうまくいかないと感じる。', reverse: false },
-      { id: 4, text: '良い結果を期待するのは難しい。', reverse: false },
-      { id: 5, text: '自分には良いことが起こるとは思えない。', reverse: false }
+      { id: 2, text: '私の将来は、暗いと思う', reverse: false },
+      { id: 4, text: '望ましくない、未来の自分の姿ばかりを想像する', reverse: false },
+      { id: 6, text: '何もかもが悪い方向にしか進まないだろうと思う', reverse: false },
+      { id: 8, text: '私の望みは叶わないと思う', reverse: false },
+      { id: 10, text: '自分の将来に絶望している', reverse: false },
+      { id: 12, text: '何かを計画する時、失敗している自分の姿が頭に浮かぶ', reverse: false },
+      { id: 14, text: '何をしても、うまくいかないことばかりを想像する', reverse: false },
+      { id: 16, text: '結局、自分の目標は達成できないだろう', reverse: false },
+      { id: 18, text: '今後のことを考えると、悪いことばかりが頭に浮かぶ', reverse: false },
+      { id: 20, text: '何かに取りかかる時は、失敗するだろうと考える', reverse: false }
     ]
   };
 
   const TOTAL_ITEMS = OPS.optimism.length + OPS.pessimism.length;
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 10;
 
+  // improved description styles
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
     .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
@@ -88,21 +99,23 @@
     return res;
   };
 
+  // create annotated items with domain and original id
   const allItems = [];
-  OPS.optimism.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'O', id: i + 1 }));
-  OPS.pessimism.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'P', id: i + 1 }));
+  OPS.optimism.forEach((it) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'O', id: it.id }));
+  OPS.pessimism.forEach((it) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'P', id: it.id }));
 
+  // shuffle items so their presentation order is randomized
   function shuffleInPlace(a) { for (let i=a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
   shuffleInPlace(allItems);
 
+  // save the randomized mapping so saved data can be interpreted
   jsPsych.data.addProperties({ ops_item_order: JSON.stringify(allItems.map(it => ({ domain: it.domain, id: it.id, text: it.text }))) });
 
   const pages = chunk(allItems, PAGE_SIZE);
 
   const intro = {
     type: window.jsPsychHtmlButtonResponse,
-    stimulus: `<div class="card"><h2>楽観・悲観性尺度</h2><p style="margin:0.6rem 0 0;">以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。<br>最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。</p><p style="margin:0.6rem 0 0;">回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。</p><ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">回答時間の目安：3〜5分<br>出典：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256
-</ul></div>`,
+    stimulus: `<div class="card"><h2>楽観・悲観性尺度</h2><p style="margin:0.6rem 0 0;">以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。<br>最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。</p><p style="margin:0.6rem 0 0;">回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。</p><ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">回答時間の目安：3〜5分<br>出典：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256</ul></div>`,
     choices: ['開始']
   };
 
@@ -126,6 +139,7 @@
     }
   };
 
+  // Build pages using the standard survey plugin (radiogroup) for better cross-version compatibility
   const likertPages = pages.map((items, k) => {
     const pageNum = k;
     const pageStart = pageNum * PAGE_SIZE + 1;
@@ -145,15 +159,15 @@
               }
             ]).concat(items.map(item => ({
               type: 'radiogroup',
+              // name encodes domain (O or P) and original item id, e.g. O1, P2
               name: `${item.domain}${item.id}`,
               title: item.text,
               isRequired: true,
               choices: [
                 { value: 1, text: '1 = 全く当てはまらない' },
                 { value: 2, text: '2 = 当てはまらない' },
-                { value: 3, text: '3 = どちらともいえない' },
-                { value: 4, text: '4 = 当てはまる' },
-                { value: 5, text: '5 = よく当てはまる' }
+                { value: 3, text: '3 = 当てはまる' },
+                { value: 4, text: '4 = よく当てはまる' }
               ]
             })))
           }
@@ -162,6 +176,8 @@
         completeText: pageNum === pages.length - 1 ? '結果を見る' : '次へ'
       },
       on_load: () => {
+        // logging for debugging
+        console.log('OPS survey page loaded', { pageNum, pageStart, pageEnd, itemsLength: items.length });
         updateProgressBar((pageEnd) / TOTAL_ITEMS);
       }
     };
@@ -171,64 +187,86 @@
   const getResponses = () => {
     const res = { O: {}, P: {} };
     const surveyTrials = jsPsych.data.get().filter(tr => tr.trial_type && (tr.trial_type === 'survey-likert' || tr.trial_type === 'survey')).values();
-    surveyTrials.forEach(tr => {
+    console.log('=== DEBUG getResponses ===');
+    console.log('Total survey trials:', surveyTrials.length);
+    surveyTrials.forEach((tr, trIdx) => {
       const resp = tr.response || {};
+      console.log(`Trial ${trIdx}:`, resp);
       Object.entries(resp).forEach(([name, val]) => {
+        // parse domain letter and item number, e.g. O1 or P2
         const m = String(name).match(/^([OP])(\d+)$/);
         if (!m) return;
         const domain = m[1];
         const n = parseInt(m[2], 10);
+        // val might be numeric or string depending on plugin
         let numeric = null;
         if (typeof val === 'number') {
-          numeric = val + 1;
+          numeric = val;
         } else if (typeof val === 'string') {
           const parsed = parseInt(val, 10);
           if (!Number.isNaN(parsed)) numeric = parsed;
         } else if (val && typeof val === 'object') {
+          // survey (radiogroup) stores selected value directly (number or string)
           if ('value' in val) {
             const parsed = parseInt(val.value, 10);
             if (!Number.isNaN(parsed)) numeric = parsed;
           } else {
+            // sometimes radiogroup returns the chosen value directly
             const parsed = parseInt(JSON.stringify(val), 10);
             if (!Number.isNaN(parsed)) numeric = parsed;
           }
         }
-        if (numeric != null) res[domain][n] = numeric;
+        if (numeric != null) {
+          res[domain][n] = numeric;
+          console.log(`  Parsed ${name} = ${numeric}`);
+        }
       });
     });
+    console.log('Final responses object:', res);
     return res;
   };
 
   const computeSummary = () => {
+    console.log('=== DEBUG computeSummary START ===');
     const responses = getResponses();
+    console.log('responses object:', responses);
     const base = {
-      optimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] },
-      pessimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] }
+      optimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] },
+      pessimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] }
     };
 
+    // helper to look up original item metadata (to find reverse flags)
     const findItem = (domain, id) => {
-      if (domain === 'O') return OPS.optimism[id - 1];
-      if (domain === 'P') return OPS.pessimism[id - 1];
+      if (domain === 'O') return OPS.optimism.find(it => it.id === id);
+      if (domain === 'P') return OPS.pessimism.find(it => it.id === id);
       return null;
     };
 
+    // process O and P responses stored as responses.O and responses.P
     ['O','P'].forEach(domain => {
       const bucket = domain === 'O' ? base.optimism : base.pessimism;
       const respObj = responses[domain] || {};
+      console.log(`Processing domain ${domain}:`, respObj);
       Object.entries(respObj).forEach(([k, rawVal]) => {
         const id = parseInt(k, 10);
         if (Number.isNaN(id)) return;
         const raw = Number(rawVal);
-        if (!raw) return;
+        if (!raw) {
+          console.log(`  Skipping ${domain}${id}: raw value is ${raw}`);
+          return;
+        }
         bucket.count += 1;
-        if (raw >=1 && raw <=5) bucket.counts[raw - 1] += 1;
+        if (raw >=1 && raw <=4) bucket.counts[raw - 1] += 1;
         const meta = findItem(domain, id);
-        const scored = meta && meta.reverse ? 6 - raw : raw;
+        const scored = meta && meta.reverse ? 5 - raw : raw;
         bucket.sum += scored;
+        console.log(`  ${domain}${id}: raw=${raw}, scored=${scored}, sum=${bucket.sum}`);
       });
       if (bucket.count) bucket.mean = bucket.sum / bucket.count;
+      console.log(`${domain} final: sum=${bucket.sum}, count=${bucket.count}, mean=${bucket.mean}`);
     });
 
+    console.log('=== computeSummary FINAL RESULT ===', base);
     return base;
   };
 
@@ -251,17 +289,18 @@
   const results = {
     type: window.jsPsychHtmlButtonResponse,
     stimulus: () => {
-      const summary = computeSummary();
-      lastSummary = summary;
-      const optRow = `<tr><td>楽観性 (Optimism)</td><td>${fmtInt(summary.optimism.sum)} / 25</td><td>${fmtMean(summary.optimism.mean)}</td></tr>`;
-      const pesRow = `<tr><td>悲観性 (Pessimism)</td><td>${fmtInt(summary.pessimism.sum)} / 25</td><td>${fmtMean(summary.pessimism.mean)}</td></tr>`;
-      return `<div class="card"><h2>結果</h2><p style="margin:0.4rem 0 0.8rem;">各尺度は5項目・5件法で構成され，合計得点の範囲は5〜25です。平均値（1〜5）は逆転項目を処理した後に算出しています。</p><table><thead><tr><th>特性</th><th>合計得点</th><th>平均 (1〜5)</th></tr></thead><tbody>${optRow}${pesRow}</tbody></table><div class="result-grid"><div style="grid-column:1/-1"><h3 style="margin:1rem 0 0.5rem;">楽観性と悲観性の合計得点</h3><div class="chart-wrap chart-small"><canvas id="ops-chart"></canvas></div>
+    const summary = computeSummary();
+    lastSummary = summary;
+    const optRow = `<tr><td>楽観性 (Optimism)</td><td>${fmtInt(summary.optimism.sum)} / 40</td><td>${fmtMean(summary.optimism.mean)}</td></tr>`;
+    const pesRow = `<tr><td>悲観性 (Pessimism)</td><td>${fmtInt(summary.pessimism.sum)} / 40</td><td>${fmtMean(summary.pessimism.mean)}</td></tr>`;
+      return `<div class="card"><h2>結果</h2><p style="margin:0.4rem 0 0.8rem;">各下位尺度は10項目・4件法で構成され，合計得点の範囲は10〜40です。平均値（1〜4）は逆転項目を処理した後に算出しています。</p><table><thead><tr><th>特性</th><th>合計得点</th><th>平均 (1〜4)</th></tr></thead><tbody>${optRow}${pesRow}</tbody></table><div class="result-grid"><div style="grid-column:1/-1"><h3 style="margin:1rem 0 0.5rem;">楽観性と悲観性の合計得点</h3><div class="chart-wrap chart-small"><canvas id="ops-chart"></canvas></div>
+      <div id="ops-values" style="margin-top:0.6rem; font-weight:600; text-align:center;">合計（楽観 / 悲観）: ${fmtInt(summary.optimism.sum)} / ${fmtInt(summary.pessimism.sum)}　平均（楽観 / 悲観）: ${fmtMean(summary.optimism.mean)} / ${fmtMean(summary.pessimism.mean)}</div>
       <div class="description-box" style="margin-top:0.8rem;">
         <div class="score-label">楽観性（Optimism）</div>
         <p style="margin:0.2rem 0 0;">将来に対して肯定的な期待を持ち，良い結果を期待する傾向。楽観性が高いほど，困難な状況でも前向きに対処しようとする傾向が強いことを示します。</p>
         <div class="score-label" style="margin-top:0.6rem;">悲観性（Pessimism）</div>
         <p style="margin:0.2rem 0 0;">将来に対して否定的な予期を持ち，悪い結果を期待する傾向。悲観性が高いほど，ネガティブな結果を想定しやすいことを示します。</p>
-      </div></div></div><div class="small muted" style="margin-top:1rem;">注：WaiShan (2013) に基づき実施。</div></div>`;
+      </div></div></div><div class="small muted" style="margin-top:1rem;">注：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256</div></div>`;
     },
     choices: ['終了'],
     on_finish: () => {
@@ -269,15 +308,42 @@
     },
     on_load: () => {
       const summary = lastSummary;
-      if (!summary) return;
+      if (!summary) {
+        console.error('OPS: lastSummary is null');
+        return;
+      }
+      console.log('OPS chart on_load - summary:', summary);
+      // show total score (10-40) for each domain
       const meansCanvas = document.getElementById('ops-chart');
+      console.log('Canvas element:', meansCanvas);
       if (meansCanvas) {
-        new Chart(meansCanvas.getContext('2d'), {
+        // destroy previous chart if exists (avoid overlaying)
+        try {
+          if (window.opsChart && typeof window.opsChart.destroy === 'function') {
+            window.opsChart.destroy();
+            console.log('Destroyed previous opsChart instance');
+          }
+        } catch (e) { console.warn('Error destroying previous chart', e); }
+
+        console.log('Creating OPS chart with data:', {
+          optimism: summary.optimism.sum,
+          pessimism: summary.pessimism.sum
+        });
+
+        // ensure numeric values
+        const oVal = Number(summary.optimism.sum) || 0;
+        const pVal = Number(summary.pessimism.sum) || 0;
+
+        // update visible DOM summary if present
+        const v = document.getElementById('ops-values');
+        if (v) v.innerText = `合計（楽観 / 悲観）: ${oVal} / ${pVal}　平均（楽観 / 悲観）: ${summary.optimism.mean ? summary.optimism.mean.toFixed(2) : '-'} / ${summary.pessimism.mean ? summary.pessimism.mean.toFixed(2) : '-'}`;
+
+        window.opsChart = new Chart(meansCanvas.getContext('2d'), {
           type: 'bar',
           data: {
             labels: ['楽観性 (O)', '悲観性 (P)'],
             datasets: [
-              { label: '合計得点 (5〜25)', data: [summary.optimism.sum || 0, summary.pessimism.sum || 0], backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(211,47,47,0.85)'] }
+              { label: '合計得点 (10〜40)', data: [oVal, pVal], backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(211,47,47,0.85)'] }
             ]
           },
           options: {
@@ -285,10 +351,15 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { min: 5, max: 25, ticks: { stepSize: 5 }, title: { display: true, text: '合計得点 (5〜25)' } }
+              y: { min: 0, max: 40, ticks: { stepSize: 5 }, title: { display: true, text: '合計得点 (0〜40)' } }
             }
           }
         });
+
+        // force update and render
+        try { window.opsChart.update(); } catch (e) { console.warn('Chart update failed', e); }
+      } else {
+        console.error('Canvas element not found!');
       }
     }
   };
