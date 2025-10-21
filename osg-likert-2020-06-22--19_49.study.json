@@ -1,0 +1,294 @@
+{
+  "components": {
+    "1": {
+      "id": "1",
+      "type": "lab.html.Page",
+      "items": {
+        "rows": [
+          [
+            {
+              "required": true,
+              "type": "likert",
+              "items": [
+                {
+                  "label": "心理学概論",
+                  "coding": "Q1"
+                },
+                {
+                  "label": "認知心理学概論",
+                  "coding": "Q2"
+                },
+                {
+                  "label": "認知心理学特殊講義",
+                  "coding": "Q3"
+                },
+                {
+                  "label": "認知科学",
+                  "coding": "Q4"
+                },
+                {
+                  "label": "認知心理学演習",
+                  "coding": "Q5"
+                },
+                {
+                  "label": "認知心理学基礎演習",
+                  "coding": "Q6"
+                },
+                {
+                  "label": "認知情報科学基礎実習",
+                  "coding": "Q7"
+                },
+                {
+                  "label": "課題演習（地域情報）",
+                  "coding": "Q8"
+                },
+                {
+                  "label": "情報処理実習",
+                  "coding": "Q9"
+                },
+                {
+                  "label": "心理学特殊実験",
+                  "coding": "Q10"
+                },
+                {
+                  "label": "データ処理演習",
+                  "coding": "Q11"
+                }
+              ],
+              "width": 5,
+              "anchors": [
+                "<span class=\"tategaki\">全然有意義ではなかった</span>",
+                "<span class=\"tategaki\">あまり有意義とは言えない</span>",
+                "<span class=\"tategaki\">どちらとも言えない</span>",
+                "<span class=\"tategaki\">有意義だった</span>",
+                "<span class=\"tategaki\">非常に有意義だった</span>"
+              ],
+              "label": "大杉の担当授業についてお答えください。",
+              "name": "Question"
+            }
+          ]
+        ]
+      },
+      "scrollTop": true,
+      "submitButtonText": "次へ →",
+      "submitButtonPosition": "right",
+      "files": {
+        "rows": []
+      },
+      "responses": {
+        "rows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      "parameters": {
+        "rows": [
+          [
+            {
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        ]
+      },
+      "messageHandlers": {
+        "rows": [
+          [
+            {
+              "title": "",
+              "message": "",
+              "code": ""
+            }
+          ]
+        ]
+      },
+      "title": "Stimuli",
+      "width": "m"
+    },
+    "2": {
+      "id": "2",
+      "type": "lab.html.Page",
+      "items": {
+        "rows": [
+          [
+            {
+              "type": "text",
+              "title": "楽観・悲観性尺度",
+              "content": "回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。<br><br>回答時間の目安：3〜5分<br><br>出典：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256</ul></div>"
+            }
+          ]
+        ]
+      },
+      "scrollTop": true,
+      "submitButtonText": "始める →",
+      "submitButtonPosition": "right",
+      "files": {
+        "rows": []
+      },
+      "responses": {
+        "rows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      "parameters": {
+        "rows": [
+          [
+            {
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        ]
+      },
+      "messageHandlers": {
+        "rows": [
+          [
+            {
+              "title": "",
+              "message": "",
+              "code": ""
+            }
+          ]
+        ]
+      },
+      "title": "Inst"
+    },
+    "3": {
+      "id": "3",
+      "type": "lab.html.Page",
+      "items": {
+        "rows": [
+          [
+            {
+              "type": "text",
+              "title": "ありがとうございました。",
+              "content": "これで調査は終了です。以下の「結果のダウンロード」ボタンを押すと結果をダウンロードできます。"
+            }
+          ]
+        ]
+      },
+      "scrollTop": true,
+      "submitButtonText": "結果のダウンロード →",
+      "submitButtonPosition": "right",
+      "files": {
+        "rows": []
+      },
+      "responses": {
+        "rows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      "parameters": {
+        "rows": [
+          [
+            {
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        ]
+      },
+      "messageHandlers": {
+        "rows": [
+          [
+            {
+              "title": "",
+              "message": "",
+              "code": ""
+            }
+          ]
+        ]
+      },
+      "title": "Thanks"
+    },
+    "root": {
+      "id": "root",
+      "title": "root",
+      "type": "lab.flow.Sequence",
+      "children": [
+        "2",
+        "1",
+        "3"
+      ],
+      "parameters": {
+        "rows": [
+          [
+            {
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        ]
+      },
+      "plugins": [
+        {
+          "type": "lab.plugins.Metadata"
+        }
+      ],
+      "metadata": {
+        "title": "OSG likert",
+        "description": "",
+        "repository": "",
+        "contributors": "Takayuki Osugi"
+      }
+    }
+  },
+  "version": [
+    20,
+    0,
+    1
+  ],
+  "files": {
+    "files": {
+      "index.html": {
+        "content": "data:text/html,%3C!doctype%20html%3E%0A%3Chtml%3E%0A%3Chead%3E%0A%20%20%3Cmeta%20charset%3D%22utf-8%22%3E%0A%20%20%3Ctitle%3EExperiment%3C%2Ftitle%3E%0A%20%20%3C!--%20viewport%20setup%20--%3E%0A%20%20%3Cmeta%20name%3D%22viewport%22%20content%3D%22width%3Ddevice-width%2C%20initial-scale%3D1%22%3E%0A%20%20%3C!--%20lab.js%20library%20and%20experiment%20code%20--%3E%0A%20%20%24%7B%20header%20%7D%0A%3C%2Fhead%3E%0A%3Cbody%3E%0A%20%20%3C!--%20If%20you'd%20rather%20have%20a%20container%20with%20a%20fixed%20width%0A%20%20%20%20%20%20%20and%20variable%20height%2C%20try%20removing%20the%20fullscreen%20class%20below%20--%3E%0A%20%20%3Cdiv%20class%3D%22container%20fullscreen%22%20data-labjs-section%3D%22main%22%3E%0A%20%20%20%20%3Cmain%20class%3D%22content-vertical-center%20content-horizontal-center%22%3E%0A%20%20%20%20%20%20%3Cdiv%3E%0A%20%20%20%20%20%20%20%20%3Ch2%3ELoading%20Experiment%3C%2Fh2%3E%0A%20%20%20%20%20%20%20%20%3Cp%3EThe%20experiment%20is%20loading%20and%20should%20start%20in%20a%20few%20seconds%3C%2Fp%3E%0A%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3C%2Fmain%3E%0A%20%20%3C%2Fdiv%3E%0A%3C%2Fbody%3E%0A%3C%2Fhtml%3E%0A",
+        "source": "library"
+      },
+      "style.css": {
+        "content": "data:text/css,%2F*%20Please%20define%20your%20custom%20styles%20here%20*%2F%0A.tategaki%20%7B%0A%20%20-ms-writing-mode%3A%20tb-rl%3B%0A%20%20writing-mode%3A%20vertical-rl%3B%0A%7D",
+        "source": "library"
+      }
+    },
+    "bundledFiles": {
+      "lib/lab.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.js.map": {
+        "type": "text/plain"
+      },
+      "lib/lab.fallback.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js.map": {
+        "type": "text/plain"
+      },
+      "lib/lab.css": {
+        "type": "text/css"
+      },
+      "lib/loading.svg": {
+        "type": "image/svg+xml"
+      }
+    }
+  }
+}
