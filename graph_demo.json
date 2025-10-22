@@ -1,0 +1,459 @@
+{
+  "components": {
+    "1": {
+      "id": "1",
+      "type": "lab.html.Screen",
+      "files": [],
+      "responses": [
+        {
+          "label": "next",
+          "event": "click",
+          "target": "button#next",
+          "filter": ""
+        }
+      ],
+      "parameters": [],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "run",
+          "code": "//過去データ\nconst previousMean = 0.5;\nconst previousError = 0.1;\n\n//本実験のデータ\n//任意のコンポーネントの変数のみを抽出する\nconst rowName = \"choice\"//行名（正誤が出力されるコンポーネント名）\n\n//列名（従属変数名)\nconst colName = \"correct\"\n\n//データを抽出\nconst ds = this.options.datastore\nlet yourData = ds.extract(colName, rowName)\n\n//平均を計算\nlet yourMean = Math.round(lab.util.stats.mean(yourData) * 100)/100\n\n//グラフ設定\nnew Chart(document.getElementById('plotArea').getContext('2d'), {\n  type: 'barWithErrorBars',\n  data: {\n    labels: ['あなたのデータ', '過去のデータ'],\n    datasets: [\n      {\n        barThickness: 100,\n        data: [\n          {\n            label:'あなたのデータ',\n            y: yourMean\n          },\n          {\n            label:'過去のデータ',\n            y: previousMean,\n            yMin: previousMean-previousError,\n            yMax: previousMean+previousError,\n          },\n        ],\n        //棒グラフの色\n        backgroundColor: [\n          'rgba(255, 99, 132, 0.5)',\n          'rgba(54, 162, 235, 0.5)'\n        ],\n      }\n    ],\n  },\n  //y軸の最小と最大を指定\n  options : {\n    scales : {\n      y : {\n        min: this.parameters.ymin,\n        max: this.parameters.ymax,\n      }\n    },\n    plugins:{\n      legend: {\n        display: false\n      }\n    }\n  }\n});"
+        }
+      ],
+      "title": "displayMeanCorrectRate_with_other",
+      "content": "<header>\n  平均正答率（%)\n</header>\n<main class = \"content-horizontal-center content-vertical-center\">\n  <div class = \"w-l\">\n    <canvas id = \"plotArea\"></canvas>\n  </div>\n</main>\n<footer>\n  <button id = \"next\">次へ</button>\n</footer>",
+      "_tab": "Scripts",
+      "tardy": true,
+      "notes": "",
+      "_template": false
+    },
+    "2": {
+      "id": "2",
+      "type": "lab.html.Screen",
+      "files": [],
+      "responses": [
+        {
+          "label": "plus",
+          "event": "click",
+          "target": "button#plus",
+          "filter": ""
+        },
+        {
+          "label": "minus",
+          "event": "click",
+          "target": "button#minus"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [],
+      "title": "choice",
+      "content": "<main class = \"content-vertical-center content-horizontal-center\">\n  <div class = \"w-s content-horizontal-space-between\" >\n   <button style=\"font-size:4vh\" id = \"plus\">+</button>\n   <button style=\"font-size:4vh\" id = \"minus\">-</button>\n  </div>\n</main>",
+      "_tab": "Scripts",
+      "correctResponse": "plus"
+    },
+    "3": {
+      "id": "3",
+      "type": "lab.html.Screen",
+      "files": [],
+      "responses": [
+        {
+          "label": "next",
+          "event": "click",
+          "target": "button#next",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "previousMean",
+          "value": "0.70",
+          "type": "number"
+        },
+        {
+          "name": "previousError",
+          "value": "0.05",
+          "type": "number"
+        },
+        {
+          "name": "colName",
+          "value": "correct",
+          "type": "string"
+        },
+        {
+          "name": "rowName",
+          "value": "choice",
+          "type": "string"
+        },
+        {
+          "name": "ymax",
+          "value": "1",
+          "type": "number"
+        },
+        {
+          "name": "ymin",
+          "value": "0",
+          "type": "number"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "run",
+          "code": "//コンポーネント名（試行名）\nconst rowName = \"choice\"\n\n//列名（従属変数名)\nconst colName = \"correct\"\n\n//データを抽出\nconst ds = this.options.datastore\nlet yourData = ds.extract(colName, rowName)\n\n//平均を計算\nlet yourMean = Math.round(lab.util.stats.mean(yourData) * 100)/100\n\n//グラフ設定\nnew Chart(document.getElementById('plotArea').getContext('2d'), {\n  type: 'barWithErrorBars',\n  data: {\n    labels: ['あなたのデータ'],\n    datasets: [\n      {\n        barThickness: 100,\n        data: [\n          {\n            label:'あなたのデータ',\n            y: yourMean\n          }\n        ],\n        //棒グラフの色\n        backgroundColor: [\n          'rgba(255, 99, 132, 0.5)'\n        ],\n      }\n    ],\n  },\n  //y軸の最小と最大を指定\n  options : {\n    scales : {\n      y : {\n        min: 0,\n        max: 1,\n      }\n    }\n  }\n});"
+        }
+      ],
+      "title": "displayMeanCorrectRate",
+      "content": "<header>\n  平均正答率（%)\n</header>\n<main class = \"content-horizontal-center content-vertical-center\">\n  <div class = \"w-l\">\n    <canvas id = \"plotArea\"></canvas>\n  </div>\n</main>\n<footer>\n  <button id = \"next\">次へ</button>\n</footer>",
+      "_tab": "Scripts",
+      "tardy": true,
+      "notes": "previousMean：過去データの平均値（数値）\npreviousMean：過去データのエラーバーの片側の幅（数値）\ncolName: 従属変数名\nrowName: 従属変数が出力されるコンポーネント名\nymax: Y軸の最大値\nymin:  Y軸の最小値\n\ncolNameはデフォルトでは，コンポーネントの「Behavior」で「Correct response」に対応しているので，正答率の場合はそのまま（correct）にしてください。\ncolName以外はプログラムに合わせて変更してください。",
+      "_template": false
+    },
+    "4": {
+      "id": "4",
+      "type": "lab.flow.Loop",
+      "children": [
+        "6"
+      ],
+      "templateParameters": {
+        "columns": [
+          {
+            "name": "block",
+            "type": "string"
+          },
+          {
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            "1",
+            ""
+          ]
+        ]
+      },
+      "sample": {
+        "mode": "sequential",
+        "n": "5"
+      },
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [],
+      "title": "block",
+      "indexParameter": "trialNo",
+      "_tab": "Scripts"
+    },
+    "5": {
+      "id": "5",
+      "type": "lab.html.Screen",
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [],
+      "title": "blank",
+      "_tab": "Scripts",
+      "timeout": "400"
+    },
+    "6": {
+      "id": "6",
+      "type": "lab.flow.Sequence",
+      "children": [
+        "2",
+        "5"
+      ],
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "",
+          "code": ""
+        }
+      ],
+      "title": "trial"
+    },
+    "7": {
+      "id": "7",
+      "type": "lab.html.Page",
+      "items": [
+        {
+          "type": "text",
+          "title": "グラフ表示用のデモ",
+          "content": "「＋」と「−」が表示される試行が5試行実施されます。「＋」が正答扱いになっています。\n<br>「＋」を押した割合を計算し，最後に正答率として表示されます。<br>\n<br>また，試行の正反応時間も計算しています。"
+        }
+      ],
+      "scrollTop": true,
+      "submitButtonText": "次へ",
+      "submitButtonPosition": "right",
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "",
+          "code": ""
+        }
+      ],
+      "title": "inst"
+    },
+    "10": {
+      "id": "10",
+      "type": "lab.flow.Sequence",
+      "children": [
+        "3",
+        "12",
+        "11",
+        "1"
+      ],
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "",
+          "code": ""
+        }
+      ],
+      "title": "displaySummary"
+    },
+    "11": {
+      "id": "11",
+      "type": "lab.html.Screen",
+      "files": [],
+      "responses": [
+        {
+          "label": "next",
+          "event": "click",
+          "target": "button#next",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "rowName",
+          "value": "choice",
+          "type": "string"
+        },
+        {
+          "name": "ymax",
+          "value": "10000",
+          "type": "number"
+        },
+        {
+          "name": "ymin",
+          "value": "0",
+          "type": "number"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "run",
+          "code": "//コンポーネント名（試行名）\nconst rowName = \"choice\"\n\n//列名（従属変数名)\nconst colName = \"duration\"\n\n//データを抽出\nconst ds = this.options.datastore\nconst yourData = ds.data.filter(\n  row => row.sender === rowName && row.correct === true\n)\nconst rtCorrectTrials = yourData.map(row => row.duration)\n\n//平均反応時間を計算\nlet yourMean = Math.round(lab.util.stats.mean(rtCorrectTrials) * 100)/100\n\n//グラフ設定\nnew Chart(document.getElementById('plotArea').getContext('2d'), {\n  type: 'barWithErrorBars',\n  data: {\n    labels: ['あなたのデータ'],\n    datasets: [\n      {\n        barThickness: 100,\n        data: [\n          {\n            label:'あなたのデータ',\n            y: yourMean\n          }\n        ],\n        //棒グラフの色\n        backgroundColor: [\n          'rgba(255, 99, 132, 0.5)'\n        ],\n      }\n    ],\n  },\n  //y軸の最小と最大を指定\n  options : {\n    scales : {\n      y : {\n        min: 0,\n        max: 10000,\n      }\n    }\n  }\n});"
+        }
+      ],
+      "title": "displayMeanCorrectRT",
+      "content": "<header>\n  平均正反応時間(ms)\n</header>\n<main class = \"content-horizontal-center content-vertical-center\">\n  <div class = \"w-l\">\n    <canvas id = \"plotArea\"></canvas>\n  </div>\n</main>\n<footer>\n  <button id = \"next\">次へ</button>\n</footer>",
+      "_tab": "Scripts",
+      "tardy": true,
+      "notes": "previousMean：過去データの平均値（数値）\npreviousMean：過去データのエラーバーの片側の幅（数値）\nrowName: 反応時間を出力するコンポーネント名\nymax: Y軸の最大値\nymin:  Y軸の最小値\n\ncolNameはデフォルトでは，コンポーネントの「Behavior」で「duration」に対応しているので，反応時間の場合はそのまま（correct）にしてください。\ncolName以外はプログラムに合わせて変更してください。\n＊正反応時間を出力するので，反応時間を出力するコンポーネントにおいてcorrect responseを必ず定義してください",
+      "_template": false
+    },
+    "12": {
+      "id": "12",
+      "type": "lab.html.Screen",
+      "files": [],
+      "responses": [
+        {
+          "label": "next",
+          "event": "click",
+          "target": "button#next",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "previousMean",
+          "value": "0.70",
+          "type": "number"
+        },
+        {
+          "name": "previousError",
+          "value": "0.05",
+          "type": "number"
+        },
+        {
+          "name": "colName",
+          "value": "correct",
+          "type": "string"
+        },
+        {
+          "name": "rowName",
+          "value": "choice",
+          "type": "string"
+        },
+        {
+          "name": "ymax",
+          "value": "1",
+          "type": "number"
+        },
+        {
+          "name": "ymin",
+          "value": "0",
+          "type": "number"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "run",
+          "code": "//コンポーネント名（試行名）\nconst rowName = \"choice\"\n\n//列名（従属変数名)\nconst colName = \"correct\"\n\n//データを抽出\nconst ds = this.options.datastore\nlet yourData = ds.extract(colName, rowName)\n\n//平均を計算\nlet yourMean = Math.round(lab.util.stats.mean(yourData) * 100)/100\n\n//グラフ設定\nnew Chart(document.getElementById('plotArea').getContext('2d'), {\n  type: 'barWithErrorBars',\n  data: {\n    labels: ['あなたのデータ'],\n    datasets: [\n      {\n        barThickness: 100,\n        data: [\n          {\n            label:'あなたのデータ',\n            y: yourMean,\n            yMin: yourMean-0.1,\n            yMax: yourMean+0.1,\n          }\n        ],\n        //棒グラフの色\n        backgroundColor: [\n          'rgba(255, 99, 132, 0.5)'\n        ],\n      }\n    ],\n  },\n  //y軸の最小と最大を指定\n  options : {\n    scales : {\n      y : {\n        min: 0,\n        max: 1,\n      }\n    }\n  }\n});"
+        }
+      ],
+      "title": "displayMeanCorrectRate",
+      "content": "<header>\n  平均正答率（%)\n</header>\n<main class = \"content-horizontal-center content-vertical-center\">\n  <div class = \"w-l\">\n    <canvas id = \"plotArea\"></canvas>\n  </div>\n</main>\n<footer>\n  <button id = \"next\">次へ</button>\n</footer>",
+      "_tab": "Scripts",
+      "tardy": true,
+      "notes": "previousMean：過去データの平均値（数値）\npreviousMean：過去データのエラーバーの片側の幅（数値）\ncolName: 従属変数名\nrowName: 従属変数が出力されるコンポーネント名\nymax: Y軸の最大値\nymin:  Y軸の最小値\n\ncolNameはデフォルトでは，コンポーネントの「Behavior」で「Correct response」に対応しているので，正答率の場合はそのまま（correct）にしてください。\ncolName以外はプログラムに合わせて変更してください。",
+      "_template": false
+    },
+    "root": {
+      "id": "root",
+      "title": "root",
+      "type": "lab.flow.Sequence",
+      "children": [
+        "7",
+        "4",
+        "10"
+      ],
+      "parameters": [],
+      "plugins": [
+        {
+          "type": "lab.plugins.Metadata"
+        }
+      ],
+      "metadata": {
+        "title": "graph_demo",
+        "description": "",
+        "repository": "",
+        "contributors": "Masanori Kobayashi"
+      }
+    }
+  },
+  "version": [
+    20,
+    2,
+    4
+  ],
+  "files": {
+    "files": {
+      "index.html": {
+        "content": "data:text/html,%3C!doctype%20html%3E%0A%3Chtml%3E%0A%3Chead%3E%0A%20%20%3Cmeta%20charset%3D%22utf-8%22%3E%0A%20%20%3Ctitle%3EExperiment%3C%2Ftitle%3E%0A%20%20%3C!--%20viewport%20setup%20--%3E%0A%20%20%3Cmeta%20name%3D%22viewport%22%20content%3D%22width%3Ddevice-width%2C%20initial-scale%3D1%22%3E%0A%20%20%3C!--%20lab.js%20library%20and%20experiment%20code%20--%3E%0A%20%20%3Cscript%20src%3D%22https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2Fchart.js%403.5.0%2Fdist%2Fchart.min.js%22%3E%3C%2Fscript%3E%0A%20%20%3Cscript%20src%3D%22https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2Fchartjs-chart-error-bars%403.1.0%2Fbuild%2Findex.umd.min.js%22%3E%3C%2Fscript%3E%0A%20%20%24%7B%20header%20%7D%0A%3C%2Fhead%3E%0A%3Cbody%3E%0A%20%20%3C!--%20If%20you'd%20rather%20have%20a%20container%20with%20a%20fixed%20width%0A%20%20%20%20%20%20%20and%20variable%20height%2C%20try%20removing%20the%20fullscreen%20class%20below%20--%3E%0A%20%20%3Cdiv%20class%3D%22container%20fullscreen%22%20data-labjs-section%3D%22main%22%3E%0A%20%20%20%20%3Cmain%20class%3D%22content-vertical-center%20content-horizontal-center%22%3E%0A%20%20%20%20%20%20%3Cdiv%3E%0A%20%20%20%20%20%20%20%20%3Ch2%3ELoading%20Experiment%3C%2Fh2%3E%0A%20%20%20%20%20%20%20%20%3Cp%3EThe%20experiment%20is%20loading%20and%20should%20start%20in%20a%20few%20seconds%3C%2Fp%3E%0A%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3C%2Fmain%3E%0A%20%20%3C%2Fdiv%3E%0A%3C%2Fbody%3E%0A%3C%2Fhtml%3E%0A",
+        "source": "library"
+      },
+      "style.css": {
+        "content": "data:text/css,%2F*%20Please%20define%20your%20custom%20styles%20here%20*%2F",
+        "source": "library"
+      }
+    },
+    "bundledFiles": {
+      "lib/lab.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.js.map": {
+        "type": "text/plain"
+      },
+      "lib/lab.fallback.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js.map": {
+        "type": "text/plain"
+      },
+      "lib/lab.css": {
+        "type": "text/css"
+      },
+      "lib/loading.svg": {
+        "type": "image/svg+xml"
+      }
+    }
+  }
+}

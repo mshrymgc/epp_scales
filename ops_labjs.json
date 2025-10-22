@@ -1,0 +1,304 @@
+{
+  "components": {
+    "1": {
+      "id": "1",
+      "type": "lab.html.Page",
+      "items": [
+        {
+          "required": true,
+          "type": "likert",
+          "items": [
+            {
+              "label": "自分の将来は、良いことが起こると思う",
+              "coding": "O1"
+            },
+            {
+              "label": "私の将来は、暗いと思う",
+              "coding": "P1"
+            },
+            {
+              "label": "将来、幸せになれると思う",
+              "coding": "O2"
+            },
+            {
+              "label": "望ましくない、未来の自分の姿ばかりを想像する",
+              "coding": "P2"
+            },
+            {
+              "label": "私は将来に対して、前向きに考えている",
+              "coding": "O3"
+            },
+            {
+              "label": "何もかもが悪い方向にしか進まないだろうと思う",
+              "coding": "P3"
+            },
+            {
+              "label": "自分の将来は、恵まれていると思う'",
+              "coding": "O4"
+            },
+            {
+              "label": "私の望みは叶わないと思う",
+              "coding": "P4"
+            },
+            {
+              "label": "自分の将来に期待がもてる'",
+              "coding": "O5"
+            },
+            {
+              "label": "自分の将来に絶望している",
+              "coding": "P5"
+            },
+            {
+              "label": "これからの人生は良いものになるだろうと思う",
+              "coding": "O6"
+            },
+            {
+              "label": "何かを計画する時、失敗している自分の姿が頭に浮かぶ",
+              "coding": "P6"
+            },
+            {
+              "label": "結果が予想できない時は、良い方向に期待する",
+              "coding": "O7"
+            },
+            {
+              "label": "何をしても、うまくいかないことばかりを想像する",
+              "coding": "P7"
+            },
+            {
+              "label": "私には、悪いことよりも良いことが起こると思う",
+              "coding": "O8"
+            },
+            {
+              "label": "結局、自分の目標は達成できないだろう",
+              "coding": "P8"
+            },
+            {
+              "label": "何かに取りかかる時は、成功するだろうと考える",
+              "coding": "O9"
+            },
+            {
+              "label": "今後のことを考えると、悪いことばかりが頭に浮かぶ",
+              "coding": "P9"
+            },
+            {
+              "label": "情自分の将来を楽しみにしている",
+              "coding": "O10"
+            },
+            {
+              "label": "何かに取りかかる時は、失敗するだろうと考える",
+              "coding": "P10"
+            }
+          ],
+          "width": 4,
+          "anchors": [
+            "<span class=\"tategaki\">全く当てはまらない</span>",
+            "<span class=\"tategaki\">当てはまらない</span>",
+            "<span class=\"tategaki\">当てはまる</span>",
+            "<span class=\"tategaki\">よく当てはまる</span>"
+          ],
+          "label": "以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。",
+          "name": "Question"
+        }
+      ],
+      "scrollTop": true,
+      "submitButtonText": "次へ →",
+      "submitButtonPosition": "right",
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "",
+          "code": ""
+        }
+      ],
+      "title": "Questionnaire",
+      "width": "l"
+    },
+    "2": {
+      "id": "2",
+      "type": "lab.html.Page",
+      "items": [
+        {
+          "type": "text",
+          "title": "楽観・悲観性尺度",
+          "content": "回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。<br><br>回答時間の目安：3〜5分<br><br>出典：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256</ul></div>"
+        }
+      ],
+      "scrollTop": true,
+      "submitButtonText": "始める →",
+      "submitButtonPosition": "right",
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "",
+          "code": ""
+        }
+      ],
+      "title": "Inst"
+    },
+    "3": {
+      "id": "3",
+      "type": "lab.html.Screen",
+      "content": "<header>\n  <h2>あなたの結果</h2>\n</header>\n<main class=\"content-horizontal-center content-vertical-center\">\n  <div style=\"width: 80%; max-width: 600px;\">\n    <canvas id=\"feedbackGraph\"></canvas>\n  </div>\n</main>\n<footer>\n  <button id=\"nextButton\">次へ →</button>\n</footer>",
+      "messageHandlers": [
+        {
+          "title": "after:render",
+          "message": "run",
+          "code": "// Get the datastore\nconst ds = this.options.datastore;\n\n// Extract all data from the Question component\nconst allData = ds.data.filter(row => row.sender === 'Question');\n\n// Initialize scores\nlet optimismScore = 0;\nlet pessimismScore = 0;\n\n// Calculate scores based on coding\nallData.forEach((row) => {\n  // The coding is stored in the 'coding' field\n  const coding = row.coding;\n  // The response is the response value (0-indexed, so add 1 to get 1-4 scale)\n  const numericResponse = (row.response !== undefined && row.response !== null) ? parseInt(row.response) + 1 : 0;\n  \n  if (coding && coding.startsWith('O')) {\n    // Optimism items (O1-O10)\n    optimismScore += numericResponse;\n  } else if (coding && coding.startsWith('P')) {\n    // Pessimism items (P1-P10)\n    pessimismScore += numericResponse;\n  }\n});\n\n// Create the chart\nconst ctx = document.getElementById('feedbackGraph').getContext('2d');\n\nconst maxScore = 40; // 10 items × 4 (max Likert value)\n\nconst chart = new Chart(ctx, {\n  type: 'bar',\n  data: {\n    labels: ['楽観性（O得点）', '悲観性（P得点）'],\n    datasets: [\n      {\n        label: 'スコア',\n        data: [\n          optimismScore,\n          pessimismScore\n        ],\n        backgroundColor: [\n          'rgba(75, 192, 192, 0.7)',\n          'rgba(255, 99, 132, 0.7)'\n        ],\n        borderColor: [\n          'rgba(75, 192, 192, 1)',\n          'rgba(255, 99, 132, 1)'\n        ],\n        borderWidth: 2\n      }\n    ]\n  },\n  options: {\n    indexAxis: 'y',\n    responsive: true,\n    maintainAspectRatio: true,\n    scales: {\n      x: {\n        beginAtZero: true,\n        max: maxScore,\n        ticks: {\n          stepSize: 5\n        }\n      }\n    },\n    plugins: {\n      legend: {\n        display: false\n      }\n    }\n  }\n});\n\n// Add event listener for next button\ndocument.getElementById('nextButton').addEventListener('click', () => {\n  this.end();\n});"
+        }
+      ],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [],
+      "title": "Feedback",
+      "_tab": "Behavior",
+      "tardy": true
+    },
+    "4": {
+      "id": "4",
+      "type": "lab.html.Page",
+      "items": [
+        {
+          "type": "text",
+          "title": "ありがとうございました。",
+          "content": "これで調査は終了です。"
+        }
+      ],
+      "scrollTop": true,
+      "submitButtonText": "結果のダウンロード →",
+      "submitButtonPosition": "hidden",
+      "files": [],
+      "responses": [
+        {
+          "label": "",
+          "event": "",
+          "target": "",
+          "filter": ""
+        }
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "messageHandlers": [
+        {
+          "title": "",
+          "message": "",
+          "code": ""
+        }
+      ],
+      "title": "Thanks"
+    },
+    "root": {
+      "id": "root",
+      "title": "root",
+      "type": "lab.flow.Sequence",
+      "children": [
+        "2",
+        "1",
+        "3",
+        "4"
+      ],
+      "parameters": [
+        {
+          "name": "",
+          "value": "",
+          "type": "string"
+        }
+      ],
+      "plugins": [
+        {
+          "type": "lab.plugins.Metadata"
+        }
+      ],
+      "metadata": {
+        "title": "OSG likert",
+        "description": "",
+        "repository": "",
+        "contributors": "Takayuki Osugi"
+      },
+      "messageHandlers": [],
+      "files": []
+    }
+  },
+  "version": [
+    20,
+    2,
+    4
+  ],
+  "files": {
+    "files": {
+      "index.html": {
+        "content": "data:text/html,%3C!doctype%20html%3E%0A%3Chtml%3E%0A%3Chead%3E%0A%20%20%3Cmeta%20charset%3D%22utf-8%22%3E%0A%20%20%3Ctitle%3Eops_demo%3C%2Ftitle%3E%0A%20%20%3C!--%20viewport%20setup%20--%3E%0A%20%20%3Cmeta%20name%3D%22viewport%22%20content%3D%22width%3Ddevice-width%2C%20initial-scale%3D1%22%3E%0A%20%20%3C!--%20lab.js%20library%20and%20experiment%20code%20--%3E%0A%09%3C!--%20import%20chart.js--%3E%0A%20%20%3Cscript%20src%3D%22https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2Fchart.js%403.5.0%2Fdist%2Fchart.min.js%22%3E%3C%2Fscript%3E%0A%20%20%3Cscript%20src%3D%22https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2Fchartjs-chart-error-bars%403.1.0%2Fbuild%2Findex.umd.min.js%22%3E%3C%2Fscript%3E%0A%20%20%24%7B%20header%20%7D%0A%3C%2Fhead%3E%0A%3Cbody%3E%0A%20%20%3C!--%20If%20you'd%20rather%20have%20a%20container%20with%20a%20fixed%20width%0A%20%20%20%20%20%20%20and%20variable%20height%2C%20try%20removing%20the%20fullscreen%20class%20below%20--%3E%0A%20%20%3Cdiv%20class%3D%22container%20fullscreen%22%20data-labjs-section%3D%22main%22%3E%0A%20%20%20%20%3Cmain%20class%3D%22content-vertical-center%20content-horizontal-center%22%3E%0A%20%20%20%20%20%20%3Cdiv%3E%0A%20%20%20%20%20%20%20%20%3Ch2%3ELoading%20Experiment%3C%2Fh2%3E%0A%20%20%20%20%20%20%20%20%3Cp%3EThe%20experiment%20is%20loading%20and%20should%20start%20in%20a%20few%20seconds%3C%2Fp%3E%0A%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3C%2Fmain%3E%0A%20%20%3C%2Fdiv%3E%0A%3C%2Fbody%3E%0A%3C%2Fhtml%3E%0A",
+        "source": "library"
+      },
+      "style.css": {
+        "content": "data:text/css,%2F*%20Please%20define%20your%20custom%20styles%20here%20*%2F%0A.tategaki%20%7B%0A%20%20-ms-writing-mode%3A%20tb-rl%3B%0A%20%20writing-mode%3A%20vertical-rl%3B%0A%7D",
+        "source": "library"
+      }
+    },
+    "bundledFiles": {
+      "lib/lab.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.js.map": {
+        "type": "text/plain"
+      },
+      "lib/lab.fallback.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js.map": {
+        "type": "text/plain"
+      },
+      "lib/lab.css": {
+        "type": "text/css"
+      },
+      "lib/loading.svg": {
+        "type": "image/svg+xml"
+      }
+    }
+  }
+}
