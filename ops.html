@@ -7,22 +7,127 @@
   <link rel="stylesheet" href="./dist/jspsych.css" />
   <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
-    body { font-family: system-ui, sans-serif; }
-    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
-    .grid { display:grid; gap:1rem; }
-    .result-grid { display:grid; gap:1.2rem; margin-top:1.5rem; }
-    @media (min-width: 780px) { .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-    .chart-wrap { position:relative; width:100%; max-width:500px; margin:0 auto; }
-    .chart-small { height:260px; max-height:320px; }
-    .chart-wrap canvas { display:block; width:100%; height:100%; }
-    table { border-collapse:collapse; width:100%; }
-    th, td { padding:0.45rem 0.4rem; border-bottom:1px solid #eee; text-align:left; font-size:0.95rem; }
-    th { font-weight:600; background:#fafafa; }
-    .small { font-size:0.85rem; }
-    .muted { color:#666; }
-    .likert-label-tooltip { position: relative; }
-    .likert-label-tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.4rem 0.6rem; border-radius: 4px; white-space: nowrap; font-size: 0.8rem; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; z-index: 10; }
-    .likert-label-tooltip:hover::after { opacity: 1; }
+    /* ==========================================
+       基本スタイル
+       ========================================== */
+    body { 
+      font-family: system-ui, sans-serif; 
+    }
+    
+    /* カード型のコンテナ */
+    .card { 
+      background: #fff; 
+      border: 1px solid #eee; 
+      border-radius: 12px; 
+      padding: 1rem; 
+    }
+    
+    /* グリッドレイアウト */
+    .grid { 
+      display: grid; 
+      gap: 1rem; 
+    }
+    
+    /* 結果画面のグリッド */
+    .result-grid { 
+      display: grid; 
+      gap: 1.2rem; 
+      margin-top: 1.5rem; 
+    }
+    
+    /* レスポンシブ: 780px以上で2カラム表示 */
+    @media (min-width: 780px) { 
+      .result-grid { 
+        grid-template-columns: repeat(2, minmax(0, 1fr)); 
+        align-items: start; 
+      } 
+    }
+    
+    /* ==========================================
+       グラフ関連
+       ========================================== */
+    /* グラフのラッパー */
+    .chart-wrap { 
+      position: relative; 
+      width: 100%; 
+      max-width: 500px; 
+      margin: 0 auto; 
+    }
+    
+    /* 小さいサイズのグラフ */
+    .chart-small { 
+      height: 260px; 
+      max-height: 320px; 
+    }
+    
+    /* グラフのcanvas要素 */
+    .chart-wrap canvas { 
+      display: block; 
+      width: 100%; 
+      height: 100%; 
+    }
+    
+    /* ==========================================
+       テーブルスタイル
+       ========================================== */
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+    }
+    
+    th, td { 
+      padding: 0.45rem 0.4rem; 
+      border-bottom: 1px solid #eee; 
+      text-align: left; 
+      font-size: 0.95rem; 
+    }
+    
+    th { 
+      font-weight: 600; 
+      background: #fafafa; 
+    }
+    
+    /* ==========================================
+       ユーティリティクラス
+       ========================================== */
+    /* 小さい文字 */
+    .small { 
+      font-size: 0.85rem; 
+    }
+    
+    /* グレーの文字 */
+    .muted { 
+      color: #666; 
+    }
+    
+    /* ==========================================
+       ツールチップ（ホバー時の説明表示）
+       ========================================== */
+    .likert-label-tooltip { 
+      position: relative; 
+    }
+    
+    .likert-label-tooltip::after { 
+      content: attr(data-tooltip); 
+      position: absolute; 
+      bottom: 120%; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      background: #333; 
+      color: #fff; 
+      padding: 0.4rem 0.6rem; 
+      border-radius: 4px; 
+      white-space: nowrap; 
+      font-size: 0.8rem; 
+      opacity: 0; 
+      transition: opacity 0.15s ease; 
+      pointer-events: none; 
+      z-index: 10; 
+    }
+    
+    .likert-label-tooltip:hover::after { 
+      opacity: 1; 
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./dist/jspsych.js"></script>
@@ -35,21 +140,49 @@
   <div id="jspsych-target"></div>
   <script>
 (function(){
-  const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
+  // ==========================================
+  // jsPsych の初期化
+  // ==========================================
+  // jsPsychライブラリの初期化設定
+  // - display_element: 実験画面を表示するHTML要素のID
+  // - show_progress_bar: 進捗バーを表示するかどうか
+  // - auto_update_progress_bar: 進捗バーを自動更新しない（手動制御）
+  const jsPsych = window.jsPsychModule.initJsPsych({ 
+    display_element: 'jspsych-target', 
+    show_progress_bar: true, 
+    auto_update_progress_bar: false 
+  });
 
+  // ==========================================
+  // 進捗バーのラベルを日本語化
+  // ==========================================
+  // 進捗バーのテキストを「進捗状況」に設定する関数
   (function setProgressLabel(){
     const setLabel = () => {
       const span = document.querySelector('#jspsych-progressbar-container span');
-      if (span) { span.innerHTML = '進捗状況'; return true; }
+      if (span) { 
+        span.innerHTML = '進捗状況'; 
+        return true; 
+      }
       return false;
     };
+    
+    // 既に要素が存在すればすぐに設定、なければDOM変化を監視して設定
     if (!setLabel()) {
-      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+      const mo = new MutationObserver((_, obs) => { 
+        if (setLabel()) obs.disconnect(); 
+      });
       mo.observe(document.body, { childList: true, subtree: true });
     }
   })();
 
+  // ==========================================
+  // 尺度項目の定義（楽観性・悲観性）
+  // ==========================================
+  // 外山美樹 (2013) の楽観・悲観性尺度
+  // 各項目は id（オリジナルの項目番号）、text（質問文）、reverse（逆転項目かどうか）を持つ
   const OPS = {
+    // 楽観性（Optimism）: 10項目
     optimism: [
       { id: 1, text: '自分の将来は、良いことが起こると思う', reverse: false },
       { id: 3, text: '将来、幸せになれると思う', reverse: false },
@@ -62,6 +195,7 @@
       { id: 17, text: '何かに取りかかる時は、成功するだろうと考える', reverse: false },
       { id: 19, text: '自分の将来を楽しみにしている', reverse: false }
     ],
+    // 悲観性（Pessimism）: 10項目
     pessimism: [
       { id: 2, text: '私の将来は、暗いと思う', reverse: false },
       { id: 4, text: '望ましくない、未来の自分の姿ばかりを想像する', reverse: false },
@@ -76,10 +210,16 @@
     ]
   };
 
-  const TOTAL_ITEMS = OPS.optimism.length + OPS.pessimism.length;
-  const PAGE_SIZE = 10;
+  // ==========================================
+  // 定数の設定
+  // ==========================================
+  const TOTAL_ITEMS = OPS.optimism.length + OPS.pessimism.length; // 全項目数（20項目）
+  const PAGE_SIZE = 10; // 1ページあたりの質問項目数
 
-  // improved description styles
+  // ==========================================
+  // スタイル設定（説明ボックス）
+  // ==========================================
+  // 結果画面の説明ボックスのスタイルを動的に追加
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
     .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
@@ -88,37 +228,118 @@
   `;
   document.head.appendChild(styleEl);
 
+  // ==========================================
+  // ユーティリティ関数
+  // ==========================================
+  
+  /**
+   * 進捗バーを更新する関数
+   * @param {number} fraction - 進捗の割合（0.0〜1.0）
+   */
   const updateProgressBar = (fraction) => {
     const barInner = document.querySelector('#jspsych-progressbar-inner');
-    if (barInner) barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
+    if (barInner) {
+      // 0〜100%の範囲に変換してバーの幅を設定
+      barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
+    }
   };
 
+  /**
+   * 配列を指定したサイズごとに分割する関数
+   * @param {Array} arr - 分割する配列
+   * @param {number} size - 各チャンクのサイズ
+   * @returns {Array} 分割された配列の配列
+   */
   const chunk = (arr, size) => {
     const res = [];
-    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+    for (let i = 0; i < arr.length; i += size) {
+      res.push(arr.slice(i, i + size));
+    }
     return res;
   };
 
-  // create annotated items with domain and original id
+  // ==========================================
+  // 質問項目の準備とランダム化
+  // ==========================================
+  
+  // 全ての項目を1つの配列にまとめる（楽観性と悲観性）
+  // 各項目にdomain（O=楽観性, P=悲観性）とオリジナルのidを付与
   const allItems = [];
-  OPS.optimism.forEach((it) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'O', id: it.id }));
-  OPS.pessimism.forEach((it) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'P', id: it.id }));
+  OPS.optimism.forEach((it) => {
+    allItems.push({ 
+      text: it.text, 
+      reverse: it.reverse, 
+      domain: 'O',  // O = Optimism（楽観性）
+      id: it.id 
+    });
+  });
+  OPS.pessimism.forEach((it) => {
+    allItems.push({ 
+      text: it.text, 
+      reverse: it.reverse, 
+      domain: 'P',  // P = Pessimism（悲観性）
+      id: it.id 
+    });
+  });
 
-  // shuffle items so their presentation order is randomized
-  function shuffleInPlace(a) { for (let i=a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  /**
+   * 配列をシャッフルする関数（Fisher-Yatesアルゴリズム）
+   * @param {Array} a - シャッフルする配列
+   * @returns {Array} シャッフルされた配列
+   */
+  function shuffleInPlace(a) { 
+    for (let i = a.length - 1; i > 0; i--) { 
+      const j = Math.floor(Math.random() * (i + 1)); 
+      [a[i], a[j]] = [a[j], a[i]];  // 要素を入れ替え
+    } 
+    return a; 
+  }
+  
+  // 項目の提示順序をランダム化（順序効果を防ぐため）
   shuffleInPlace(allItems);
 
-  // save the randomized mapping so saved data can be interpreted
-  jsPsych.data.addProperties({ ops_item_order: JSON.stringify(allItems.map(it => ({ domain: it.domain, id: it.id, text: it.text }))) });
+  // ランダム化された項目順序を記録（データ分析時に参照できるよう）
+  jsPsych.data.addProperties({ 
+    ops_item_order: JSON.stringify(allItems.map(it => ({ 
+      domain: it.domain, 
+      id: it.id, 
+      text: it.text 
+    }))) 
+  });
 
+  // 項目をページごとに分割（PAGE_SIZE = 10項目ずつ）
   const pages = chunk(allItems, PAGE_SIZE);
 
+  // ==========================================
+  // 実験画面の構成
+  // ==========================================
+  
+  // 【1】イントロ画面
+  // 尺度の説明と倫理的配慮について説明
   const intro = {
     type: window.jsPsychHtmlButtonResponse,
-    stimulus: `<div class="card"><h2>楽観・悲観性尺度</h2><p style="margin:0.6rem 0 0;">以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。<br>最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。</p><p style="margin:0.6rem 0 0;">回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。</p><ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">回答時間の目安：3〜5分<br>出典：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256</ul></div>`,
+    stimulus: `
+      <div class="card">
+        <h2>楽観・悲観性尺度</h2>
+        <p style="margin:0.6rem 0 0;">
+          以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。<br>
+          最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。
+        </p>
+        <p style="margin:0.6rem 0 0;">
+          回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>
+          また，回答の有無が成績に影響することは一切ありません。
+        </p>
+        <ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">
+          回答時間の目安：3〜5分<br>
+          出典：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. 
+          https://doi.org/10.4992/jjpsy.84.256
+        </ul>
+      </div>
+    `,
     choices: ['開始']
   };
 
+  // 【2】デモグラフィック情報（年齢・性別）の収集
   const demographics = {
     type: window.jsPsychSurvey,
     survey_json: {
@@ -126,24 +347,42 @@
       pages: [{
         name: 'demographics',
         elements: [
-          { type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true },
-          { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
+          { 
+            type: 'text', 
+            name: 'age', 
+            title: '年齢', 
+            inputType: 'number', 
+            isRequired: true 
+          },
+          { 
+            type: 'dropdown', 
+            name: 'gender', 
+            title: '性別', 
+            isRequired: true, 
+            choices: ['男性','女性','その他','未回答'] 
+          }
         ]
       }],
       pageNextText: '次へ',
       completeText: '次へ'
     },
     on_finish: (data) => {
+      // 回答データをjsPsychのデータオブジェクトに追加
       const r = data.response || {};
-      jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
+      jsPsych.data.addProperties({ 
+        age: r.age || '', 
+        gender: r.gender || '' 
+      });
     }
   };
 
-  // Build pages using the standard survey plugin (radiogroup) for better cross-version compatibility
+  // 【3】質問項目ページの生成
+  // 各ページに10項目ずつ表示し、4件法（1〜4）で回答を収集
   const likertPages = pages.map((items, k) => {
-    const pageNum = k;
-    const pageStart = pageNum * PAGE_SIZE + 1;
-    const pageEnd = pageNum * PAGE_SIZE + items.length;
+    const pageNum = k;  // 現在のページ番号（0から始まる）
+    const pageStart = pageNum * PAGE_SIZE + 1;  // このページの開始項目番号
+    const pageEnd = pageNum * PAGE_SIZE + items.length;  // このページの終了項目番号
+    
     const page = {
       type: window.jsPsychSurvey,
       survey_json: {
@@ -152,17 +391,27 @@
           {
             name: `page_${pageNum}`,
             elements: ([
+              // ページ冒頭に説明文を表示
               {
                 type: 'html',
                 name: `preamble_${pageNum}`,
-                html: `<div class="card"><b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b><p style="margin:0.5rem 0 0;">以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。直感的に答えて構いません。</p></div>`
+                html: `
+                  <div class="card">
+                    <b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b>
+                    <p style="margin:0.5rem 0 0;">
+                      以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。直感的に答えて構いません。
+                    </p>
+                  </div>
+                `
               }
+            // このページの質問項目をラジオボタン（radiogroup）として追加
             ]).concat(items.map(item => ({
               type: 'radiogroup',
-              // name encodes domain (O or P) and original item id, e.g. O1, P2
+              // 項目名は「ドメイン+ID」の形式（例：O1, P2）
+              // これにより後で楽観性・悲観性を区別できる
               name: `${item.domain}${item.id}`,
               title: item.text,
-              isRequired: true,
+              isRequired: true,  // 必須回答
               choices: [
                 { value: 1, text: '1 = 全く当てはまらない' },
                 { value: 2, text: '2 = 当てはまらない' },
@@ -173,32 +422,60 @@
           }
         ],
         pageNextText: '次へ',
+        // 最後のページのみ「結果を見る」ボタンを表示
         completeText: pageNum === pages.length - 1 ? '結果を見る' : '次へ'
       },
       on_load: () => {
-        // logging for debugging
-        console.log('OPS survey page loaded', { pageNum, pageStart, pageEnd, itemsLength: items.length });
+        // デバッグ用のログ出力
+        console.log('OPS survey page loaded', { 
+          pageNum, 
+          pageStart, 
+          pageEnd, 
+          itemsLength: items.length 
+        });
+        // 進捗バーを更新（現在何問目まで進んだか）
         updateProgressBar((pageEnd) / TOTAL_ITEMS);
       }
     };
     return page;
   });
 
+  // ==========================================
+  // 回答データの取得と処理
+  // ==========================================
+  
+  /**
+   * jsPsychから回答データを取得して、楽観性・悲観性ごとに整理する関数
+   * @returns {Object} { O: {項目ID: 回答値}, P: {項目ID: 回答値} }
+   */
   const getResponses = () => {
+    // 楽観性（O）と悲観性（P）の回答を格納するオブジェクト
     const res = { O: {}, P: {} };
-    const surveyTrials = jsPsych.data.get().filter(tr => tr.trial_type && (tr.trial_type === 'survey-likert' || tr.trial_type === 'survey')).values();
+    
+    // jsPsychのデータからsurvey関連のトライアルのみ抽出
+    const surveyTrials = jsPsych.data.get()
+      .filter(tr => tr.trial_type && (tr.trial_type === 'survey-likert' || tr.trial_type === 'survey'))
+      .values();
+    
     console.log('=== DEBUG getResponses ===');
     console.log('Total survey trials:', surveyTrials.length);
+    
+    // 各トライアルの回答を処理
     surveyTrials.forEach((tr, trIdx) => {
       const resp = tr.response || {};
       console.log(`Trial ${trIdx}:`, resp);
+      
+      // 各項目の回答を処理
       Object.entries(resp).forEach(([name, val]) => {
-        // parse domain letter and item number, e.g. O1 or P2
+        // 項目名から「ドメイン（O or P）」と「項目番号」を抽出
+        // 例: "O1" → domain="O", id=1
         const m = String(name).match(/^([OP])(\d+)$/);
-        if (!m) return;
-        const domain = m[1];
-        const n = parseInt(m[2], 10);
-        // val might be numeric or string depending on plugin
+        if (!m) return;  // マッチしない場合はスキップ
+        
+        const domain = m[1];  // "O" または "P"
+        const n = parseInt(m[2], 10);  // 項目番号
+        
+        // 回答値を数値に変換
         let numeric = null;
         if (typeof val === 'number') {
           numeric = val;
@@ -206,63 +483,103 @@
           const parsed = parseInt(val, 10);
           if (!Number.isNaN(parsed)) numeric = parsed;
         } else if (val && typeof val === 'object') {
-          // survey (radiogroup) stores selected value directly (number or string)
+          // surveyプラグインの場合、オブジェクト形式で返されることがある
           if ('value' in val) {
             const parsed = parseInt(val.value, 10);
             if (!Number.isNaN(parsed)) numeric = parsed;
           } else {
-            // sometimes radiogroup returns the chosen value directly
             const parsed = parseInt(JSON.stringify(val), 10);
             if (!Number.isNaN(parsed)) numeric = parsed;
           }
         }
+        
+        // 数値変換に成功した場合のみ格納
         if (numeric != null) {
           res[domain][n] = numeric;
           console.log(`  Parsed ${name} = ${numeric}`);
         }
       });
     });
+    
     console.log('Final responses object:', res);
     return res;
   };
 
+  /**
+   * 楽観性・悲観性の得点を計算する関数
+   * @returns {Object} 楽観性・悲観性それぞれの合計点、項目数、平均値、回答分布
+   */
   const computeSummary = () => {
     console.log('=== DEBUG computeSummary START ===');
     const responses = getResponses();
     console.log('responses object:', responses);
+    
+    // 結果を格納するオブジェクト
     const base = {
-      optimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] },
-      pessimism: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] }
+      optimism: { 
+        sum: 0,         // 合計点
+        count: 0,       // 回答した項目数
+        mean: null,     // 平均値
+        counts: [0, 0, 0, 0]  // 各選択肢（1〜4）の回答数
+      },
+      pessimism: { 
+        sum: 0, 
+        count: 0, 
+        mean: null, 
+        counts: [0, 0, 0, 0] 
+      }
     };
 
-    // helper to look up original item metadata (to find reverse flags)
+    /**
+     * オリジナルの項目メタデータを検索する関数
+     * 逆転項目かどうかの情報を取得するために使用
+     * @param {string} domain - "O" または "P"
+     * @param {number} id - 項目ID
+     * @returns {Object|null} 項目オブジェクト
+     */
     const findItem = (domain, id) => {
       if (domain === 'O') return OPS.optimism.find(it => it.id === id);
       if (domain === 'P') return OPS.pessimism.find(it => it.id === id);
       return null;
     };
 
-    // process O and P responses stored as responses.O and responses.P
+    // 楽観性（O）と悲観性（P）の回答を処理
     ['O','P'].forEach(domain => {
       const bucket = domain === 'O' ? base.optimism : base.pessimism;
       const respObj = responses[domain] || {};
       console.log(`Processing domain ${domain}:`, respObj);
+      
       Object.entries(respObj).forEach(([k, rawVal]) => {
         const id = parseInt(k, 10);
         if (Number.isNaN(id)) return;
+        
         const raw = Number(rawVal);
         if (!raw) {
           console.log(`  Skipping ${domain}${id}: raw value is ${raw}`);
           return;
         }
-        bucket.count += 1;
-        if (raw >=1 && raw <=4) bucket.counts[raw - 1] += 1;
+        
+        bucket.count += 1;  // 回答項目数をカウント
+        
+        // 回答分布をカウント（1〜4の選択肢）
+        if (raw >= 1 && raw <= 4) {
+          bucket.counts[raw - 1] += 1;
+        }
+        
+        // 逆転項目の処理
+        // reverse=trueの場合は、5 - 元の値 で計算
         const meta = findItem(domain, id);
         const scored = meta && meta.reverse ? 5 - raw : raw;
         bucket.sum += scored;
+        
         console.log(`  ${domain}${id}: raw=${raw}, scored=${scored}, sum=${bucket.sum}`);
       });
-      if (bucket.count) bucket.mean = bucket.sum / bucket.count;
+      
+      // 平均値の計算
+      if (bucket.count) {
+        bucket.mean = bucket.sum / bucket.count;
+      }
+      
       console.log(`${domain} final: sum=${bucket.sum}, count=${bucket.count}, mean=${bucket.mean}`);
     });
 
@@ -270,101 +587,212 @@
     return base;
   };
 
+  // 最後に計算した結果を保持する変数（結果画面でグラフ描画に使用）
   let lastSummary = null;
 
+  // ==========================================
+  // フォーマット用のヘルパー関数
+  // ==========================================
+  
+  /**
+   * 数値を整数として表示する関数
+   * @param {number|null} val - フォーマットする数値
+   * @returns {string} フォーマット済みの文字列
+   */
   const fmtInt = (val) => (val == null ? '-' : Math.round(val).toString());
+  
+  /**
+   * 数値を小数第2位まで表示する関数
+   * @param {number|null} val - フォーマットする数値
+   * @returns {string} フォーマット済みの文字列
+   */
   const fmtMean = (val) => (val == null ? '-' : val.toFixed(2));
 
+  // ==========================================
+  // データ保存の設定
+  // ==========================================
+  
+  // 参加者IDをランダムに生成（10文字）
   const subject_id = jsPsych.randomization.randomID(10);
   jsPsych.data.addProperties({ subject_id });
 
+  // DataPipeを使用してデータをサーバーに保存
   const save_data = {
     type: window.jsPsychPipe,
     action: 'save',
-    experiment_id: 'rEHu7dVHdN1Z',
-    filename: `${subject_id}.csv`,
-    data_string: () => jsPsych.data.get().csv()
+    experiment_id: 'rEHu7dVHdN1Z',  // 実験ID
+    filename: `${subject_id}.csv`,  // ファイル名（参加者IDを含む）
+    data_string: () => jsPsych.data.get().csv()  // CSV形式でデータを取得
   };
 
+  // ==========================================
+  // 【4】結果画面
+  // ==========================================
   const results = {
     type: window.jsPsychHtmlButtonResponse,
+    // stimulus: 画面に表示するHTMLを動的に生成
     stimulus: () => {
-    const summary = computeSummary();
-    lastSummary = summary;
-    const optRow = `<tr><td>楽観性 (Optimism)</td><td>${fmtInt(summary.optimism.sum)} / 40</td><td>${fmtMean(summary.optimism.mean)}</td></tr>`;
-    const pesRow = `<tr><td>悲観性 (Pessimism)</td><td>${fmtInt(summary.pessimism.sum)} / 40</td><td>${fmtMean(summary.pessimism.mean)}</td></tr>`;
-      return `<div class="card"><h2>結果</h2><p style="margin:0.4rem 0 0.8rem;">各下位尺度は10項目・4件法で構成され，合計得点の範囲は10〜40です。平均値（1〜4）は逆転項目を処理した後に算出しています。</p><table><thead><tr><th>特性</th><th>合計得点</th><th>平均 (1〜4)</th></tr></thead><tbody>${optRow}${pesRow}</tbody></table><div class="result-grid"><div style="grid-column:1/-1"><h3 style="margin:1rem 0 0.5rem;">楽観性と悲観性の合計得点</h3><div class="chart-wrap chart-small"><canvas id="ops-chart"></canvas></div>
-      <div id="ops-values" style="margin-top:0.6rem; font-weight:600; text-align:center;">合計（楽観 / 悲観）: ${fmtInt(summary.optimism.sum)} / ${fmtInt(summary.pessimism.sum)}　平均（楽観 / 悲観）: ${fmtMean(summary.optimism.mean)} / ${fmtMean(summary.pessimism.mean)}</div>
-      <div class="description-box" style="margin-top:0.8rem;">
-        <div class="score-label">楽観性（Optimism）</div>
-        <p style="margin:0.2rem 0 0;">将来に対して肯定的な期待を持ち，良い結果を期待する傾向。楽観性が高いほど，困難な状況でも前向きに対処しようとする傾向が強いことを示します。</p>
-        <div class="score-label" style="margin-top:0.6rem;">悲観性（Pessimism）</div>
-        <p style="margin:0.2rem 0 0;">将来に対して否定的な予期を持ち，悪い結果を期待する傾向。悲観性が高いほど，ネガティブな結果を想定しやすいことを示します。</p>
-      </div></div></div><div class="small muted" style="margin-top:1rem;">注：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. https://doi.org/10.4992/jjpsy.84.256</div></div>`;
+      // 得点を計算
+      const summary = computeSummary();
+      lastSummary = summary;  // グラフ描画用に保存
+      
+      // 結果テーブルの行を生成
+      const optRow = `<tr><td>楽観性 (Optimism)</td><td>${fmtInt(summary.optimism.sum)} / 40</td><td>${fmtMean(summary.optimism.mean)}</td></tr>`;
+      const pesRow = `<tr><td>悲観性 (Pessimism)</td><td>${fmtInt(summary.pessimism.sum)} / 40</td><td>${fmtMean(summary.pessimism.mean)}</td></tr>`;
+      
+      // 結果画面のHTMLを返す
+      return `
+        <div class="card">
+          <h2>結果</h2>
+          <p style="margin:0.4rem 0 0.8rem;">
+            各下位尺度は10項目・4件法で構成され，合計得点の範囲は10〜40です。平均値（1〜4）は逆転項目を処理した後に算出しています。
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>特性</th>
+                <th>合計得点</th>
+                <th>平均 (1〜4)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${optRow}
+              ${pesRow}
+            </tbody>
+          </table>
+          <div class="result-grid">
+            <div style="grid-column:1/-1">
+              <h3 style="margin:1rem 0 0.5rem;">楽観性と悲観性の合計得点</h3>
+              <div class="chart-wrap chart-small">
+                <canvas id="ops-chart"></canvas>
+              </div>
+              <div id="ops-values" style="margin-top:0.6rem; font-weight:600; text-align:center;">
+                合計（楽観 / 悲観）: ${fmtInt(summary.optimism.sum)} / ${fmtInt(summary.pessimism.sum)}　
+                平均（楽観 / 悲観）: ${fmtMean(summary.optimism.mean)} / ${fmtMean(summary.pessimism.mean)}
+              </div>
+              <div class="description-box" style="margin-top:0.8rem;">
+                <div class="score-label">楽観性（Optimism）</div>
+                <p style="margin:0.2rem 0 0;">
+                  将来に対して肯定的な期待を持ち，良い結果を期待する傾向。楽観性が高いほど，困難な状況でも前向きに対処しようとする傾向が強いことを示します。
+                </p>
+                <div class="score-label" style="margin-top:0.6rem;">悲観性（Pessimism）</div>
+                <p style="margin:0.2rem 0 0;">
+                  将来に対して否定的な予期を持ち，悪い結果を期待する傾向。悲観性が高いほど，ネガティブな結果を想定しやすいことを示します。
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="small muted" style="margin-top:1rem;">
+            注：外山美樹. (2013). 楽観・悲観性尺度の作成ならびに信頼性・妥当性の検討. 心理学研究, 84(3), 256–266. 
+            https://doi.org/10.4992/jjpsy.84.256
+          </div>
+        </div>
+      `;
     },
     choices: ['終了'],
+    // 終了ボタンが押されたら、トップページにリダイレクト
     on_finish: () => {
       window.location.href = 'https://mshrymgc.github.io/epp_scales/';
     },
+    // グラフを描画する処理（画面が読み込まれた時に実行）
     on_load: () => {
       const summary = lastSummary;
+      
+      // データが存在しない場合はエラーログを出力して終了
       if (!summary) {
         console.error('OPS: lastSummary is null');
         return;
       }
+      
       console.log('OPS chart on_load - summary:', summary);
-      // show total score (10-40) for each domain
+      
+      // グラフを描画するcanvas要素を取得
       const meansCanvas = document.getElementById('ops-chart');
       console.log('Canvas element:', meansCanvas);
+      
       if (meansCanvas) {
-        // destroy previous chart if exists (avoid overlaying)
+        // 既存のグラフがあれば破棄（重複描画を防ぐ）
         try {
           if (window.opsChart && typeof window.opsChart.destroy === 'function') {
             window.opsChart.destroy();
             console.log('Destroyed previous opsChart instance');
           }
-        } catch (e) { console.warn('Error destroying previous chart', e); }
+        } catch (e) { 
+          console.warn('Error destroying previous chart', e); 
+        }
 
         console.log('Creating OPS chart with data:', {
           optimism: summary.optimism.sum,
           pessimism: summary.pessimism.sum
         });
 
-        // ensure numeric values
+        // 数値型に変換（念のため）
         const oVal = Number(summary.optimism.sum) || 0;
         const pVal = Number(summary.pessimism.sum) || 0;
 
-        // update visible DOM summary if present
+        // DOMに表示されている数値も更新
         const v = document.getElementById('ops-values');
-        if (v) v.innerText = `合計（楽観 / 悲観）: ${oVal} / ${pVal}　平均（楽観 / 悲観）: ${summary.optimism.mean ? summary.optimism.mean.toFixed(2) : '-'} / ${summary.pessimism.mean ? summary.pessimism.mean.toFixed(2) : '-'}`;
+        if (v) {
+          v.innerText = `合計（楽観 / 悲観）: ${oVal} / ${pVal}　平均（楽観 / 悲観）: ${summary.optimism.mean ? summary.optimism.mean.toFixed(2) : '-'} / ${summary.pessimism.mean ? summary.pessimism.mean.toFixed(2) : '-'}`;
+        }
 
+        // Chart.jsを使用して棒グラフを作成
         window.opsChart = new Chart(meansCanvas.getContext('2d'), {
-          type: 'bar',
+          type: 'bar',  // 棒グラフ
           data: {
-            labels: ['楽観性 (O)', '悲観性 (P)'],
+            labels: ['楽観性 (O)', '悲観性 (P)'],  // X軸のラベル
             datasets: [
-              { label: '合計得点 (10〜40)', data: [oVal, pVal], backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(211,47,47,0.85)'] }
+              { 
+                label: '合計得点 (10〜40)', 
+                data: [oVal, pVal],  // 各特性の合計得点
+                backgroundColor: ['rgba(211,47,47,0.85)', 'rgba(25,118,210,0.85)']  // 赤と青
+              }
             ]
           },
           options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            responsive: true,  // レスポンシブ対応
+            maintainAspectRatio: false,  // アスペクト比を固定しない
+            plugins: { 
+              legend: { display: false }  // 凡例を非表示
+            },
             scales: {
-              y: { min: 0, max: 40, ticks: { stepSize: 5 }, title: { display: true, text: '合計得点 (0〜40)' } }
+              y: { 
+                min: 0,  // Y軸の最小値
+                max: 40,  // Y軸の最大値（10項目×4点満点）
+                ticks: { stepSize: 5 },  // 5刻みで目盛りを表示
+                title: { 
+                  display: true, 
+                  text: '合計得点 (0〜40)' 
+                } 
+              }
             }
           }
         });
 
-        // force update and render
-        try { window.opsChart.update(); } catch (e) { console.warn('Chart update failed', e); }
+        // グラフを強制的に更新・描画
+        try { 
+          window.opsChart.update(); 
+        } catch (e) { 
+          console.warn('Chart update failed', e); 
+        }
       } else {
         console.error('Canvas element not found!');
       }
     }
   };
 
-  jsPsych.run([intro, demographics, ...likertPages, save_data, results]);
+  // ==========================================
+  // 実験の実行
+  // ==========================================
+  // jsPsychのタイムラインを実行
+  // 画面の表示順序: イントロ → デモグラフィック → 質問項目ページ群 → データ保存 → 結果
+  jsPsych.run([
+    intro,           // イントロ画面
+    demographics,    // デモグラフィック情報収集
+    ...likertPages,  // 質問項目ページ（スプレッド構文で展開）
+    save_data,       // データ保存
+    results          // 結果画面
+  ]);
 })();
   </script>
 </body>
