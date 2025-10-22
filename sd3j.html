@@ -7,18 +7,89 @@
   <link rel="stylesheet" href="./dist/jspsych.css" />
   <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
-    body { font-family: system-ui, sans-serif; }
-    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
-    .grid { display:grid; gap:1rem; }
-    .chart-wrap { position:relative; width:100%; max-width:500px; height:46vh; max-height:420px; margin:0 auto; }
-    .chart-wrap canvas { display:block; margin:0 auto; }
-    table { border-collapse:collapse; width:100%; }
-    th, td { padding:0.4rem 0.3rem; border-bottom:1px solid #eee; text-align:left; }
-    .small { font-size: 0.85rem; }
-    .muted { color:#666 }
-    .likert-label-tooltip { position: relative; }
-    .likert-label-tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.4rem 0.6rem; border-radius: 4px; white-space: nowrap; font-size: 0.8rem; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; z-index: 10; }
-    .likert-label-tooltip:hover::after { opacity: 1; }
+    /* ==========================================
+       基本スタイル
+       ========================================== */
+    body { 
+      font-family: system-ui, sans-serif; 
+    }
+    
+    /* カード型のコンテナ */
+    .card { 
+      background: #fff; 
+      border: 1px solid #eee; 
+      border-radius: 12px; 
+      padding: 1rem; 
+    }
+    
+    /* グリッドレイアウト */
+    .grid { 
+      display: grid; 
+      gap: 1rem; 
+    }
+    
+    /* グラフのラッパー */
+    .chart-wrap { 
+      position: relative; 
+      width: 100%; 
+      max-width: 500px; 
+      height: 46vh; 
+      max-height: 420px; 
+      margin: 0 auto; 
+    }
+    
+    .chart-wrap canvas { 
+      display: block; 
+      margin: 0 auto; 
+    }
+    
+    /* テーブルスタイル */
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+    }
+    
+    th, td { 
+      padding: 0.4rem 0.3rem; 
+      border-bottom: 1px solid #eee; 
+      text-align: left; 
+    }
+    
+    /* ユーティリティクラス */
+    .small { 
+      font-size: 0.85rem; 
+    }
+    
+    .muted { 
+      color: #666; 
+    }
+    
+    /* ツールチップ（ホバー時の説明表示） */
+    .likert-label-tooltip { 
+      position: relative; 
+    }
+    
+    .likert-label-tooltip::after { 
+      content: attr(data-tooltip); 
+      position: absolute; 
+      bottom: 120%; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      background: #333; 
+      color: #fff; 
+      padding: 0.4rem 0.6rem; 
+      border-radius: 4px; 
+      white-space: nowrap; 
+      font-size: 0.8rem; 
+      opacity: 0; 
+      transition: opacity 0.15s ease; 
+      pointer-events: none; 
+      z-index: 10; 
+    }
+    
+    .likert-label-tooltip:hover::after { 
+      opacity: 1; 
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./dist/jspsych.js"></script>
@@ -31,158 +102,643 @@
   <div id="jspsych-target"></div>
   <script>
 (function(){
-  const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
+  // ==========================================
+  // jsPsych の初期化
+  // ==========================================
+  const jsPsych = window.jsPsychModule.initJsPsych({ 
+    display_element: 'jspsych-target', 
+    show_progress_bar: true, 
+    auto_update_progress_bar: false 
+  });
   
-  // 「Completion Progress」を「進捗状況」に置換（進捗バーが生成されたら処理）
+  // ==========================================
+  // 進捗バーのラベルを日本語化
+  // ==========================================
   (function setProgressLabel(){
     const setLabel = () => {
       const span = document.querySelector('#jspsych-progressbar-container span');
-      if (span) { span.innerHTML = '進捗状況'; return true; }
+      if (span) { 
+        span.innerHTML = '進捗状況'; 
+        return true; 
+      }
       return false;
     };
+    
     if (!setLabel()) {
-      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
+      const mo = new MutationObserver((_, obs) => { 
+        if (setLabel()) obs.disconnect(); 
+      });
       mo.observe(document.body, { childList: true, subtree: true });
     }
   })();
   
+  // ==========================================
+  // 尺度項目の定義（SD3-J: ダークトライアド）
+  // ==========================================
+  // 下司忠大・小塩真司 (2017) の日本語版Short Dark Triad
   const SD3 = {
-    M: ["他の誰かに自分の秘密を教えないということは賢明なことだ。","自分の思い通りになるように，賢く周りの人々を扱いたい。","とにかく，重要な人物は自分の味方に付けておいたほうが良い。","将来その人が自分の役に立つかもしれないので，人との直接の争いは避けるようにしている。","後になって誰かに対して利用できるような情報に目を配っておくことは賢明なことだ。","誰かに復讐するなら，それに最適な時が来るまでじっと待つべきだ。","自分の良い評判を守るために，他の人に秘密にしなければならないことがある。","自分の計画が，他の誰かの利益ではなく自分の利益になるように取り計らっている。","ほとんどの人々は簡単に騙されたり，操られたりしてしまうものだ。"],
-    N: ["周りの人は私を生まれながらのリーダーだと思っている。","私は注目の的になることが嫌いだ。","私なしではグループの多くの活動が滞ってしまう。","周りの人がそう言っているので私は特別な人間なのだと思う。","私は地位の高い重要な人物と親しくなるのを好んでいる。","私は褒められると恥ずかしくなってしまう。","私はこれまでに著名な人物にたたえられたことがある。","私は平均的でたいしたことのない人間だ。","私は自分が受けるに値する尊敬を集めるべき人間だ。"],
-    P: ["私は目上の人に仕返しや報復をしたいと思うことがある。","私は物騒な状況に飛び込むようなことはしない。","報復は，即座に，冷酷に行うものだ。","私は他人からよく手に負えないと言われる。","私は他人につらく当たっても平気だというのが実際のところだ。","私をからかう者はいつまでもその行為を後悔することになる。","私は人に迷惑をかけるような問題を起こしていない。","私は後先考えずに，ほとんど知らない異性と関係を持つのを楽しむことがある。","私は誰に何を言っても，欲しいものを手に入れる。"]
+    // マキャベリアニズム（Machiavellianism）: 9項目
+    // 目的のために他者を操作する傾向
+    M: [
+      "他の誰かに自分の秘密を教えないということは賢明なことだ。",
+      "自分の思い通りになるように，賢く周りの人々を扱いたい。",
+      "とにかく，重要な人物は自分の味方に付けておいたほうが良い。",
+      "将来その人が自分の役に立つかもしれないので，人との直接の争いは避けるようにしている。",
+      "後になって誰かに対して利用できるような情報に目を配っておくことは賢明なことだ。",
+      "誰かに復讐するなら，それに最適な時が来るまでじっと待つべきだ。",
+      "自分の良い評判を守るために，他の人に秘密にしなければならないことがある。",
+      "自分の計画が，他の誰かの利益ではなく自分の利益になるように取り計らっている。",
+      "ほとんどの人々は簡単に騙されたり，操られたりしてしまうものだ。"
+    ],
+    
+    // 自己愛傾向（Narcissism）: 9項目
+    // 自己の重要性や優越性の過大評価
+    N: [
+      "周りの人は私を生まれながらのリーダーだと思っている。",
+      "私は注目の的になることが嫌いだ。",
+      "私なしではグループの多くの活動が滞ってしまう。",
+      "周りの人がそう言っているので私は特別な人間なのだと思う。",
+      "私は地位の高い重要な人物と親しくなるのを好んでいる。",
+      "私は褒められると恥ずかしくなってしまう。",
+      "私はこれまでに著名な人物にたたえられたことがある。",
+      "私は平均的でたいしたことのない人間だ。",
+      "私は自分が受けるに値する尊敬を集めるべき人間だ。"
+    ],
+    
+    // サイコパシー傾向（Psychopathy）: 9項目
+    // 衝動性や共感性の欠如
+    P: [
+      "私は目上の人に仕返しや報復をしたいと思うことがある。",
+      "私は物騒な状況に飛び込むようなことはしない。",
+      "報復は，即座に，冷酷に行うものだ。",
+      "私は他人からよく手に負えないと言われる。",
+      "私は他人につらく当たっても平気だというのが実際のところだ。",
+      "私をからかう者はいつまでもその行為を後悔することになる。",
+      "私は人に迷惑をかけるような問題を起こしていない。",
+      "私は後先考えずに，ほとんど知らない異性と関係を持つのを楽しむことがある。",
+      "私は誰に何を言っても，欲しいものを手に入れる。"
+    ]
   };
   
+  // 逆転項目（低い値がその特性を示す項目）
+  // 項目番号: 11, 15, 17, 20, 25
   const REVERSED = new Set([11, 15, 17, 20, 25]);
   
-  const PAPER_MEANS = { M: 3.53, N: 2.27, P: 2.43 };
-  
-  const updateProgressBar = (fraction) => {
-    const barInner = document.querySelector('#jspsych-progressbar-inner');
-    if (barInner) barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
+  // 論文で報告された平均値（下司・小塩, 2017）
+  const PAPER_MEANS = { 
+    M: 3.53,  // マキャベリアニズムの平均
+    N: 2.27,  // 自己愛傾向の平均
+    P: 2.43   // サイコパシー傾向の平均
   };
   
+  // ==========================================
+  // ユーティリティ関数
+  // ==========================================
+  
+  /**
+   * システム情報を取得する関数
+   * ユーザーエージェント文字列からブラウザとOSを判定
+   * @returns {Object} browser, os, user_agent を含むオブジェクト
+   */
+  function getSystemInfo() {
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    let os = 'Unknown';
+    
+    // ブラウザの判定
+    if (ua.indexOf('Edg') > -1) browser = 'Edge';
+    else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+    else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+    else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+    
+    // OSの判定
+    if (ua.indexOf('Win') > -1) os = 'Windows';
+    else if (ua.indexOf('Mac') > -1) os = 'macOS';
+    else if (ua.indexOf('Linux') > -1) os = 'Linux';
+    else if (ua.indexOf('Android') > -1) os = 'Android';
+    else if (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+    
+    return { browser, os, user_agent: ua };
+  }
+  
+  /**
+   * 日本時間の文字列を取得する関数
+   * @param {number} timestamp - タイムスタンプ（ミリ秒）。省略時は現在時刻
+   * @returns {string} 日本時間の文字列（例: "2025/10/22 14:30:45"）
+   */
+  function getJapanTime(timestamp) {
+    const date = timestamp ? new Date(timestamp) : new Date();
+    return date.toLocaleString('ja-JP', { 
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '/').replace(',', '');
+  }
+  
+  /**
+   * 進捗バーを更新する関数
+   * @param {number} fraction - 進捗の割合（0.0〜1.0）
+   */
+  const updateProgressBar = (fraction) => {
+    const barInner = document.querySelector('#jspsych-progressbar-inner');
+    if (barInner) {
+      barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
+    }
+  };
+  
+  /**
+   * 回答から各特性の得点を計算する関数
+   * @param {Array} responses - 27項目の回答配列（0-indexed）
+   * @returns {Object} 各特性（M, N, P）の平均得点
+   */
   function computeScores(responses) {
+    // 各項目の得点を格納するオブジェクト
     const scored = {};
+    
+    // 全27項目について処理
     for (let i = 1; i <= 27; i++) {
       const v = responses[i - 1];
-      const num = (v === undefined || v === null) ? null : (typeof v === 'number' ? v + 1 : parseInt(String(v).match(/^\d+/)[0], 10));
-      scored[i] = (num === null) ? null : (REVERSED.has(i) ? 6 - num : num);
+      
+      // 回答値を1〜5の数値に変換
+      const num = (v === undefined || v === null) 
+        ? null 
+        : (typeof v === 'number' 
+          ? v + 1 
+          : parseInt(String(v).match(/^\d+/)[0], 10));
+      
+      // 逆転項目の場合は反転処理（6 - 値）
+      scored[i] = (num === null) 
+        ? null 
+        : (REVERSED.has(i) ? 6 - num : num);
     }
+    
+    /**
+     * 指定された項目番号の平均値を計算
+     * @param {Array} idxs - 項目番号の配列
+     * @returns {number|null} 平均値
+     */
     const meanOf = (idxs) => {
       const arr = idxs.map(i => scored[i]).filter(x => x != null);
       return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
     };
-    return { M: meanOf([1,2,3,4,5,6,7,8,9]), N: meanOf([10,11,12,13,14,15,16,17,18]), P: meanOf([19,20,21,22,23,24,25,26,27]) };
+    
+    // 各特性の平均得点を計算
+    return { 
+      M: meanOf([1, 2, 3, 4, 5, 6, 7, 8, 9]),          // マキャベリアニズム（項目1〜9）
+      N: meanOf([10, 11, 12, 13, 14, 15, 16, 17, 18]), // 自己愛傾向（項目10〜18）
+      P: meanOf([19, 20, 21, 22, 23, 24, 25, 26, 27])  // サイコパシー傾向（項目19〜27）
+    };
   }
   
-  const intro = { type: window.jsPsychHtmlButtonResponse, stimulus: `<div class="card"><h2>SD3-J</h2><h3>日本語版Short Dark Triad</h3><h4>「感情・人格心理学」受講者用</h4><p class="note">
-              これはダークトライアド傾向を評価するアンケートです。<br>
-              講義内容の理解を促進することを目的に利用されます。<br>
-              データは保管されますが，個人が特定されることはありません。<br>
-              また，回答の有無が成績に影響することは一切ありません。</p>
-            <ul class="small muted">
-              回答時間の目安：3〜5分 <br>
-              出典<br>下司忠大・小塩真司. (2017). 日本語版Short Dark Triad（SD3-J）の作成. パーソナリティ研究, 26(1), 12–22. https://doi.org/10.2132/personality.26.1.2
-              </ul></div>`, choices: ['開始'] };
+  // ==========================================
+  // 実験画面の構成
+  // ==========================================
   
-  const demographics = { type: window.jsPsychSurvey, survey_json: { showQuestionNumbers: false, pages: [{name: 'demographics', elements: [{type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true}, {type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答']}]}], pageNextText: '次へ', completeText: '次へ' }, on_finish: (data) => { const r = data.response||{}; jsPsych.data.addProperties({ age: r.age||'', gender: r.gender||'' }); } };
+  // システム情報と開始時刻を取得
+  const systemInfo = getSystemInfo();
+  const startTimestamp = Date.now();
+  const startTimeJST = getJapanTime(startTimestamp);
   
+  // 全トライアルに共通のデータを追加
+  jsPsych.data.addProperties({
+    browser: systemInfo.browser,
+    os: systemInfo.os,
+    user_agent: systemInfo.user_agent,
+    start_time_jst: startTimeJST,
+    start_timestamp: startTimestamp
+  });
+  
+  // 【1】イントロ画面
+  const intro = { 
+    type: window.jsPsychHtmlButtonResponse, 
+    stimulus: `
+      <div class="card">
+        <h2>SD3-J</h2>
+        <h3>日本語版Short Dark Triad</h3>
+        <h4>「感情・人格心理学」受講者用</h4>
+        <p class="note">
+          これはダークトライアド傾向を評価するアンケートです。<br>
+          講義内容の理解を促進することを目的に利用されます。<br>
+          データは保管されますが，個人が特定されることはありません。<br>
+          また，回答の有無が成績に影響することは一切ありません。
+        </p>
+        <ul class="small muted">
+          回答時間の目安：3〜5分 <br>
+          出典<br>
+          下司忠大・小塩真司. (2017). 日本語版Short Dark Triad（SD3-J）の作成. パーソナリティ研究, 26(1), 12–22. 
+          https://doi.org/10.2132/personality.26.1.2
+        </ul>
+      </div>
+    `, 
+    choices: ['開始'] 
+  };
+  
+  // 【2】デモグラフィック情報（年齢・性別）の収集
+  const demographics = { 
+    type: window.jsPsychSurvey, 
+    survey_json: { 
+      showQuestionNumbers: false, 
+      pages: [{
+        name: 'demographics', 
+        elements: [
+          {
+            type: 'text', 
+            name: 'age', 
+            title: '年齢', 
+            inputType: 'number', 
+            isRequired: true
+          }, 
+          {
+            type: 'dropdown', 
+            name: 'gender', 
+            title: '性別', 
+            isRequired: true, 
+            choices: ['男性','女性','その他','未回答']
+          }
+        ]
+      }], 
+      pageNextText: '次へ', 
+      completeText: '次へ' 
+    }, 
+    on_finish: (data) => { 
+      const r = data.response || {};
+      jsPsych.data.addProperties({ 
+        age: r.age || '', 
+        gender: r.gender || '' 
+      }); 
+    } 
+  };
+  
+  // ==========================================
+  // 【3】質問項目の準備とランダム化
+  // ==========================================
+  
+  // 全27項目を配列に格納（SD3.M, SD3.N, SD3.P から項目を取得）
   const allItems = [];
-  SD3.M.forEach((t, i) => allItems.push({idx: i+1, domain: 'M', text: t}));
-  SD3.N.forEach((t, i) => allItems.push({idx: 9+i+1, domain: 'N', text: t}));
-  SD3.P.forEach((t, i) => allItems.push({idx: 18+i+1, domain: 'P', text: t}));
   
-  function shuffleInPlace(a) { for (let i=a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  // マキャベリアニズム項目（1〜9）を追加
+  SD3.M.forEach((t, i) => allItems.push({
+    idx: i + 1,        // 項目番号（1〜9）
+    domain: 'M',       // 特性タイプ（Machiavellianism）
+    text: t            // 質問文
+  }));
+  
+  // 自己愛傾向項目（10〜18）を追加
+  SD3.N.forEach((t, i) => allItems.push({
+    idx: 9 + i + 1,    // 項目番号（10〜18）
+    domain: 'N',       // 特性タイプ（Narcissism）
+    text: t            // 質問文
+  }));
+  
+  // サイコパシー傾向項目（19〜27）を追加
+  SD3.P.forEach((t, i) => allItems.push({
+    idx: 18 + i + 1,   // 項目番号（19〜27）
+    domain: 'P',       // 特性タイプ（Psychopathy）
+    text: t            // 質問文
+  }));
+  
+  /**
+   * Fisher–Yatesアルゴリズムによる配列のインプレースシャッフル
+   * 各項目の出現順序をランダム化することで順序効果を防ぐ
+   * @param {Array} a - シャッフルする配列
+   * @returns {Array} シャッフルされた配列（同じ参照）
+   */
+  function shuffleInPlace(a) { 
+    for (let i = a.length - 1; i > 0; i--) { 
+      const j = Math.floor(Math.random() * (i + 1)); 
+      [a[i], a[j]] = [a[j], a[i]]; // ES6の分割代入で要素を交換
+    } 
+    return a; 
+  }
+  
+  // 全27項目をランダムに並べ替え
   shuffleInPlace(allItems);
   
-  const pages = [allItems.slice(0, 9), allItems.slice(9, 18), allItems.slice(18, 27)];
+  // ランダム化した項目を9項目ずつ3ページに分割
+  // 各ページに約9項目ずつ配置することで回答者の負担を軽減
+  const pages = [
+    allItems.slice(0, 9),    // ページ1: 項目1〜9
+    allItems.slice(9, 18),   // ページ2: 項目10〜18
+    allItems.slice(18, 27)   // ページ3: 項目19〜27
+  ];
   
+  // ==========================================
+  // 【4】Likert尺度ページの生成
+  // ==========================================
+  
+  // 各ページごとにjsPsychSurveyLikertトライアルを作成
   const likertPages = pages.map((items, k) => ({
     type: window.jsPsychSurveyLikert,
-    preamble: `<div class="card"><b>質問 ${k*9+1}–${k*9+items.length} / 27</b><p style="margin:0.5rem 0 0; font-size:0.95rem;">各文について、どの程度同意するかを示してください。<br>
-      選択肢：<br>
-      1=全くそう思わない<br>
-      2=そう思わない<br>
-      3=どちらかともいえない<br>
-      4=そう思う<br>
-      5=非常にそう思う</p></div></div>`,
+    
+    // ページ上部の説明文（現在の質問番号と総数を表示）
+    preamble: `
+      <div class="card">
+        <b>質問 ${k * 9 + 1}–${k * 9 + items.length} / 27</b>
+        <p style="margin:0.5rem 0 0; font-size:0.95rem;">
+          各文について、どの程度同意するかを示してください。<br>
+          選択肢：<br>
+          1=全くそう思わない<br>
+          2=そう思わない<br>
+          3=どちらかともいえない<br>
+          4=そう思う<br>
+          5=非常にそう思う
+        </p>
+      </div>
+    `,
+    
+    // このページの質問項目を生成
     questions: items.map((it, pageIdx) => {
+      // 各特性内での項目番号（1〜9）
       const domainItemNum = pageIdx + 1;
+      // 変数名（例: M1, N5, P3）
       const name = `${it.domain}${domainItemNum}`;
-      return {prompt: it.text, labels: ['1','2','3','4','5'], name: name, required: true};
+      
+      return {
+        prompt: it.text,                    // 質問文
+        labels: ['1','2','3','4','5'],      // 選択肢の数値ラベル
+        name: name,                         // データ保存時の変数名
+        required: true                      // 必須回答
+      };
     }),
+    
+    // ボタンラベル（最終ページのみ「結果を見る」）
     button_label: k === 2 ? '結果を見る' : '次へ',
+    
+    // ページ読み込み時の処理
     on_load: () => {
-      const opts = ['全くそう思わない','そう思わない','どちらともいえない','そう思う','非常にそう思う'];
+      // 選択肢ラベルにツールチップを付与
+      const opts = [
+        '全くそう思わない',
+        'そう思わない',
+        'どちらともいえない',
+        'そう思う',
+        '非常にそう思う'
+      ];
+      
+      // DOMの構築を待ってからツールチップを設定
       setTimeout(() => {
         document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
+          // 重複クラス付与を防止
           if (!label.classList.contains('likert-label-tooltip')) {
             label.classList.add('likert-label-tooltip');
           }
+          // ツールチップテキストを設定（5つの選択肢を繰り返し）
           label.setAttribute('data-tooltip', opts[i % 5]);
         });
       }, 100);
-      updateProgressBar((k*9 + items.length) / 27);
+      
+      // プログレスバーを更新（現在のページまでの進捗率）
+      updateProgressBar((k * 9 + items.length) / 27);
     },
-    on_finish: () => {}
+    
+    // 回答終了時の処理：0-4を1-5に変換し、逆転項目を考慮した得点を追加
+    on_finish: (data) => {
+      const resp = data.response || {};
+      
+      // ページ番号を記録（1, 2, 3）
+      data.page_number = k + 1;
+      
+      // このページで回答した項目番号のリストを作成
+      const pageItems = items.map(it => it.idx).join(',');
+      data.page_items = pageItems;
+      
+      // 各回答について処理
+      Object.entries(resp).forEach(([name, idx]) => {
+        // 該当する項目を検索
+        const item = items.find(it => {
+          const itemNum = items.indexOf(it) + 1;
+          return `${it.domain}${itemNum}` === name;
+        });
+        
+        if (item) {
+          // 0-4を1-5に変換
+          const rawScore = Number(idx) + 1;
+          
+          // 逆転項目かどうかチェックして得点を計算
+          const scoredValue = REVERSED.has(item.idx) ? (6 - rawScore) : rawScore;
+          
+          // 元の変数名に対応する得点変数を追加
+          // 例: M1 → M1_raw (1-5の生得点), M1_scored (逆転処理済み得点)
+          data[`${name}_raw`] = rawScore;
+          data[`${name}_scored`] = scoredValue;
+          
+          // 項目番号も記録
+          data[`${name}_item_number`] = item.idx;
+        }
+      });
+    }
   }));
   
+  // ==========================================
+  // 【5】データ保存設定
+  // ==========================================
+  
+  // ランダムな被験者IDを生成（10桁の英数字）
   const subject_id = jsPsych.randomization.randomID(10);
-  const save_data = { type: window.jsPsychPipe, action: 'save', experiment_id: 'GyvSHLaKTiph', filename: `${subject_id}.csv`, data_string: () => jsPsych.data.get().csv() };
+  
+  // DataPipeプラグインを使用してOSFにCSVデータを保存
+  const save_data = { 
+    type: window.jsPsychPipe,           // DataPipeプラグインを使用
+    action: 'save',                     // データ保存アクション
+    experiment_id: 'GyvSHLaKTiph',      // 実験ID（OSF上のプロジェクト識別子）
+    filename: `${subject_id}.csv`,      // 保存ファイル名（被験者IDを使用）
+    data_string: () => jsPsych.data.get().csv()  // 全データをCSV形式で取得
+  };
+  
+  // ==========================================
+  // 【6】結果表示画面
+  // ==========================================
   
   const results = {
     type: window.jsPsychHtmlButtonResponse,
+    
+    // 結果画面のHTML生成（stimulus関数）
     stimulus: () => {
+      // survey-likertトライアルのデータを取得
       const trials = jsPsych.data.get().filter({trial_type:'survey-likert'}).values();
+      
+      // 27項目分の回答を格納する配列（初期値はnull）
       const responses = new Array(27).fill(null);
+      
+      // 各トライアルから回答を抽出して配列に格納
       trials.forEach(tr => {
-        const resp = tr.response||{};
+        const resp = tr.response || {};
         Object.entries(resp).forEach(([name, idx]) => {
-          const n = parseInt(name.replace('Q',''), 10);
-          if (n >= 1 && n <= 27) responses[n - 1] = Number(idx) + 1;
+          // 変数名から項目情報を抽出（例: "M1" → マキャベリアニズム1番目）
+          // allItems配列から該当する項目を探して項目番号を取得
+          const item = allItems.find(it => `${it.domain}${allItems.filter(x => x.domain === it.domain).indexOf(it) + 1}` === name);
+          if (item) {
+            // 項目番号（1〜27）を使って配列に格納（0-indexedに変換）
+            responses[item.idx - 1] = Number(idx) + 1;  // 選択肢インデックス(0-4)を得点(1-5)に変換
+          }
         });
       });
+      
+      // 各特性の得点を計算
       const s = computeScores(responses);
+      
+      // 数値を小数点2桁でフォーマット（nullの場合は"-"）
       const fmt = v => (v == null ? '-' : v.toFixed(2));
-      const rowsHtml = `<tr><td>マキャベリアニズム (M)</td><td>${fmt(s.M)}</td><td>${fmt(PAPER_MEANS.M)}</td></tr><tr><td>自己愛傾向 (N)</td><td>${fmt(s.N)}</td><td>${fmt(PAPER_MEANS.N)}</td></tr><tr><td>サイコパシー傾向 (P)</td><td>${fmt(s.P)}</td><td>${fmt(PAPER_MEANS.P)}</td></tr>`;
-      return `<div class="card"><h2>結果</h2><div class="chart-wrap"><canvas id="sd3-radar"></canvas></div><div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">注：下司忠大・小塩真司. (2017). 日本語版Short Dark Triad（SD3-J）の作成. パーソナリティ研究, 26(1), 12–22. https://doi.org/10.2132/personality.26.1.2</div><table><thead><tr><th>特性</th><th>あなた</th><th>論文の平均</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+      
+      // 結果テーブルの行HTML生成
+      const rowsHtml = `
+        <tr><td>マキャベリアニズム (M)</td><td>${fmt(s.M)}</td><td>${fmt(PAPER_MEANS.M)}</td></tr>
+        <tr><td>自己愛傾向 (N)</td><td>${fmt(s.N)}</td><td>${fmt(PAPER_MEANS.N)}</td></tr>
+        <tr><td>サイコパシー傾向 (P)</td><td>${fmt(s.P)}</td><td>${fmt(PAPER_MEANS.P)}</td></tr>
+      `;
+      
+      // 結果画面全体のHTML
+      return `
+        <div class="card">
+          <h2>結果</h2>
+          <div class="chart-wrap">
+            <canvas id="sd3-radar"></canvas>
+          </div>
+          <div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">
+            注：下司忠大・小塩真司. (2017). 日本語版Short Dark Triad（SD3-J）の作成. パーソナリティ研究, 26(1), 12–22. 
+            https://doi.org/10.2132/personality.26.1.2
+          </div>
+          <table>
+            <thead>
+              <tr><th>特性</th><th>あなた</th><th>論文の平均</th></tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
     },
+    
     choices: ['終了'],
-      on_finish: () => {
-        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
-      },
+    
+    // 「終了」ボタン押下時の処理
+    on_finish: () => {
+      // 終了時刻と所要時間を記録
+      const endTimestamp = Date.now();
+      const endTimeJST = getJapanTime(endTimestamp);
+      const durationMs = endTimestamp - startTimestamp;
+      const durationSec = durationMs / 1000;
+      const durationMin = durationSec / 60;
+      
+      // 全データに終了時刻と所要時間を追加
+      jsPsych.data.addProperties({
+        end_time_jst: endTimeJST,
+        end_timestamp: endTimestamp,
+        total_duration_ms: durationMs,
+        total_duration_sec: parseFloat(durationSec.toFixed(2)),
+        total_duration_min: parseFloat(durationMin.toFixed(2))
+      });
+      
+      // トップページにリダイレクト
+      window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+    },
+    
+    // 結果画面読み込み時の処理
     on_load: () => {
+      // survey-likertトライアルのデータを再取得
       const trials = jsPsych.data.get().filter({trial_type:'survey-likert'}).values();
+      
+      // 27項目分の回答を格納する配列（初期値はnull）
       const responses = new Array(27).fill(null);
+      
+      // 各トライアルから回答を抽出
       trials.forEach(tr => {
-        const resp = tr.response||{};
+        const resp = tr.response || {};
         Object.entries(resp).forEach(([name, idx]) => {
-          const n = parseInt(name.replace('Q',''), 10);
-          if (n >= 1 && n <= 27) responses[n - 1] = Number(idx) + 1;
+          // 変数名から項目情報を抽出（例: "M1" → マキャベリアニズム1番目）
+          const item = allItems.find(it => `${it.domain}${allItems.filter(x => x.domain === it.domain).indexOf(it) + 1}` === name);
+          if (item) {
+            responses[item.idx - 1] = Number(idx) + 1;
+          }
         });
       });
+      
+      // 各特性の得点を計算
       const s = computeScores(responses);
-      const palette = {selfBorder:'#1976D2', selfFill:'rgba(25,118,210,0.15)', normBorder:'#D32F2F', normFill:'rgba(211,47,47,0.15)'};
+      
+      // ==========================================
+      // Chart.jsでレーダーチャートを描画
+      // ==========================================
+      
+      // チャートの色設定
+      const palette = {
+        selfBorder: '#1976D2',             // ユーザー得点の線色（青）
+        selfFill: 'rgba(25,118,210,0.15)', // ユーザー得点の塗り色（半透明の青）
+        normBorder: '#D32F2F',             // 論文平均の線色（赤）
+        normFill: 'rgba(211,47,47,0.15)'   // 論文平均の塗り色（半透明の赤）
+      };
+      
+      // Canvas要素のサイズを親要素に合わせて調整
       const canvas = document.getElementById('sd3-radar');
       if (canvas) {
         const wrap = canvas.parentElement;
         canvas.width = wrap.offsetWidth;
         canvas.height = wrap.offsetHeight;
       }
+      
+      // Chart.jsでレーダーチャートを作成
       new Chart(document.getElementById('sd3-radar').getContext('2d'), {
-        type: 'radar',
+        type: 'radar',  // チャートタイプ：レーダーチャート
         data: {
-          labels: ['マキャベリアニズム','自己愛傾向','サイコパシー傾向'],
+          // 各軸のラベル（3つの特性）
+          labels: ['マキャベリアニズム', '自己愛傾向', 'サイコパシー傾向'],
+          
+          // データセット（ユーザーの得点と論文平均）
           datasets: [
-            {label: 'あなた', data: [s.M, s.N, s.P], fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 2.2, tension: 0, pointRadius: 2},
-            {label: '論文の平均', data: [PAPER_MEANS.M, PAPER_MEANS.N, PAPER_MEANS.P], fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 2.2, tension: 0, pointRadius: 2}
+            {
+              label: 'あなた', 
+              data: [s.M, s.N, s.P],              // ユーザーの各特性得点
+              fill: true,                         // 塗りつぶし有効
+              borderColor: palette.selfBorder,    // 線の色
+              backgroundColor: palette.selfFill,  // 塗りつぶしの色
+              borderWidth: 2.2,                   // 線の太さ
+              tension: 0,                         // 直線で結ぶ（曲線なし）
+              pointRadius: 2                      // データポイントの半径
+            },
+            {
+              label: '論文の平均', 
+              data: [PAPER_MEANS.M, PAPER_MEANS.N, PAPER_MEANS.P], // 論文の平均得点
+              fill: true, 
+              borderColor: palette.normBorder, 
+              backgroundColor: palette.normFill, 
+              borderWidth: 2.2, 
+              tension: 0, 
+              pointRadius: 2
+            }
           ]
         },
-        options: { responsive: false, maintainAspectRatio: false, scales: { r: {min: 1, max: 5, ticks: {stepSize: 1}} }, plugins: {legend: {position: 'bottom'}}, elements: {line: {tension: 0}} }
+        options: { 
+          responsive: false,           // 自動リサイズ無効
+          maintainAspectRatio: false,  // アスペクト比固定無効
+          scales: { 
+            r: {                       // レーダー軸の設定
+              min: 1,                  // 最小値（1点）
+              max: 5,                  // 最大値（5点）
+              ticks: {stepSize: 1}     // 目盛りの間隔（1点刻み）
+            }
+          }, 
+          plugins: {
+            legend: {position: 'bottom'} // 凡例を下部に配置
+          }, 
+          elements: {
+            line: {tension: 0}         // 全ての線を直線化
+          }
+        }
       });
     }
   };
   
+  // ==========================================
+  // 【7】実験の実行
+  // ==========================================
+  
+  // jsPsychタイムラインを順番に実行
+  // 1. イントロ画面 → 2. デモグラフィック情報 → 3. Likert尺度3ページ → 4. データ保存 → 5. 結果表示
   jsPsych.run([intro, demographics, ...likertPages, save_data, results]);
 })();
   </script>

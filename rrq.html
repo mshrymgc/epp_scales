@@ -7,22 +7,123 @@
   <link rel="stylesheet" href="./dist/jspsych.css" />
   <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
-    body { font-family: system-ui, sans-serif; }
-    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
-    .grid { display:grid; gap:1rem; }
-    .result-grid { display:grid; gap:1.2rem; margin-top:1.5rem; }
-    @media (min-width: 780px) { .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-    .chart-wrap { position:relative; width:100%; max-width:500px; margin:0 auto; }
-    .chart-small { height:260px; max-height:320px; }
-    .chart-wrap canvas { display:block; width:100%; height:100%; }
-    table { border-collapse:collapse; width:100%; }
-    th, td { padding:0.45rem 0.4rem; border-bottom:1px solid #eee; text-align:left; font-size:0.95rem; }
-    th { font-weight:600; background:#fafafa; }
-    .small { font-size:0.85rem; }
-    .muted { color:#666; }
-    .likert-label-tooltip { position: relative; }
-    .likert-label-tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.4rem 0.6rem; border-radius: 4px; white-space: nowrap; font-size: 0.8rem; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; z-index: 10; }
-    .likert-label-tooltip:hover::after { opacity: 1; }
+    /* ==========================================
+       基本スタイル
+       ========================================== */
+    body {
+      font-family: system-ui, sans-serif;
+    }
+
+    /* カード型のコンテナ */
+    .card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    /* グリッドレイアウト */
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    /* 結果画面のグリッド */
+    .result-grid {
+      display: grid;
+      gap: 1.2rem;
+      margin-top: 1.5rem;
+    }
+
+    /* レスポンシブ: 780px以上で2カラム表示 */
+    @media (min-width: 780px) {
+      .result-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+      }
+    }
+
+    /* ==========================================
+       グラフ関連
+       ========================================== */
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .chart-small {
+      height: 260px;
+      max-height: 320px;
+    }
+
+    .chart-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ==========================================
+       テーブルスタイル
+       ========================================== */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      padding: 0.45rem 0.4rem;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      font-weight: 600;
+      background: #fafafa;
+    }
+
+    /* ==========================================
+       ユーティリティクラス
+       ========================================== */
+    .small {
+      font-size: 0.85rem;
+    }
+
+    .muted {
+      color: #666;
+    }
+
+    /* ==========================================
+       ツールチップ（ホバー時の説明表示）
+       ========================================== */
+    .likert-label-tooltip {
+      position: relative;
+    }
+
+    .likert-label-tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .likert-label-tooltip:hover::after {
+      opacity: 1;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./dist/jspsych.js"></script>
@@ -34,21 +135,34 @@
 <body>
   <div id="jspsych-target"></div>
   <script>
-(function(){
-  const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
+(() => {
+  // ==========================================
+  // 0. jsPsych の初期化と基本設定
+  // ==========================================
+  const PROGRESS_LABEL_TEXT = '進捗状況'; // 進捗バーに表示するテキスト
+  const PAGE_SIZE = 6; // 1ページに表示する質問数（反芻・省察を6問ずつ）
+  const LIKERT_CHOICES = [
+    { value: 1, text: '1 = 全く当てはまらない' },
+    { value: 2, text: '2 = 当てはまらない' },
+    { value: 3, text: '3 = どちらともいえない' },
+    { value: 4, text: '4 = 当てはまる' },
+    { value: 5, text: '5 = よく当てはまる' }
+  ];
+  const DEBUG = false; // true にすると処理の流れをコンソールに表示
+  const debugLog = (...args) => { if (DEBUG) console.log(...args); };
 
-  (function setProgressLabel(){
-    const setLabel = () => {
-      const span = document.querySelector('#jspsych-progressbar-container span');
-      if (span) { span.innerHTML = '進捗状況'; return true; }
-      return false;
-    };
-    if (!setLabel()) {
-      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
-      mo.observe(document.body, { childList: true, subtree: true });
-    }
-  })();
+  const jsPsych = window.jsPsychModule.initJsPsych({
+    display_element: 'jspsych-target',
+    show_progress_bar: true,
+    auto_update_progress_bar: false
+  });
 
+  setProgressLabelToJapanese();
+  injectResultStyles();
+
+  // ==========================================
+  // 1. 尺度項目の定義
+  // ==========================================
   const RRQ = {
     rumination: [
       { id: 1, text: '自分のある側面について考えるのをやめたいと思っていても，そこに注意が向くことが多い。', reverse: false },
@@ -81,257 +195,573 @@
   };
 
   const TOTAL_ITEMS = RRQ.rumination.length + RRQ.reflection.length;
-  // RRQは6項目ずつ（反芻・省察の区切りがわかりやすいため）
-  const PAGE_SIZE = 6;
+  const ITEM_LOOKUP = {
+    R: Object.fromEntries(RRQ.rumination.map((item, index) => [index + 1, item])),
+    F: Object.fromEntries(RRQ.reflection.map((item, index) => [index + 1, item]))
+  };
 
-  // improved description styles
-  const styleEl = document.createElement('style');
-  styleEl.innerHTML = `
-    .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
-    .description-box .score-label { font-weight:700; font-size:1rem; color:#0d47a1; margin-bottom:0.25rem; }
-    .description-box p { margin:0 0 0.6rem 0; line-height:1.45; }
-  `;
-  document.head.appendChild(styleEl);
+  // システム情報と開始時刻を取得して全トライアルに記録
+  const systemInfo = getSystemInfo();
+  const startTimestamp = Date.now();
+  const startTimeJST = getJapanTime(startTimestamp);
+  
+  jsPsych.data.addProperties({
+    browser: systemInfo.browser,
+    os: systemInfo.os,
+    user_agent: systemInfo.user_agent,
+    start_time_jst: startTimeJST,
+    start_timestamp: startTimestamp
+  });
 
-  const updateProgressBar = (fraction) => {
+  const allItems = createQuestionPool();
+  jsPsych.data.addProperties({
+    rrq_item_order: JSON.stringify(allItems.map(({ domain, id, originalId, text }) => ({ domain, id, originalId, text })))
+  });
+  const pages = chunkArray(allItems, PAGE_SIZE);
+
+  // ==========================================
+  // 2. タイムラインの構築
+  // ==========================================
+  const intro = createIntroTrial();
+  const demographics = createDemographicsTrial();
+  const likertPages = pages.map((items, index) => createLikertPage(items, index));
+  const subjectId = jsPsych.randomization.randomID(10);
+  jsPsych.data.addProperties({ subject_id: subjectId });
+  const saveDataTrial = createSaveTrial(subjectId);
+  let lastSummary = null;
+  const results = createResultsTrial();
+
+  const timeline = [intro, demographics, ...likertPages, saveDataTrial, results];
+  jsPsych.run(timeline);
+
+  // ==========================================
+  // 3. DOM 初期化系関数
+  // ==========================================
+  function setProgressLabelToJapanese() {
+    const trySetLabel = () => {
+      const span = document.querySelector('#jspsych-progressbar-container span');
+      if (span) {
+        span.innerHTML = PROGRESS_LABEL_TEXT;
+        return true;
+      }
+      return false;
+    };
+
+    if (trySetLabel()) return;
+
+    const observer = new MutationObserver((_, obs) => {
+      if (trySetLabel()) obs.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function injectResultStyles() {
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      .description-box { background: linear-gradient(90deg,#f5f9ff,#fbfdff); border-left:6px solid #1976D2; padding:1rem; border-radius:6px; }
+      .description-box .score-label { font-weight:700; font-size:1rem; color:#0d47a1; margin-bottom:0.25rem; }
+      .description-box p { margin:0 0 0.6rem 0; line-height:1.45; }
+    `;
+    document.head.appendChild(styleEl);
+  }
+
+  // ==========================================
+  // 4. データ準備ヘルパー
+  // ==========================================
+  
+  /**
+   * システム情報を取得する関数
+   * ユーザーエージェント文字列からブラウザとOSを判定
+   * @returns {Object} browser, os, user_agent を含むオブジェクト
+   */
+  function getSystemInfo() {
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    let os = 'Unknown';
+    
+    // ブラウザの判定
+    if (ua.indexOf('Edg') > -1) browser = 'Edge';
+    else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+    else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+    else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+    
+    // OSの判定
+    if (ua.indexOf('Win') > -1) os = 'Windows';
+    else if (ua.indexOf('Mac') > -1) os = 'macOS';
+    else if (ua.indexOf('Linux') > -1) os = 'Linux';
+    else if (ua.indexOf('Android') > -1) os = 'Android';
+    else if (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+    
+    return { browser, os, user_agent: ua };
+  }
+  
+  /**
+   * 日本時間の文字列を取得する関数
+   * @param {number} timestamp - タイムスタンプ（ミリ秒）。省略時は現在時刻
+   * @returns {string} 日本時間の文字列（例: "2025/10/22 14:30:45"）
+   */
+  function getJapanTime(timestamp) {
+    const date = timestamp ? new Date(timestamp) : new Date();
+    return date.toLocaleString('ja-JP', { 
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '/').replace(',', '');
+  }
+  
+  function createQuestionPool() {
+    const merged = [
+      ...RRQ.rumination.map((item, index) => ({
+        text: item.text,
+        reverse: item.reverse,
+        domain: 'R',
+        id: index + 1,
+        originalId: item.id
+      })),
+      ...RRQ.reflection.map((item, index) => ({
+        text: item.text,
+        reverse: item.reverse,
+        domain: 'F',
+        id: index + 1,
+        originalId: item.id
+      }))
+    ];
+
+    return shuffleInPlace(merged);
+  }
+
+  function updateProgressBar(fraction) {
     const barInner = document.querySelector('#jspsych-progressbar-inner');
-    if (barInner) barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
-  };
+    if (!barInner) return;
+    const clamped = Math.max(0, Math.min(1, fraction));
+    barInner.style.width = `${Math.round(clamped * 100)}%`;
+  }
 
-  const chunk = (arr, size) => {
-    const res = [];
-    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
-    return res;
-  };
-
-  // create annotated items with domain and local id (R1..R12, F1..F12)
-  const allItems = [];
-  RRQ.rumination.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'R', id: i + 1 }));
-  RRQ.reflection.forEach((it, i) => allItems.push({ text: it.text, reverse: it.reverse, domain: 'F', id: i + 1 }));
-
-  // shuffle items so their presentation order is randomized
-  function shuffleInPlace(a) { for (let i=a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-  shuffleInPlace(allItems);
-
-  // save the randomized mapping so saved data can be interpreted
-  jsPsych.data.addProperties({ rrq_item_order: JSON.stringify(allItems.map(it => ({ domain: it.domain, id: it.id, text: it.text }))) });
-
-  const pages = chunk(allItems, PAGE_SIZE);
-
-  const intro = {
-    type: window.jsPsychHtmlButtonResponse,
-    stimulus: `<div class="card"><h2>RRQ 日本語版</h2><h3>Rumination–Reflection Questionnaire</h3><h4>「感情・人格心理学」受講者用</h4><p style="margin:0.6rem 0 0;">以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。<br>最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。</p><p style="margin:0.6rem 0 0;">回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>また，回答の有無が成績に影響することは一切ありません。</p><ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">回答時間の目安：4〜6分<br>出典：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.</ul></div>`,
-    choices: ['開始']
-  };
-
-  const demographics = {
-    type: window.jsPsychSurvey,
-    survey_json: {
-      showQuestionNumbers: false,
-      pages: [{
-        name: 'demographics',
-        elements: [
-          { type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true },
-          { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
-        ]
-      }],
-      pageNextText: '次へ',
-      completeText: '次へ'
-    },
-    on_finish: (data) => {
-      const r = data.response || {};
-      jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
+  function chunkArray(arr, size) {
+    const result = [];
+    for (let i = 0; i < arr.length; i += size) {
+      result.push(arr.slice(i, i + size));
     }
-  };
+    return result;
+  }
 
-  const likertLabels = ['1','2','3','4','5'];
-  const likertTooltips = ['全く当てはまらない','当てはまらない','どちらともいえない','当てはまる','よく当てはまる'];
+  function shuffleInPlace(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
 
-  // Build pages using the standard survey plugin (radiogroup) for better cross-version compatibility
-  const likertPages = pages.map((items, k) => {
-    const pageNum = k;
-    const pageStart = pageNum * PAGE_SIZE + 1;
-    const pageEnd = pageNum * PAGE_SIZE + items.length;
-    const page = {
+  // ==========================================
+  // 5. トライアル生成ヘルパー
+  // ==========================================
+  function createIntroTrial() {
+    return {
+      type: window.jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="card">
+          <h2>RRQ 日本語版</h2>
+          <h3>Rumination–Reflection Questionnaire</h3>
+          <h4>「感情・人格心理学」受講者用</h4>
+          <p style="margin:0.6rem 0 0;">
+            以下の項目を読んで，それが自分の性質に当てはまる程度を考えてください。<br>
+            最もよく当てはまる選択肢を1つ選び，あまり考え込みすぎず直感的に回答してください。
+          </p>
+          <p style="margin:0.6rem 0 0;">
+            回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>
+            また，回答の有無が成績に影響することは一切ありません。
+          </p>
+          <ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">
+            回答時間の目安：4〜6分<br>
+            出典：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.
+          </ul>
+        </div>
+      `,
+      choices: ['開始']
+    };
+  }
+
+  function createDemographicsTrial() {
+    return {
       type: window.jsPsychSurvey,
       survey_json: {
         showQuestionNumbers: false,
-        pages: [
-          {
-            name: `page_${pageNum}`,
-            elements: ([
-              {
-                type: 'html',
-                name: `preamble_${pageNum}`,
-                html: `<div class="card"><b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b><p style="margin:0.5rem 0 0;">以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。直感的に答えて構いません。</p></div>`
-              }
-            ]).concat(items.map(item => ({
+        pages: [{
+          name: 'demographics',
+          elements: [
+            {
+              type: 'text',
+              name: 'age',
+              title: '年齢',
+              inputType: 'number',
+              isRequired: true
+            },
+            {
+              type: 'dropdown',
+              name: 'gender',
+              title: '性別',
+              isRequired: true,
+              choices: ['男性','女性','その他','未回答']
+            }
+          ]
+        }],
+        pageNextText: '次へ',
+        completeText: '次へ'
+      },
+      on_finish: (data) => {
+        const response = data.response || {};
+        jsPsych.data.addProperties({
+          age: response.age || '',
+          gender: response.gender || ''
+        });
+      }
+    };
+  }
+
+  function createLikertPage(items, pageIndex) {
+    const pageStart = pageIndex * PAGE_SIZE + 1;
+    const pageEnd = pageStart + items.length - 1;
+    const isLastPage = pageIndex === pages.length - 1;
+
+    return {
+      type: window.jsPsychSurvey,
+      survey_json: {
+        showQuestionNumbers: false,
+        pages: [{
+          name: `page_${pageIndex}`,
+          elements: [
+            {
+              type: 'html',
+              name: `preamble_${pageIndex}`,
+              html: `
+                <div class="card">
+                  <b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b>
+                  <p style="margin:0.5rem 0 0;">
+                    以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。直感的に答えて構いません。
+                  </p>
+                </div>
+              `
+            },
+            ...items.map(item => ({
               type: 'radiogroup',
-              // name encodes domain (R or F) and local id, e.g. R1, F3
               name: `${item.domain}${item.id}`,
               title: item.text,
               isRequired: true,
-              choices: [
-                { value: 1, text: '1 = 全く当てはまらない' },
-                { value: 2, text: '2 = 当てはまらない' },
-                { value: 3, text: '3 = どちらともいえない' },
-                { value: 4, text: '4 = 当てはまる' },
-                { value: 5, text: '5 = よく当てはまる' }
-              ]
-            })))
-          }
-        ],
+              choices: LIKERT_CHOICES.map(choice => ({ ...choice }))
+            }))
+          ]
+        }],
         pageNextText: '次へ',
-        completeText: pageNum === pages.length - 1 ? '結果を見る' : '次へ'
+        completeText: isLastPage ? '結果を見る' : '次へ'
       },
       on_load: () => {
-        // logging for debugging
-        console.log('RRQ survey page loaded', { pageNum, pageStart, pageEnd, itemsLength: items.length });
-        updateProgressBar((pageEnd) / TOTAL_ITEMS);
+        debugLog('Loaded RRQ survey page', { pageIndex, pageStart, pageEnd });
+        updateProgressBar(pageEnd / TOTAL_ITEMS);
+      },
+      on_finish: (data) => {
+        // ページ番号を記録（1-based）
+        data.page_number = pageIndex + 1;
+        
+        // このページで回答した項目のリスト（domain:id形式、例: "R1,F3,R5"）
+        const pageItemsList = items.map(item => `${item.domain}${item.id}`).join(',');
+        data.page_items = pageItemsList;
+        
+        // 各回答について逆転項目を考慮した得点を記録
+        const resp = data.response || {};
+        Object.entries(resp).forEach(([name, value]) => {
+          // 変数名から該当する項目を検索（例: "R1" → domain='R', id=1）
+          const item = items.find(it => `${it.domain}${it.id}` === name);
+          if (!item) return;
+          
+          // 回答値を数値に変換（survey プラグインの場合）
+          let rawScore = null;
+          if (typeof value === 'number') {
+            rawScore = value;
+          } else if (typeof value === 'string') {
+            rawScore = Number(value);
+          } else if (value && typeof value === 'object' && 'value' in value) {
+            rawScore = Number(value.value);
+          }
+          
+          if (rawScore == null || !Number.isFinite(rawScore)) return;
+          
+          // 1-5の範囲に収める
+          if (rawScore < 1 || rawScore > 5) return;
+          
+          // 逆転項目の場合は反転処理（6 - 値）
+          const scoredValue = item.reverse ? (6 - rawScore) : rawScore;
+          
+          // CSVに記録する変数を追加
+          data[`${name}_raw`] = rawScore;           // 生得点（1-5）
+          data[`${name}_scored`] = scoredValue;      // 逆転処理済み得点
+          data[`${name}_reversed`] = item.reverse;   // 逆転項目かどうか
+          data[`${name}_original_id`] = item.originalId; // 元の項目番号
+        });
+        
+        debugLog('Page finished', { pageIndex, pageItemsList });
       }
     };
-    return page;
-  });
+  }
 
-  const getResponses = () => {
-    const trials = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
-    // try to get data from both survey-likert and survey trials
-    const res = { R: {}, F: {} };
-    const surveyTrials = jsPsych.data.get().filter(tr => tr.trial_type && (tr.trial_type === 'survey-likert' || tr.trial_type === 'survey')).values();
-    surveyTrials.forEach(tr => {
-      const resp = tr.response || {};
-      Object.entries(resp).forEach(([name, val]) => {
-        // parse domain letter and item number, e.g. R1 or F3
-        const m = String(name).match(/^([RF])(\d+)$/);
-        if (!m) return;
-        const domain = m[1];
-        const n = parseInt(m[2], 10);
-        // val might be numeric index (0-based), or an object/value depending on plugin
-        let numeric = null;
-        if (typeof val === 'number') {
-          // survey-likert: idx is 0-based index
-          numeric = val + 1;
-        } else if (typeof val === 'string') {
-          const parsed = parseInt(val, 10);
-          if (!Number.isNaN(parsed)) numeric = parsed;
-        } else if (val && typeof val === 'object') {
-          // survey (radiogroup) stores selected value directly (number or string)
-          if ('value' in val) {
-            const parsed = parseInt(val.value, 10);
-            if (!Number.isNaN(parsed)) numeric = parsed;
-          } else {
-            // sometimes radiogroup returns the chosen value directly
-            const parsed = parseInt(JSON.stringify(val), 10);
-            if (!Number.isNaN(parsed)) numeric = parsed;
-          }
+  function createSaveTrial(subjectId) {
+    return {
+      type: window.jsPsychPipe,
+      action: 'save',
+      experiment_id: 'LtNw0mBEbED7',
+      filename: `${subjectId}.csv`,
+      data_string: () => jsPsych.data.get().csv()
+    };
+  }
+
+  function createResultsTrial() {
+    return {
+      type: window.jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        const summary = computeSummary();
+        lastSummary = summary;
+        return createResultsHtml(summary);
+      },
+      choices: ['終了'],
+      on_finish: () => {
+        // 終了時刻と所要時間を記録
+        const endTimestamp = Date.now();
+        const endTimeJST = getJapanTime(endTimestamp);
+        const durationMs = endTimestamp - startTimestamp;
+        const durationSec = durationMs / 1000;
+        const durationMin = durationSec / 60;
+        
+        // 全データに終了時刻と所要時間を追加
+        jsPsych.data.addProperties({
+          end_time_jst: endTimeJST,
+          end_timestamp: endTimestamp,
+          total_duration_ms: durationMs,
+          total_duration_sec: parseFloat(durationSec.toFixed(2)),
+          total_duration_min: parseFloat(durationMin.toFixed(2))
+        });
+        
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+      },
+      on_load: () => {
+        if (!lastSummary) {
+          debugLog('結果表示のための集計が見つかりません');
+          return;
         }
-        if (numeric != null) res[domain][n] = numeric;
+        renderResultsChart(lastSummary);
+      }
+    };
+  }
+
+  // ==========================================
+  // 6. 回答処理ロジック
+  // ==========================================
+  function getResponses() {
+    const responses = { R: {}, F: {} };
+
+    const surveyTrials = jsPsych.data.get()
+      .filter(trial => trial.trial_type && (trial.trial_type === 'survey-likert' || trial.trial_type === 'survey'))
+      .values();
+
+    surveyTrials.forEach((trial, trialIndex) => {
+      const trialResponse = trial.response || {};
+      debugLog(`Trial ${trialIndex}`, trialResponse);
+
+      Object.entries(trialResponse).forEach(([name, value]) => {
+        const match = /^([RF])(\d+)$/.exec(String(name));
+        if (!match) return;
+
+        const domain = match[1];
+        const id = Number(match[2]);
+        const numeric = parseLikertValue(value);
+        if (numeric == null) return;
+
+        responses[domain][id] = numeric;
       });
     });
-    return res;
-  };
 
-  const computeSummary = () => {
+    debugLog('Collected responses', responses);
+    return responses;
+  }
+
+  function parseLikertValue(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      // survey-likert プラグインは 0 始まりのインデックスを返すため補正
+      if (value >= 0 && value <= 4) {
+        return value + 1;
+      }
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+    if (value && typeof value === 'object') {
+      if ('value' in value) {
+        return parseLikertValue(value.value);
+      }
+      const fallback = parseInt(JSON.stringify(value), 10);
+      return Number.isNaN(fallback) ? null : fallback;
+    }
+    return null;
+  }
+
+  function computeSummary() {
     const responses = getResponses();
     const base = {
       rumination: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] },
       reflection: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] }
     };
 
-    // helper to look up original item metadata (to find reverse flags)
-    const findItem = (domain, id) => {
-      if (domain === 'R') return RRQ.rumination[id - 1];
-      if (domain === 'F') return RRQ.reflection[id - 1];
-      return null;
-    };
+    ['R', 'F'].forEach((domain) => {
+      const store = domain === 'R' ? base.rumination : base.reflection;
+      const domainResponses = responses[domain] || {};
 
-    // process R and F responses stored as responses.R and responses.F
-    ['R','F'].forEach(domain => {
-      const bucket = domain === 'R' ? base.rumination : base.reflection;
-      const respObj = responses[domain] || {};
-      Object.entries(respObj).forEach(([k, rawVal]) => {
-        const id = parseInt(k, 10);
-        if (Number.isNaN(id)) return;
-        const raw = Number(rawVal);
-        if (!raw) return;
-        bucket.count += 1;
-        if (raw >=1 && raw <=5) bucket.counts[raw - 1] += 1;
+      Object.entries(domainResponses).forEach(([idStr, rawValue]) => {
+        const id = Number(idStr);
+        if (!Number.isFinite(id)) return;
+
+        const raw = Number(rawValue);
+        if (!Number.isFinite(raw)) return;
+
         const meta = findItem(domain, id);
         const scored = meta && meta.reverse ? 6 - raw : raw;
-        bucket.sum += scored;
+
+        store.count += 1;
+        if (raw >= 1 && raw <= 5) {
+          store.counts[raw - 1] += 1;
+        }
+        store.sum += scored;
       });
-      if (bucket.count) bucket.mean = bucket.sum / bucket.count;
+
+      if (store.count > 0) {
+        store.mean = store.sum / store.count;
+      }
     });
 
+    debugLog('Summary result', base);
     return base;
-  };
+  }
 
-  let lastSummary = null;
+  function findItem(domain, id) {
+    return ITEM_LOOKUP[domain]?.[id] || null;
+  }
 
-  const fmtInt = (val) => (val == null ? '-' : Math.round(val).toString());
-  const fmtMean = (val) => (val == null ? '-' : val.toFixed(2));
+  // ==========================================
+  // 7. 表示用ユーティリティ
+  // ==========================================
+  function createResultsHtml(summary) {
+    const rumRow = `<tr><td>反芻 (Rumination)</td><td>${formatInt(summary.rumination.sum)} / 60</td><td>${formatMean(summary.rumination.mean)}</td></tr>`;
+    const refRow = `<tr><td>省察 (Reflection)</td><td>${formatInt(summary.reflection.sum)} / 60</td><td>${formatMean(summary.reflection.mean)}</td></tr>`;
 
-  const subject_id = jsPsych.randomization.randomID(10);
-  jsPsych.data.addProperties({ subject_id });
+    return `
+      <div class="card">
+        <h2>結果</h2>
+        <p style="margin:0.4rem 0 0.8rem;">
+          各下位尺度は12項目・5件法で構成され，合計得点の範囲は12〜60です。平均値（1〜5）は逆転項目を処理した後に算出しています。
+        </p>
+        <table>
+          <thead>
+            <tr><th>特性</th><th>合計得点</th><th>平均 (1〜5)</th></tr>
+          </thead>
+          <tbody>${rumRow}${refRow}</tbody>
+        </table>
+        <div class="result-grid">
+          <div style="grid-column:1/-1">
+            <h3 style="margin:1rem 0 0.5rem;">反芻と省察の合計得点</h3>
+            <div class="chart-wrap chart-small"><canvas id="rrq-chart"></canvas></div>
+            <div id="rrq-values" style="margin-top:0.6rem; font-weight:600; text-align:center;">
+              合計（反芻 / 省察）: ${formatInt(summary.rumination.sum)} / ${formatInt(summary.reflection.sum)}　
+              平均（反芻 / 省察）: ${formatMean(summary.rumination.mean)} / ${formatMean(summary.reflection.mean)}
+            </div>
+            <div class="description-box" style="margin-top:0.8rem;">
+              <div class="score-label">反芻（Rumination）</div>
+              <p style="margin:0.2rem 0 0;">
+                ネガティブな出来事や気分に対して，同じことを繰り返し考え続ける傾向。問題解決ではなく思考が堂々巡りになりやすい場合は心理的負担が増すことがあります。
+              </p>
+              <div class="score-label" style="margin-top:0.6rem;">省察（Reflection）</div>
+              <p style="margin:0.2rem 0 0;">
+                自分の感情や行動を振り返り，経験から学ぼうとする傾向。建設的な内省が高いほど，自己理解や成長への関心が高いことを示します。
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="small muted" style="margin-top:1rem;">
+          注：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.
+        </div>
+      </div>
+    `;
+  }
 
-  const save_data = {
-    type: window.jsPsychPipe,
-    action: 'save',
-    experiment_id: 'LtNw0mBEbED7',
-    filename: `${subject_id}.csv`,
-    data_string: () => jsPsych.data.get().csv()
-  };
-
-  const results = {
-    type: window.jsPsychHtmlButtonResponse,
-    stimulus: () => {
-    const summary = computeSummary();
-    lastSummary = summary;
-    const rumRow = `<tr><td>反芻 (Rumination)</td><td>${fmtInt(summary.rumination.sum)} / 60</td><td>${fmtMean(summary.rumination.mean)}</td></tr>`;
-    const refRow = `<tr><td>省察 (Reflection)</td><td>${fmtInt(summary.reflection.sum)} / 60</td><td>${fmtMean(summary.reflection.mean)}</td></tr>`;
-      return `<div class="card"><h2>結果</h2><p style="margin:0.4rem 0 0.8rem;">各下位尺度は12項目・5件法で構成され，合計得点の範囲は12〜60です。平均値（1〜5）は逆転項目を処理した後に算出しています。</p><table><thead><tr><th>特性</th><th>合計得点</th><th>平均 (1〜5)</th></tr></thead><tbody>${rumRow}${refRow}</tbody></table><div class="result-grid"><div style="grid-column:1/-1"><h3 style="margin:1rem 0 0.5rem;">反芻と省察の平均得点</h3><div class="chart-wrap chart-small"><canvas id="rrq-means-chart"></canvas></div>
-      <div class="description-box" style="margin-top:0.8rem;">
-        <div class="score-label">反芻（Rumination）</div>
-        <p style="margin:0.2rem 0 0;">ネガティブな出来事や気分に対して，同じことを繰り返し考え続ける傾向。問題解決に向かわず反芻が強いほど心理的負担が増す場合があります。</p>
-        <div class="score-label" style="margin-top:0.6rem;">省察（Reflection）</div>
-        <p style="margin:0.2rem 0 0;">自分の感情や行動を分析し，経験から学ぼうとする傾向。建設的な内省が高い場合は成長志向が強いことを示します。</p>
-      </div></div></div><div class="small muted" style="margin-top:1rem;">注：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.／RRQ尺度使用マニュアルに基づき実施。</div></div>`;
-    },
-    choices: ['終了'],
-    on_finish: () => {
-      window.location.href = 'https://mshrymgc.github.io/epp_scales/';
-    },
-    on_load: () => {
-      const summary = lastSummary;
-      if (!summary) return;
-      const labels = ['1','2','3','4','5'];
-      const palette = { rum:'#1976D2', ref:'#388E3C' };
-      // 平均得点チャート（1〜5）
-      const meansCanvas = document.getElementById('rrq-means-chart');
-      if (meansCanvas) {
-        // show total score (12-60) for each domain
-        new Chart(meansCanvas.getContext('2d'), {
-          type: 'bar',
-          data: {
-            labels: ['反芻 (R)', '省察 (F)'],
-            datasets: [
-              { label: '合計得点 (12〜60)', data: [summary.rumination.sum || 0, summary.reflection.sum || 0], backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(56,142,60,0.85)'] }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { min: 12, max: 60, ticks: { stepSize: 6 }, title: { display: true, text: '合計得点 (12〜60)' } }
-            }
-          }
-        });
-      }
+  function renderResultsChart(summary) {
+    const canvas = document.getElementById('rrq-chart');
+    if (!canvas) {
+      debugLog('結果グラフ用の canvas が見つかりません');
+      return;
     }
-  };
 
-  jsPsych.run([intro, demographics, ...likertPages, save_data, results]);
+    if (window.rrqChart && typeof window.rrqChart.destroy === 'function') {
+      window.rrqChart.destroy();
+    }
+
+    const ruminationScore = Number(summary.rumination.sum) || 0;
+    const reflectionScore = Number(summary.reflection.sum) || 0;
+
+    const valuesEl = document.getElementById('rrq-values');
+    if (valuesEl) {
+      valuesEl.innerText = (
+        `合計（反芻 / 省察）: ${formatInt(ruminationScore)} / ${formatInt(reflectionScore)}　` +
+        `平均（反芻 / 省察）: ${formatMean(summary.rumination.mean)} / ${formatMean(summary.reflection.mean)}`
+      );
+    }
+
+    window.rrqChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['反芻 (R)', '省察 (F)'],
+        datasets: [{
+          label: '合計得点 (12〜60)',
+          data: [ruminationScore, reflectionScore],
+          backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(56,142,60,0.85)']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            min: 12,
+            max: 60,
+            ticks: { stepSize: 6 },
+            title: { display: true, text: '合計得点 (12〜60)' }
+          }
+        }
+      }
+    });
+
+    try {
+      window.rrqChart.update();
+    } catch (error) {
+      debugLog('Chart update failed', error);
+    }
+  }
+
+  function formatInt(value) {
+    if (value == null) return '-';
+    return Math.round(value).toString();
+  }
+
+  function formatMean(value) {
+    if (value == null) return '-';
+    const numeric = Number(value);
+    return Number.isNaN(numeric) ? '-' : numeric.toFixed(2);
+  }
 })();
   </script>
 </body>

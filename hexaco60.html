@@ -61,12 +61,16 @@
 
   <script>
   (function(){
+    // ==========================================
+    // jsPsych プラグインの読み込み確認
+    // ==========================================
     const { initJsPsych } = window.jsPsychModule || {};
     const jsPsychHtmlButtonResponse = window.jsPsychHtmlButtonResponse;
     const jsPsychSurvey = window.jsPsychSurvey;
     const jsPsychSurveyLikert = window.jsPsychSurveyLikert;
     const jsPsychPipe = window.jsPsychPipe;
 
+    // 必要なコンポーネントが読み込まれているか確認
     if (!initJsPsych || !jsPsychHtmlButtonResponse || !jsPsychSurvey || !jsPsychSurveyLikert) {
       console.error('必要な jsPsych コンポーネントが読み込まれていません。dist/ 内のファイルパスを確認してください。');
       return;
@@ -76,7 +80,10 @@
       return;
     }
 
-  // ===== Theme (default light; allow manual dark with ?theme=dark) =====
+  // ==========================================
+  // ダークテーマ設定（オプション）
+  // ==========================================
+  // URLパラメータに ?theme=dark がある場合のみダークモードを有効化
   (function setTheme(){
     try {
       const params = new URLSearchParams(location.search);
@@ -86,26 +93,62 @@
     } catch(e){}
   })();
 
-    // ====== 出典（ノーム） ======
+    // ==========================================
+    // 日本人ノーム（標準データ）の定義
+    // ==========================================
+    // 出典：Wakabayashi (2014) Japanese Psychological Research
     const normCitation = {
       label_base: '日本人サンプル（Wakabayashi, 2014, Japanese Psychological Research, Table 1）',
       url: 'https://onlinelibrary.wiley.com/doi/pdf/10.1111/jpr.12045'
     };
 
-    // ====== 日本人ノーム（男女別／全体）—— Table 1 の合計得点（M） ======
-    // 注：ノームは HEXACO-PI-R 100（ドメイン32・ファセット8項目）の合計得点。
-    //     参加者は HEXACO-60（ドメイン10項目・ファセット2〜4項目）の合計得点。
-    //     絶対値レンジは異なるため、比較は参照目的です。
+    // 日本人の平均値（男女別／全体）
+    // 注：論文のノームはHEXACO-PI-R 100項目版の合計得点
+    //     本実験はHEXACO-60項目版（項目数が異なる）のため、絶対値は参考値
     const norms = {
+      // 全体の平均値
       total: {
-        domain: { H: 106.6, E: 109.9, X: 100.7, A: 91.5,  C: 95.2,  O: 100.8 },
+        // 各ドメイン（因子）の平均合計得点
+        domain: { 
+          H: 106.6,  // 誠実-謙虚性 (Honesty-Humility)
+          E: 109.9,  // 情動性 (Emotionality)
+          X: 100.7,  // 外向性 (eXtraversion)
+          A: 91.5,   // 協調性 (Agreeableness)
+          C: 95.2,   // 勤勉性 (Conscientiousness)
+          O: 100.8   // 開放性 (Openness to experience)
+        },
+        // 各ファセット（下位尺度）の平均値
         facet: {
-          H_Sincerity: 22.4, H_Fairness: 29.7, H_GreedAvoidance: 25.8, H_Modesty: 28.7,
-          E_Fearfulness: 26.3, E_Anxiety: 28.5, E_Dependence: 26.9, E_Sentimentality: 28.1,
-          X_Expressiveness: 26.1, X_SocialBoldness: 20.8, X_Sociability: 28.3, X_Liveliness: 25.5,
-          A_Forgiveness: 20.0, A_Gentleness: 23.3, A_Flexibility: 25.0, A_Patience: 23.2,
-          C_Organization: 22.2, C_Diligence: 23.4, C_Perfectionism: 26.7, C_Prudence: 23.0,
-          O_AestheticAppreciation: 25.8, O_Inquisitiveness: 24.7, O_Creativity: 21.2, O_Unconventionality: 29.1
+          // 誠実-謙虚性のファセット
+          H_Sincerity: 22.4,           // 率直さ（誠実さ）
+          H_Fairness: 29.7,            // 公正さ
+          H_GreedAvoidance: 25.8,      // 強欲回避
+          H_Modesty: 28.7,             // 謙虚さ
+          // 情動性のファセット
+          E_Fearfulness: 26.3,         // 恐れやすさ
+          E_Anxiety: 28.5,             // 不安傾向
+          E_Dependence: 26.9,          // 依存傾向
+          E_Sentimentality: 28.1,      // 感傷性
+          // 外向性のファセット
+          X_Expressiveness: 26.1,      // 表出性
+          X_SocialBoldness: 20.8,      // 社会的大胆さ
+          X_Sociability: 28.3,         // 社交性
+          X_Liveliness: 25.5,          // 活発さ
+          // 協調性のファセット
+          A_Forgiveness: 20.0,         // 赦しやすさ
+          A_Gentleness: 23.3,          // 温和さ
+          A_Flexibility: 25.0,         // 柔軟さ
+          A_Patience: 23.2,            // 我慢強さ
+          // 勤勉性のファセット
+          C_Organization: 22.2,        // 組織性
+          C_Diligence: 23.4,           // 勤勉さ
+          C_Perfectionism: 26.7,       // 完璧主義
+          C_Prudence: 23.0,            // 慎重さ
+          // 開放性のファセット
+          O_AestheticAppreciation: 25.8,  // 審美的感受性
+          O_Inquisitiveness: 24.7,        // 探究心
+          O_Creativity: 21.2,             // 創造性
+          O_Unconventionality: 29.1       // 非慣習性
         }
       },
       male: {
@@ -132,43 +175,64 @@
       }
     };
 
-    // 表示ラベル（日本語）
-    const domainLabelsJA = { H:'誠実‐謙虚性', E:'情動性', X:'外向性', A:'協調性', C:'勤勉性', O:'開放性' };
+    // ==========================================
+    // 日本語ラベルの定義
+    // ==========================================
+    
+    // 各ドメイン（因子）の日本語名
+    const domainLabelsJA = { 
+      H:'誠実‐謙虚性',  // Honesty-Humility
+      E:'情動性',        // Emotionality
+      X:'外向性',        // eXtraversion
+      A:'協調性',        // Agreeableness
+      C:'勤勉性',        // Conscientiousness
+      O:'開放性'         // Openness to experience
+    };
 
-    // ファセットの並び（日本語表記）→ レーダー & ノーム参照のキー
+    // ファセット（下位尺度）の並び順と日本語ラベル
+    // レーダーチャートとノーム参照で使用
     const facetOrder = [
+      // 誠実-謙虚性（H）の4ファセット
       { key:'H_Sincerity', label:'率直さ（誠実さ）', dom:'H' },
       { key:'H_Fairness', label:'公正さ', dom:'H' },
       { key:'H_GreedAvoidance', label:'強欲回避', dom:'H' },
       { key:'H_Modesty', label:'謙虚さ', dom:'H' },
 
+      // 情動性（E）の4ファセット
       { key:'E_Fearfulness', label:'恐れやすさ', dom:'E' },
       { key:'E_Anxiety', label:'不安傾向', dom:'E' },
       { key:'E_Dependence', label:'依存傾向', dom:'E' },
       { key:'E_Sentimentality', label:'感傷性', dom:'E' },
 
+      // 外向性（X）の4ファセット
       { key:'X_Expressiveness', label:'表出性', dom:'X' },
       { key:'X_SocialBoldness', label:'社会的大胆さ', dom:'X' },
       { key:'X_Sociability', label:'社交性', dom:'X' },
       { key:'X_Liveliness', label:'活発さ', dom:'X' },
 
+      // 協調性（A）の4ファセット
       { key:'A_Forgiveness', label:'赦しやすさ', dom:'A' },
       { key:'A_Gentleness', label:'温和さ', dom:'A' },
       { key:'A_Flexibility', label:'柔軟さ', dom:'A' },
       { key:'A_Patience', label:'我慢強さ', dom:'A' },
 
+      // 勤勉性（C）の4ファセット
       { key:'C_Organization', label:'組織性', dom:'C' },
       { key:'C_Diligence', label:'勤勉さ', dom:'C' },
       { key:'C_Perfectionism', label:'完璧主義', dom:'C' },
       { key:'C_Prudence', label:'慎重さ', dom:'C' },
 
+      // 開放性（O）の4ファセット
       { key:'O_AestheticAppreciation', label:'審美的感受性', dom:'O' },
       { key:'O_Inquisitiveness', label:'探究心', dom:'O' },
       { key:'O_Creativity', label:'創造性', dom:'O' },
       { key:'O_Unconventionality', label:'非慣習性', dom:'O' }
     ];
 
-    // ========== 項目テキスト ==========
+    // ==========================================
+    // HEXACO-60 質問項目（全60項目）
+    // ==========================================
+    // 各項目は5件法（1=全く当てはまらない 〜 5=とても当てはまる）で回答
     const itemTexts_ja = [
       "美術館に行くと，とても退屈してしまう。",
       "最後になってあわてないために，前もって計画を立てて物事の準備をする。",
@@ -234,29 +298,43 @@
 
     const itemTexts = itemTexts_ja;
 
-    // Likert ラベル（1..5）
+    // ==========================================
+    // Likert尺度のラベル（5件法）
+    // ==========================================
     const likertLabelsJA = [
-      '全く<br>当てはまらない',
-      'あまり<br>当てはまらない',
-      'どちらとも<br>言えない',
-      'やや<br>当てはまる',
-      'とても<br>当てはまる'
+      '全く<br>当てはまらない',      // 1点
+      'あまり<br>当てはまらない',    // 2点
+      'どちらとも<br>言えない',      // 3点
+      'やや<br>当てはまる',          // 4点
+      'とても<br>当てはまる'         // 5点
     ];
 
-    // 反転項目
-    const reverseItems = new Set([1,9,10,12,13,15,19,20,21,24,25,28,30,35,38,41,42,44,46,48,50,52,53,55,56,57,59,60]);
+    // ==========================================
+    // 逆転項目の定義
+    // ==========================================
+    // これらの項目は得点を反転させる必要がある（6 - 元の得点）
+    // 例：「美術館に行くと退屈」→低い得点ほど開放性が高い
+    const reverseItems = new Set([
+      1,9,10,12,13,15,19,20,21,24,25,28,30,35,38,41,42,44,46,48,50,52,53,55,56,57,59,60
+    ]);
 
-    // ドメイン
+    // ==========================================
+    // ドメイン（6因子）と項目番号のマッピング
+    // ==========================================
+    // 各ドメインは10項目で構成される
     const domainMap = {
-      'H': [6,12,18,24,30,36,42,48,54,60],
-      'E': [5,11,17,23,29,35,41,47,53,59],
-      'X': [4,10,16,22,28,34,40,46,52,58],
-      'A': [3,9,15,21,27,33,39,45,51,57],
-      'C': [2,8,14,20,26,32,38,44,50,56],
-      'O': [1,7,13,19,25,31,37,43,49,55]
+      'H': [6,12,18,24,30,36,42,48,54,60],  // 誠実-謙虚性
+      'E': [5,11,17,23,29,35,41,47,53,59],  // 情動性
+      'X': [4,10,16,22,28,34,40,46,52,58],  // 外向性
+      'A': [3,9,15,21,27,33,39,45,51,57],   // 協調性
+      'C': [2,8,14,20,26,32,38,44,50,56],   // 勤勉性
+      'O': [1,7,13,19,25,31,37,43,49,55]    // 開放性
     };
 
-    // ファセット（日本語表記 → 項目番号）
+    // ==========================================
+    // ファセット（24下位尺度）と項目番号のマッピング
+    // ==========================================
+    // 各ドメインは4つのファセットに分かれ、各ファセットは2〜4項目
     const facetMap = {
       'H': {
         '率直さ（誠実さ）': [6,30,54],
@@ -296,45 +374,148 @@
       }
     };
 
-    // ========== テスト（自己診断） ==========
+    // ==========================================
+    // 自己診断テスト（開発用）
+    // ==========================================
+    // 得点計算が正しく動作するか確認するためのテスト
     (function selfTests(){
       try {
         console.group('%cHEXACO-60 self-tests','color:#0a0');
+        
+        // 項目数が60であることを確認
         console.assert(itemTexts.length === 60, `Items length must be 60, got ${itemTexts.length}`);
-        for (const [dom, arr] of Object.entries(domainMap)) console.assert(arr.length === 10, `Domain ${dom} must have 10 items`);
+        
+        // 各ドメインが10項目であることを確認
+        for (const [dom, arr] of Object.entries(domainMap)) {
+          console.assert(arr.length === 10, `Domain ${dom} must have 10 items`);
+        }
+        
+        // ドメインマップが60項目すべてをカバーしていることを確認
         const allItems = Object.values(domainMap).flat();
         console.assert(new Set(allItems).size === 60, 'Domain map covers 60 unique items');
-        console.assert(facetOrder.every(f=>norms.total.facet.hasOwnProperty(f.key)), 'norms.total.facet has all keys in facetOrder');
-        console.assert(facetOrder.every(f=>facetMap[f.dom] && Object.keys(facetMap[f.dom]).includes(f.label)), 'facetMap contains all facet labels in facetOrder');
-        // All-3s => each domain sum = 30
+        
+        // ノームデータにすべてのファセットが含まれていることを確認
+        console.assert(
+          facetOrder.every(f=>norms.total.facet.hasOwnProperty(f.key)), 
+          'norms.total.facet has all keys in facetOrder'
+        );
+        
+        // ファセットマップにすべてのファセットラベルが含まれていることを確認
+        console.assert(
+          facetOrder.every(f=>facetMap[f.dom] && Object.keys(facetMap[f.dom]).includes(f.label)), 
+          'facetMap contains all facet labels in facetOrder'
+        );
+        
+        // 全項目に3点を回答した場合、各ドメインの合計が30になることを確認
         const all3 = Array(60).fill(3);
         const s3 = computeScores(all3);
-        Object.entries(s3.domains).forEach(([k,v])=>console.assert(v.sum===30, `All-3s ${k} sum should be 30, got ${v.sum}`));
-        // All-1s => expected using reverse counts
+        Object.entries(s3.domains).forEach(([k,v])=>
+          console.assert(v.sum===30, `All-3s ${dom} sum should be 30, got ${v.sum}`)
+        );
+        
+        // 全項目に1点を回答した場合、逆転項目を考慮した合計が正しいことを確認
         const all1 = Array(60).fill(1);
         const r1 = computeScores(all1);
         for (const [dom, nums] of Object.entries(domainMap)){
           const revCnt = nums.filter(n=>reverseItems.has(n)).length;
           const expected = (nums.length - revCnt)*1 + revCnt*5;
-          console.assert(r1.domains[dom].sum === expected, `All-1s ${dom} expected ${expected}, got ${r1.domains[dom].sum}`);
+          console.assert(
+            r1.domains[dom].sum === expected, 
+            `All-1s ${dom} expected ${expected}, got ${r1.domains[dom].sum}`
+          );
         }
-        // Facet check with All-1s
+        
+        // ファセットレベルでも同様の確認
         for (const [dom, fobj] of Object.entries(facetMap)){
           for (const [fname, nums] of Object.entries(fobj)){
             const revCnt = nums.filter(n=>reverseItems.has(n)).length;
             const expected = (nums.length - revCnt)*1 + revCnt*5;
-            console.assert(r1.facets[dom][fname].sum === expected, `All-1s ${dom}/${fname} expected ${expected}, got ${r1.facets[dom][fname].sum}`);
+            console.assert(
+              r1.facets[dom][fname].sum === expected, 
+              `All-1s ${dom}/${fname} expected ${expected}, got ${r1.facets[dom][fname].sum}`
+            );
           }
         }
+        
         console.groupEnd();
       } catch(e){
         console.error('Self-test error', e);
       }
     })();
 
-    // ========== ユーティリティ ==========
+    // ==========================================
+    // システム情報取得関数
+    // ==========================================
+    /**
+     * ブラウザとOSの情報を取得する関数
+     * @returns {Object} { browser: ブラウザ名, os: OS名, user_agent: 完全なユーザーエージェント文字列 }
+     * 
+     * navigator.userAgent から情報を抽出
+     */
+    function getSystemInfo() {
+      const ua = navigator.userAgent;
+      let browser = 'Unknown';
+      let os = 'Unknown';
+
+      // ブラウザの判定
+      if (ua.indexOf('Edg') > -1) browser = 'Edge';
+      else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+      else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+      else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+      else if (ua.indexOf('MSIE') > -1 || ua.indexOf('Trident') > -1) browser = 'IE';
+
+      // OSの判定
+      if (ua.indexOf('Win') > -1) os = 'Windows';
+      else if (ua.indexOf('Mac') > -1) os = 'macOS';
+      else if (ua.indexOf('Linux') > -1) os = 'Linux';
+      else if (ua.indexOf('Android') > -1) os = 'Android';
+      else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+
+      return { browser, os, user_agent: ua };
+    }
+
+    /**
+     * 日本時間（JST）で現在時刻を取得する関数
+     * @returns {string} YYYY/MM/DD HH:MM:SS 形式の日本時間文字列
+     * 
+     * タイムゾーンを 'Asia/Tokyo' に指定してフォーマット
+     */
+    function getJapanTime() {
+      return new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+    }
+
+    // ==========================================
+    // ユーティリティ関数
+    // ==========================================
+    
+    /**
+     * 配列を指定されたサイズに分割する関数
+     * @param {Array} arr - 分割する配列
+     * @param {number} size - 各チャンクのサイズ
+     * @returns {Array[]} 分割された配列の配列
+     * 
+     * 例: chunk([1,2,3,4,5], 2) → [[1,2], [3,4], [5]]
+     * 60項目を10項目ずつ6ページに分割する際に使用
+     */
     const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
-    const reverseScore = (raw) => 6 - raw; // raw: 1..5
+    
+    /**
+     * 逆転項目の得点を変換する関数
+     * @param {number} raw - 元の回答値（1-5の5件法）
+     * @returns {number} 変換後の得点（逆転項目の場合は6-raw）
+     * 
+     * 注：この関数は単純な反転のみ。実際の判定はcomputeScores内で行う
+     * 例: raw=1 → 6-1=5, raw=5 → 6-5=1
+     */
+    const reverseScore = (raw) => 6 - raw;
+    
+    /**
+     * 進捗バーを更新する関数
+     * @param {number} fraction - 進捗率（0.0〜1.0）
+     * 
+     * jsPsychの進捗バーの幅をパーセンテージで更新
+     * 例: fraction=0.5 → 50%
+     */
     const updateProgressBar = (fraction) => {
       const barInner = document.querySelector('#jspsych-progressbar-inner');
       if (barInner) {
@@ -343,65 +524,111 @@
       }
     };
 
+    // ==========================================
+    // 得点計算関数
+    // ==========================================
+    /**
+     * HEXACO-60の得点を計算する関数
+     * @param {number[]} responses - 60項目の回答（1-5の値の配列）
+     * @returns {Object} ドメインとファセットの得点情報
+     * 
+     * 処理の流れ：
+     * 1. 各項目について逆転項目かどうかを判定
+     * 2. 逆転項目の場合は6から引いた値を使用（6-回答値）
+     * 3. 各ドメイン（6因子）ごとに10項目の合計を計算
+     * 4. 各ファセット（24下位尺度）ごとに該当項目の合計を計算
+     */
     function computeScores(responses) {
+      // 指定された項目番号（1-60）の回答値を取得
       const get = (n) => responses[n-1];
-      const scoreOf = (n) => reverseItems.has(n) ? (6 - get(n)) : get(n); // 反転後の項目得点（1..5）
+      
+      // 逆転項目の場合は6-回答値、通常項目はそのまま
+      // 例：項目1（逆転項目）で回答が1の場合 → 6-1=5
+      const scoreOf = (n) => reverseItems.has(n) ? (6 - get(n)) : get(n);
 
+      // ==========================================
+      // ドメイン（6因子）レベルの得点計算
+      // ==========================================
       const domains = {};
       for (const [dom, nums] of Object.entries(domainMap)) {
+        // 各ドメインに属する10項目の得点を取得（逆転処理済み）
         const vals = nums.map(scoreOf);
-        const sum = vals.reduce((a,b)=>a+b,0); // 合計
+        // 10項目の合計を計算（最小10点〜最大50点）
+        const sum = vals.reduce((a,b)=>a+b,0);
         domains[dom] = { sum, items: nums };
       }
 
+      // ==========================================
+      // ファセット（24下位尺度）レベルの得点計算
+      // ==========================================
       const facets = {};
       for (const [dom, fobj] of Object.entries(facetMap)) {
         facets[dom] = {};
         for (const [facet, nums] of Object.entries(fobj)) {
+          // 各ファセットに属する項目の得点を取得（逆転処理済み）
           const vals = nums.map(scoreOf);
+          // 該当項目の合計を計算（項目数は2〜4）
           const sum = vals.reduce((a,b)=>a+b,0);
           facets[dom][facet] = { sum, items: nums };
         }
       }
+      
       return { domains, facets };
     }
 
-    // ========== 実験本体 ==========
+    // ==========================================
+    // jsPsych実験の初期化
+    // ==========================================
     const jsPsych = initJsPsych({
-      display_element: 'jspsych-target',
-      show_progress_bar: true,
-      auto_update_progress_bar: false
+      display_element: 'jspsych-target',     // 実験を表示するHTML要素のID
+      show_progress_bar: true,                // 進捗バーを表示
+      auto_update_progress_bar: false        // 進捗バーは手動更新（各ページで明示的に更新）
     });
 
+    // ==========================================
+    // 参加者ID・ファイル名の生成
+    // ==========================================
+    // OSFへのデータ保存用に一意なIDとファイル名を生成
+    const subject_id = jsPsych.randomization.randomID(10);  // 10文字のランダムID
+    const filename   = `${subject_id}.csv`;                  // CSV形式で保存
     
-    // ===== Datapipe: unique subject_id & filename =====
-    const subject_id = jsPsych.randomization.randomID(10);
-    const filename   = `${subject_id}.csv`;
+    // すべてのトライアルに追加されるメタデータ
     jsPsych.data.addProperties({
       subject_id,
-      timestamp_start: new Date().toISOString()
+      timestamp_start: new Date().toISOString()  // 実験開始時刻（ISO形式）
     });
-// 「Completion Progress」を「進捗状況」に置換（進捗バーが生成されたら処理）
-(function setProgressLabel(){
-  const setLabel = () => {
-    const span = document.querySelector('#jspsych-progressbar-container span');
-    if (span) {
-      span.innerHTML = '進捗状況';
-      return true;
-    }
-    return false;
-  };
-  if (!setLabel()) {
-    const mo = new MutationObserver((_, obs) => {
-      if (setLabel()) obs.disconnect();
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-  }
-})();
 
+    // ==========================================
+    // 進捗バーのラベルを日本語化
+    // ==========================================
+    // デフォルトの "Completion Progress" を「進捗状況」に変更
+    (function setProgressLabel(){
+      const setLabel = () => {
+        const span = document.querySelector('#jspsych-progressbar-container span');
+        if (span) {
+          span.innerHTML = '進捗状況';
+          return true;
+        }
+        return false;
+      };
+      // 進捗バーがまだ生成されていない場合は、DOMの変化を監視
+      if (!setLabel()) {
+        const mo = new MutationObserver((_, obs) => {
+          if (setLabel()) obs.disconnect();
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+      }
+    })();
+
+    // ==========================================
+    // 実験タイムラインの構築
+    // ==========================================
     const timeline = [];
 
-    // ウェルカム
+    // ------------------------------------------
+    // 1. ウェルカムページ
+    // ------------------------------------------
+    // 実験の説明と倫理的配慮を表示
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: `
@@ -425,49 +652,128 @@
       choices: ['はじめる']
     });
 
-    // 属性（年齢・性別のみ）
+    // ------------------------------------------
+    // 2. 属性情報の収集（年齢・性別）
+    // ------------------------------------------
+    // 性別は日本人ノームの選択に使用される
     timeline.push({
       type: jsPsychSurvey,
       survey_json: {
-        showQuestionNumbers: false,
+        showQuestionNumbers: false,  // 質問番号を非表示
         pages: [{
           name: 'demographics',
           elements: [
-            { type: 'text', name: 'age', title: '年齢', inputType: 'number', min: 0, max: 120, isRequired: true },
-            { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
+            { 
+              type: 'text', 
+              name: 'age', 
+              title: '年齢', 
+              inputType: 'number', 
+              min: 0, 
+              max: 120, 
+              isRequired: true 
+            },
+            { 
+              type: 'dropdown', 
+              name: 'gender', 
+              title: '性別', 
+              isRequired: true, 
+              choices: ['男性','女性','その他','未回答'] 
+            }
           ]
         }],
-        pageNextText: '次へ', pagePrevText: '戻る', completeText: '次へ'
+        pageNextText: '次へ', 
+        pagePrevText: '戻る', 
+        completeText: '次へ'
       },
       on_finish: (data) => {
+        // 回答データをjsPsychのグローバルデータに追加
         const r = data.response || {};
-        jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
+        jsPsych.data.addProperties({ 
+          age: r.age || '', 
+          gender: r.gender || '' 
+        });
       }
     });
 
-    // Likert（10問×6ページ）
-    const totalItems = itemTexts.length;
-    const perPage = 10;
-    const pages = chunk(itemTexts, perPage);
+    // ------------------------------------------
+    // 3. HEXACO-60 質問項目（10問×6ページ）
+    // ------------------------------------------
+    const totalItems = itemTexts.length;  // 60項目
+    const perPage = 10;                    // 1ページあたり10項目
+    const pages = chunk(itemTexts, perPage);  // 6ページに分割
+    
+    // システム情報とタイムスタンプを取得
+    const sysInfo = getSystemInfo();
+    const startTime = getJapanTime();
+    const startTimestamp = Date.now();
 
     pages.forEach((pageItems, pageIdx) => {
-      const start = pageIdx * perPage + 1;
-      const end = Math.min(totalItems, (pageIdx + 1) * perPage);
-      const isLastPage = pageIdx === pages.length - 1;
+      const start = pageIdx * perPage + 1;  // このページの最初の項目番号
+      const end = Math.min(totalItems, (pageIdx + 1) * perPage);  // このページの最後の項目番号
+      const isLastPage = pageIdx === pages.length - 1;  // 最終ページかどうか
 
       timeline.push({
         type: jsPsychSurveyLikert,
         preamble: `<div class="card"><b>質問 ${start}–${end} / ${totalItems}</b><div class="small muted">各項目に対して最も近い選択肢を選んでください。</div></div>`,
-        randomize_question_order: false,
-        button_label: isLastPage ? '結果を見る' : '次へ',
+        randomize_question_order: false,  // 項目順をランダム化しない
+        button_label: isLastPage ? '結果を見る' : '次へ',  // 最終ページのみボタンラベルを変更
         questions: pageItems.map((txt, i) => ({
-          prompt: `<div class="note">${txt}</div>`,
-          labels: likertLabelsJA,
-          required: true,
-          name: `Q${start + i}`
+          prompt: `<div class="note">${txt}</div>`,  // 質問文
+          labels: likertLabelsJA,  // 5件法のラベル
+          required: true,  // 必須回答
+          name: `Q${start + i}`  // 質問名（Q1〜Q60）
         })),
-        on_finish: () => {
+        on_finish: (data) => {
+          // ==========================================
+          // 各回答に詳細なメタデータを追加
+          // ==========================================
+          const resp = data.response || {};
+          
+          // このページで回答された項目番号のリスト
+          const itemsOnPage = [];
+          for (let i = start; i <= end; i++) {
+            itemsOnPage.push(i);
+          }
+          
+          // 各項目について、raw（素点）、scored（換算後）、reversed（逆転フラグ）を記録
+          Object.entries(resp).forEach(([qName, idx]) => {
+            const itemNum = parseInt(qName.replace('Q', ''), 10);  // Q1 → 1
+            const raw = Number(idx) + 1;  // 0-4 → 1-5
+            const isReversed = reverseItems.has(itemNum);
+            const scored = isReversed ? (6 - raw) : raw;
+            
+            // CSVに記録される変数名
+            data[`${qName}_raw`] = raw;           // 素点（1-5）
+            data[`${qName}_scored`] = scored;     // 換算後の得点（逆転処理済み）
+            data[`${qName}_reversed`] = isReversed ? 1 : 0;  // 逆転項目フラグ（1=逆転、0=通常）
+            data[`${qName}_item_number`] = itemNum;  // 項目番号
+          });
+          
+          // ==========================================
+          // システム情報とタイムスタンプの記録
+          // ==========================================
+          data.browser = sysInfo.browser;
+          data.os = sysInfo.os;
+          data.user_agent = sysInfo.user_agent;
+          data.start_time_jst = startTime;
+          data.start_timestamp = startTimestamp;
+          data.end_time_jst = getJapanTime();
+          data.end_timestamp = Date.now();
+          
+          // 所要時間の計算
+          const duration_ms = data.end_timestamp - startTimestamp;
+          data.total_duration_ms = duration_ms;
+          data.total_duration_sec = (duration_ms / 1000).toFixed(2);
+          data.total_duration_min = (duration_ms / 60000).toFixed(2);
+          
+          // ページ情報
+          data.page_number = pageIdx + 1;
+          data.page_items = itemsOnPage.join(',');
+          
+          // 進捗バーを更新（現在の完了項目数 / 全項目数）
           updateProgressBar(end / totalItems);
+          
+          // 最終ページ以外はページトップにスクロール
           if (!isLastPage) {
             window.scrollTo(0, 0);
           }
@@ -475,31 +781,37 @@
       });
     });
 
-    // === Datapipe: 公式 Pipe プラグインで OSF に保存 ===
+    // ------------------------------------------
+    // 4. データ保存（OSFへアップロード）
+    // ------------------------------------------
+    // jsPsych Pipeプラグインを使用してOSFにCSVデータを保存
     const save_data = {
       type: jsPsychPipe,
-      action: 'save',
-      experiment_id: 'TY0B485foupj',
-      filename: filename,
+      action: 'save',  // 保存アクション
+      experiment_id: 'TY0B485foupj',  // OSFのExperiment ID
+      filename: filename,  // 保存するファイル名（subject_id.csv）
       wait_message: `
         <div class="card">
           <h3>結果をまとめています...</h3>
           <p class="small muted">数秒お待ちください。</p>
         </div>
       `,
-      data_string: () => jsPsych.data.get().csv(),
+      data_string: () => jsPsych.data.get().csv(),  // CSV形式でデータを取得
       on_start: () => {
+        // 実験終了時刻を記録
         jsPsych.data.addProperties({ timestamp_end: new Date().toISOString() });
         console.log('[HEXACO-60] Saving data via jsPsych Pipe:', { filename, experiment_id: 'TY0B485foupj' });
-        updateProgressBar(1);
+        updateProgressBar(1);  // 進捗バーを100%に
       },
       on_finish: (data) => {
+        // 保存結果を確認
         const result = data?.result || {};
         if (data?.success && !result.error) {
           console.log('[HEXACO-60] Data saved to OSF successfully:', result);
         } else {
           console.warn('[HEXACO-60] OSF save reported error:', result.error);
         }
+        // 保存結果をグローバル変数に保存（結果画面で参照）
         window.__pipe_result = {
           success: data?.success === true && !result.error,
           error: result.error || null,
@@ -508,37 +820,51 @@
       }
     };
     
-    // 保存トライアルを直接タイムラインに追加
+    // タイムラインにデータ保存トライアルを追加
     timeline.push(save_data);
-    
-    // 保存結果に関わらず結果を表示（常に実行される）
 
-    // 保存成功後に結果（チャート）を表示
+    // ------------------------------------------
+    // 5. 結果表示（レーダーチャート）
+    // ------------------------------------------
+    // 保存の成否に関わらず、結果画面を表示
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: () => {
-        updateProgressBar(1);
-        // Likert の全レスポンス取得（0ベース→+1）
+        updateProgressBar(1);  // 進捗バーを100%に
+        
+        // ==========================================
+        // 回答データの取得と変換
+        // ==========================================
+        // jsPsychに保存されたLikert回答を取り出す
+        // 注：Likertプラグインは0-4で保存するため、+1して1-5に変換
         const trials = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
         const responses = new Array(60).fill(null);
         trials.forEach(tr => {
           const resp = tr.response || {};
           Object.entries(resp).forEach(([name, idx]) => {
             const n = parseInt(name.replace('Q',''), 10);
-            responses[n-1] = Number(idx) + 1;
+            responses[n-1] = Number(idx) + 1;  // 0-4 → 1-5
           });
         });
 
+        // 未回答項目がある場合はエラーメッセージを表示
         if (responses.some(v => v === null)) {
           return `<div class=\"card\"><p>未回答の項目があります。<b>すべての項目</b>に回答してください。</p></div>`;
         }
 
+        // ==========================================
+        // 得点計算（ドメインとファセット）
+        // ==========================================
         const scored = computeScores(responses);
+        
+        // ドメインの得点を表形式で整形
         const domRows = Object.entries(scored.domains).map(([dom, v]) => `
           <tr><td>${domainLabelsJA[dom]} (${dom})</td><td style=\"text-align:right\">${v.sum}</td></tr>
         `).join('');
 
-        // 保存ステータスの確認
+        // ==========================================
+        // データ保存ステータスの確認
+        // ==========================================
         let saveNote = '';
         try {
           const pr = window.__pipe_result;
@@ -554,7 +880,9 @@
           saveNote = `<div class="small danger">⚠ データ保存の状態を確認できませんでした。</div>`;
         }
 
-        // レーダー用キャンバス
+        // ==========================================
+        // 結果画面のHTML生成
+        // ==========================================
         return `
           <div class="card">
             <h3>回答ありがとうございました。</h3>
@@ -585,65 +913,115 @@
       },
       choices: ['終了'],
       on_load: () => {
+        // ページ読み込み後、少し下にスクロールして結果を見やすくする
         setTimeout(() => {
-          // 現在の位置から下にスクロール
           window.scrollBy({ top: 300, behavior: 'smooth' });
         }, 150);
-        // responses 再構築
+        
+        // ==========================================
+        // 回答データの再取得
+        // ==========================================
         const trials = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
         const responses = new Array(60).fill(null);
         trials.forEach(tr => {
           const resp = tr.response || {};
           Object.entries(resp).forEach(([name, idx]) => {
             const n = parseInt(name.replace('Q',''), 10);
-            responses[n-1] = Number(idx) + 1;
+            responses[n-1] = Number(idx) + 1;  // 0-4 → 1-5
           });
         });
-        if (responses.some(v => v === null)) return;
+        if (responses.some(v => v === null)) return;  // 未回答があれば処理を中断
 
-        // 参加者の性別に応じてノームを選択
+        // ==========================================
+        // 性別に応じた日本人ノームの選択
+        // ==========================================
         const meta = jsPsych.data.get().values().find(v => v.gender !== undefined) || {};
         const g = (meta.gender || '').trim();
-        let normSet = norms.total; let normLabel = '日本人平均（全体）';
-        if (g === '男性') { normSet = norms.male; normLabel = '日本人平均（男性）'; }
-        else if (g === '女性') { normSet = norms.female; normLabel = '日本人平均（女性）'; }
+        let normSet = norms.total; 
+        let normLabel = '日本人平均（全体）';
+        if (g === '男性') { 
+          normSet = norms.male; 
+          normLabel = '日本人平均（男性）'; 
+        } else if (g === '女性') { 
+          normSet = norms.female; 
+          normLabel = '日本人平均（女性）'; 
+        }
 
+        // 得点計算
         const { domains, facets } = computeScores(responses);
 
-        // Chart colors depending on theme
+        // ==========================================
+        // チャートの配色設定（ダークモード対応）
+        // ==========================================
         const isDark = document.body.classList.contains('dark');
         const txtColor = isDark ? '#ffffff' : '#000000';
         const gridColor = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
 
-        // ===== 因子レーダー =====
+        // ==========================================
+        // ドメインレーダーチャート（6因子）
+        // ==========================================
         const order = ['H','E','X','A','C','O'];
         const labelsDom = order.map(k => `${domainLabelsJA[k]} (${k})`);
         const selfDom = order.map(k => domains[k].sum);
         const normDom = order.map(k => normSet.domain[k]);
         const ctxD = document.getElementById('hexaco-radar-domain');
-        // High-contrast dataset colors to avoid invisible lines (esp. dark mode)
+        
+        // 配色パレット（ダークモードでは明るい色を使用）
         const palette = isDark
           ? { selfBorder:'#4FC3F7', selfFill:'rgba(79,195,247,0.18)', normBorder:'#FFB74D', normFill:'rgba(255,183,77,0.18)' }
           : { selfBorder:'#1976D2', selfFill:'rgba(25,118,210,0.15)', normBorder:'#D32F2F', normFill:'rgba(211,47,47,0.15)' };
+        
         if (ctxD) new window.Chart(ctxD, {
           type: 'radar',
           data: {
             labels: labelsDom,
             datasets: [
-              { label: '自分', data: selfDom, pointRadius: 3, fill: true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 2.5, tension: 0 },
-              { label: `${normLabel}`, data: normDom, pointRadius: 3, fill: true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 2.5, tension: 0 }
+              { 
+                label: '自分', 
+                data: selfDom, 
+                pointRadius: 3, 
+                fill: true, 
+                borderColor: palette.selfBorder, 
+                backgroundColor: palette.selfFill, 
+                borderWidth: 2.5, 
+                tension: 0 
+              },
+              { 
+                label: `${normLabel}`, 
+                data: normDom, 
+                pointRadius: 3, 
+                fill: true, 
+                borderColor: palette.normBorder, 
+                backgroundColor: palette.normFill, 
+                borderWidth: 2.5, 
+                tension: 0 
+              }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { r: { min: 0, max: 160, ticks: { color: txtColor }, pointLabels: { color: txtColor }, grid: { color: gridColor }, angleLines: { color: gridColor } } },
-            plugins: { legend: { position: 'bottom', labels: { color: txtColor } }, tooltip: { enabled: true } },
+            scales: { 
+              r: { 
+                min: 0, 
+                max: 160,  // ノームの最大値を考慮
+                ticks: { color: txtColor }, 
+                pointLabels: { color: txtColor }, 
+                grid: { color: gridColor }, 
+                angleLines: { color: gridColor } 
+              } 
+            },
+            plugins: { 
+              legend: { position: 'bottom', labels: { color: txtColor } }, 
+              tooltip: { enabled: true } 
+            },
             elements: { line: { borderWidth: 2.5, tension: 0 } }
           }
         });
 
-        // ===== ファセットレーダー（24軸） =====
+        // ==========================================
+        // ファセットレーダーチャート（24下位尺度）
+        // ==========================================
         const labelsFacet = facetOrder.map(f => `${f.label}`);
         const selfFacet = facetOrder.map(f => {
           const domFacets = facets[f.dom];
@@ -651,28 +1029,37 @@
           return match ? match[1].sum : 0;
         });
         const normFacet = facetOrder.map(f => normSet.facet[f.key]);
-        // ==== Debug tables (domains & facets, with reverse flags) ====
+        
+        // ==========================================
+        // デバッグ用：採点内訳テーブルの生成
+        // ==========================================
         try {
           const scoreOf = (n) => reverseItems.has(n) ? (6 - responses[n-1]) : responses[n-1];
+          
+          // テーブルHTML生成用のヘルパー関数
           const makeTable = (headers, rows) => {
             const ths = headers.map(h=>`<th>${h}</th>`).join('');
             const trs = rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
             return `<table style=\"width:100%; font-size:12px\"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
           };
+          
+          // ドメインごとの採点内訳
           let domHtml = '';
           const order = ['H','E','X','A','C','O'];
           order.forEach(dom => {
             const items = domainMap[dom];
             const rows = items.map(n=>{
-              const raw = responses[n-1];
-              const rev = reverseItems.has(n);
-              const sc = scoreOf(n);
+              const raw = responses[n-1];  // 素点（1-5）
+              const rev = reverseItems.has(n);  // 逆転項目かどうか
+              const sc = scoreOf(n);  // 換算後の得点
               return [n, raw, rev?'<span style=\"color:#b00\">R</span>':'', sc];
             });
             const sum = rows.reduce((a,b)=>a+Number(b[3]),0);
             rows.push(['合計','','',`<b>${sum}</b>`]);
             domHtml += `<h5 style=\"margin-top:8px\">${domainLabelsJA[dom]} (${dom})</h5>${makeTable(['項目','素点','R','換算後'], rows)}`;
           });
+          
+          // ファセットごとの採点内訳
           let facetHtml = '';
           facetOrder.forEach(f => {
             const nums = (facetMap[f.dom]||{})[f.label]||[];
@@ -686,36 +1073,73 @@
             rows.push(['合計','','',`<b>${sum}</b>`]);
             facetHtml += `<h5 style=\"margin-top:8px\">${f.label}</h5>${makeTable(['項目','素点','R','換算後'], rows)}`;
           });
+          
+          // デバッグ用HTMLを挿入
           const dbg = document.getElementById('debug-content');
           if (dbg) dbg.innerHTML = `<div class=\"radar-wrap\"><h4>ドメイン内訳</h4>${domHtml}<h4 style=\"margin-top:12px\">ファセット内訳</h4>${facetHtml}</div>`;
-        } catch(e){ console.warn('debug table render failed', e); }
+        } catch(e){ 
+          console.warn('debug table render failed', e); 
+        }
 
+        // ファセットレーダーチャートの描画
         const ctxF = document.getElementById('hexaco-radar-facet');
         if (ctxF) new window.Chart(ctxF, {
           type: 'radar',
           data: {
             labels: labelsFacet,
             datasets: [
-              { label: '自分', data: selfFacet, pointRadius: 2, fill: true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 1.8, tension: 0 },
-              { label: `${normLabel}`, data: normFacet, pointRadius: 2, fill: true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 1.8, tension: 0 }
+              { 
+                label: '自分', 
+                data: selfFacet, 
+                pointRadius: 2, 
+                fill: true, 
+                borderColor: palette.selfBorder, 
+                backgroundColor: palette.selfFill, 
+                borderWidth: 1.8, 
+                tension: 0 
+              },
+              { 
+                label: `${normLabel}`, 
+                data: normFacet, 
+                pointRadius: 2, 
+                fill: true, 
+                borderColor: palette.normBorder, 
+                backgroundColor: palette.normFill, 
+                borderWidth: 1.8, 
+                tension: 0 
+              }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { r: { min: 0, max: 32, ticks: { display: false, color: txtColor }, pointLabels: { color: txtColor }, grid: { color: gridColor }, angleLines: { color: gridColor } } },
-            plugins: { legend: { position: 'bottom', labels: { color: txtColor } }, tooltip: { enabled: true } },
+            scales: { 
+              r: { 
+                min: 0, 
+                max: 32,  // ファセットの最大値を考慮
+                ticks: { display: false, color: txtColor },  // 数値ラベルは非表示
+                pointLabels: { color: txtColor }, 
+                grid: { color: gridColor }, 
+                angleLines: { color: gridColor } 
+              } 
+            },
+            plugins: { 
+              legend: { position: 'bottom', labels: { color: txtColor } }, 
+              tooltip: { enabled: true } 
+            },
             elements: { line: { borderWidth: 1.8, tension: 0 } }
           }
         });
       },
       on_finish: function() {
-        // 結果画面から終了したらトップに戻る
+        // 実験終了後、トップページに遷移
         window.location.href = 'https://mshrymgc.github.io/epp_scales/';
       }
     });
 
-    // 実行
+    // ==========================================
+    // 実験の実行
+    // ==========================================
     jsPsych.run(timeline);
   })();
   </script>

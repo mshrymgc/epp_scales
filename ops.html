@@ -160,6 +160,85 @@
     auto_update_progress_bar: false
   });
 
+  // ==========================================
+  // システム情報・時間情報の取得と記録
+  // ==========================================
+  
+  /**
+   * ブラウザとOS情報を取得する関数
+   * @returns {Object} { browser, os, userAgent }
+   */
+  const getSystemInfo = () => {
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    let os = 'Unknown';
+    
+    // ブラウザの判定
+    if (ua.indexOf('Firefox') > -1) {
+      browser = 'Firefox';
+    } else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) {
+      browser = 'Opera';
+    } else if (ua.indexOf('Trident') > -1) {
+      browser = 'Internet Explorer';
+    } else if (ua.indexOf('Edge') > -1 || ua.indexOf('Edg') > -1) {
+      browser = 'Edge';
+    } else if (ua.indexOf('Chrome') > -1) {
+      browser = 'Chrome';
+    } else if (ua.indexOf('Safari') > -1) {
+      browser = 'Safari';
+    }
+    
+    // OSの判定
+    if (ua.indexOf('Win') > -1) {
+      os = 'Windows';
+    } else if (ua.indexOf('Mac') > -1) {
+      os = 'macOS';
+    } else if (ua.indexOf('Linux') > -1) {
+      os = 'Linux';
+    } else if (ua.indexOf('Android') > -1) {
+      os = 'Android';
+    } else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) {
+      os = 'iOS';
+    }
+    
+    return { browser, os, userAgent: ua };
+  };
+  
+  /**
+   * 日本時間（JST）で現在時刻を取得する関数
+   * @returns {string} 日時文字列（日本時間）
+   */
+  const getJapanTime = () => {
+    return new Date().toLocaleString('ja-JP', { 
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+  
+  // 実験開始時刻を記録（ミリ秒単位のタイムスタンプ）
+  const experimentStartTime = Date.now();
+  
+  // システム情報を取得
+  const systemInfo = getSystemInfo();
+  
+  // 開始時刻（日本時間）を記録
+  const startTimeJST = getJapanTime();
+  
+  // これらの情報をjsPsychのデータに追加
+  jsPsych.data.addProperties({
+    browser: systemInfo.browser,
+    os: systemInfo.os,
+    user_agent: systemInfo.userAgent,
+    start_time_jst: startTimeJST,
+    start_timestamp: experimentStartTime
+  });
+
   setProgressLabelToJapanese();
   injectResultStyles();
 
@@ -403,6 +482,11 @@
         pageNextText: '次へ',
         completeText: isLastPage ? '結果を見る' : '次へ'
       },
+      // データ記録用: このページで回答した項目のリストを保存
+      data: {
+        page_number: pageIndex,
+        page_items: items.map(it => `${it.domain}${it.id}`).join(',')
+      },
       on_load: () => {
         debugLog('Loaded survey page', { pageIndex, pageStart, pageEnd });
         updateProgressBar(pageEnd / TOTAL_ITEMS);
@@ -428,6 +512,23 @@
       stimulus: () => {
         const summary = computeSummary();
         lastSummary = summary;
+        
+        // 終了時刻と所要時間を計算
+        const endTimeJST = getJapanTime();
+        const experimentEndTime = Date.now();
+        const totalDurationMs = experimentEndTime - experimentStartTime;
+        const totalDurationSec = Math.round(totalDurationMs / 1000);
+        const totalDurationMin = (totalDurationSec / 60).toFixed(2);
+        
+        // これらの情報をjsPsychのデータに追加
+        jsPsych.data.addProperties({
+          end_time_jst: endTimeJST,
+          end_timestamp: experimentEndTime,
+          total_duration_ms: totalDurationMs,
+          total_duration_sec: totalDurationSec,
+          total_duration_min: totalDurationMin
+        });
+        
         return createResultsHtml(summary);
       },
       choices: ['終了'],

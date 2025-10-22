@@ -7,23 +7,117 @@
   <link rel="stylesheet" href="./dist/jspsych.css" />
   <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif; }
-    .note { font-size: 0.95rem; color: #333; line-height: 1.6; }
-    .small { font-size: 0.85rem; }
-    .muted { color:#666 }
-    .footer { margin-top: 2rem; font-size: .8rem; color:#666 }
-    .jspsych-content { max-width: 1150px; }
-    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem; }
-    .grid { display:grid; gap:1rem; }
-    .chart-wrap { position:relative; width:100%; max-width:600px; height:50vh; max-height:500px; margin:0 auto; }
-    .chart-wrap.facet { max-width:750px; height:70vh; max-height:700px; }
-    .chart-wrap canvas { display:block; margin:0 auto; }
-    table { border-collapse:collapse; width:100%; }
-    th, td { padding:0.4rem 0.3rem; border-bottom:1px solid #eee; }
-    .jspsych-survey-likert-opt label { cursor: help; position: relative; }
-    .jspsych-survey-likert-opt label:hover::after { content: attr(data-label); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.5rem 0.8rem; border-radius: 4px; white-space: nowrap; font-size: 0.9rem; z-index: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-    /* Fallback tooltip style matching PANAS implementation: apply to inner label span when present */
-    .likert-label-tooltip { position: relative; }
+    /* ==========================================
+       基本レイアウト
+       ========================================== */
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+    }
+
+    .jspsych-content {
+      max-width: 1150px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    /* ==========================================
+       テキストと注記
+       ========================================== */
+    .note {
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .small {
+      font-size: 0.85rem;
+    }
+
+    .muted {
+      color: #666;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    /* ==========================================
+       グラフコンテナ
+       ========================================== */
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      height: 50vh;
+      max-height: 500px;
+      margin: 0 auto;
+    }
+
+    .chart-wrap.facet {
+      max-width: 750px;
+      height: 70vh;
+      max-height: 700px;
+    }
+
+    .chart-wrap canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* ==========================================
+       テーブル
+       ========================================== */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      padding: 0.4rem 0.3rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* ==========================================
+       リッカートラベル用ツールチップ
+       ========================================== */
+    .jspsych-survey-likert-opt label {
+      cursor: help;
+      position: relative;
+    }
+
+    .jspsych-survey-likert-opt label:hover::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 0.5rem 0.8rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      z-index: 1;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .likert-label-tooltip {
+      position: relative;
+    }
+
     .likert-label-tooltip::after {
       content: attr(data-tooltip);
       position: absolute;
@@ -41,9 +135,25 @@
       transition: opacity 0.15s ease;
       z-index: 1000;
     }
-    .likert-label-tooltip:hover::after { opacity: 1; }
-    .jspsych-progressbar-container .jspsych-progressbar-text { visibility: hidden; position: relative; }
-    .jspsych-progressbar-container .jspsych-progressbar-text::after { content: "進捗状況"; visibility: visible; position: absolute; left: 0; }
+
+    .likert-label-tooltip:hover::after {
+      opacity: 1;
+    }
+
+    /* ==========================================
+       進捗バー
+       ========================================== */
+    .jspsych-progressbar-container .jspsych-progressbar-text {
+      visibility: hidden;
+      position: relative;
+    }
+
+    .jspsych-progressbar-container .jspsych-progressbar-text::after {
+      content: '進捗状況';
+      visibility: visible;
+      position: absolute;
+      left: 0;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./dist/jspsych.js"></script>
@@ -55,222 +165,1152 @@
 <body>
   <div id="jspsych-target"></div>
   <script>
-(function(){
-  const jsPsych = window.jsPsychModule.initJsPsych({ display_element: 'jspsych-target', show_progress_bar: true, auto_update_progress_bar: false });
+(() => {
+  // ==========================================
+  // 0. jsPsych の初期化と基本設定
+  // ==========================================
+  // 進捗バーのラベルテキスト
+  const PROGRESS_LABEL_TEXT = '進捗状況';
   
-  // 「Completion Progress」を「進捗状況」に置換（進捗バーが生成されたら処理）
-  (function setProgressLabel(){
-    const setLabel = () => {
+  // BFI-2-S-Jの項目数（30項目）
+  const TOTAL_ITEMS = 30;
+  
+  // Big Five のドメイン（5因子）の順序
+  // E=外向性, A=協調性, C=勤勉性, N=神経症傾向, O=開放性
+  const DOMAIN_ORDER = ['E', 'A', 'C', 'N', 'O'];
+  
+  // 15ファセット（下位尺度）の順序
+  const FACET_ORDER = [
+    'E：社交性', 'E：自己主張性', 'E：活力',
+    'A：思いやり', 'A：敬意', 'A：信用',
+    'C：秩序', 'C：生産性', 'C：責任感',
+    'N：不安', 'N：抑うつ', 'N：情緒不安定性',
+    'O：美的感性', 'O：知的好奇心', 'O：創造的想像力'
+  ];
+  
+  // ページ分割の設定（3ページ：12項目、12項目、6項目）
+  const PAGE_GROUPS = [
+    Array.from({ length: 12 }, (_, i) => i + 1),   // Q1-Q12
+    Array.from({ length: 12 }, (_, i) => i + 13),  // Q13-Q24
+    Array.from({ length: 6 }, (_, i) => i + 25)    // Q25-Q30
+  ];
+  
+  // Likertスケールのラベル（5件法）
+  const LIKERT_LABELS = ['全くあてはまらない', 'あてはまらない', 'どちらかともいえない', 'あてはまる', 'とてもよくあてはまる'];
+  
+  // システム情報とセッション開始時刻を記録
+  const SYSTEM_INFO = detectSystemInfo();
+  const SESSION_START = Date.now();
+  const START_TIME_JST = formatJst(new Date(SESSION_START));
+  
+  // ==========================================
+  // デバッグ用ログ関数
+  // ==========================================
+  // DEBUG変数がtrueの場合のみコンソールにログを出力する補助関数
+  // 開発時のデバッグに使用し、本番運用時はDEBUG=falseで無効化できます
+  const DEBUG = false; // trueにするとデバッグログが有効化される
+  const debugLog = (...args) => { if (DEBUG) console.log('[BFI-2-S-J]', ...args); };
+
+  // ==========================================
+  // jsPsych実験の初期化
+  // ==========================================
+  const jsPsych = window.jsPsychModule.initJsPsych({
+    display_element: 'jspsych-target',     // 実験を表示するHTML要素
+    show_progress_bar: true,                // 進捗バーを表示
+    auto_update_progress_bar: false        // 進捗バーは手動更新
+  });
+
+  // ==========================================
+  // グローバルデータにシステム情報を追加
+  // ==========================================
+  jsPsych.data.addProperties({
+    start_timestamp: SESSION_START,         // 開始時刻（Unixタイムスタンプ）
+    start_time_jst: START_TIME_JST,         // 開始時刻（JST形式）
+    browser: SYSTEM_INFO.browser,           // ブラウザ名
+    os: SYSTEM_INFO.os,                     // OS名
+    user_agent: SYSTEM_INFO.userAgent       // ユーザーエージェント文字列
+  });
+
+  // 進捗バーのラベルを日本語化
+  setProgressLabelToJapanese();
+  // Likertラベルにツールチップを設定
+  startLikertTooltipObserver();
+
+  // 参加者IDの生成
+  const subjectId = jsPsych.randomization.randomID(10);
+  jsPsych.data.addProperties({ subject_id: subjectId });
+
+  // ==========================================
+  // タイムラインの構築と実行
+  // ==========================================
+  const timeline = [
+    createIntroTrial(),           // 1. イントロページ
+    createDemographicsTrial(),    // 2. 属性情報（年齢・性別）
+    ...PAGE_GROUPS.map((group, index) => createSurveyPage(group, index)),  // 3-5. 質問ページ（3ページ）
+    createSaveTrial(subjectId),   // 6. データ保存
+    createResultsTrial()          // 7. 結果表示
+  ];
+
+  jsPsych.run(timeline);
+
+  // ==========================================
+  // 1. データ定義
+  // ==========================================
+  // BFI-2-S-Jの30項目（日本語版）
+  const ITEMS = [
+    '無口な方だ。',
+    '思いやりがあり，優しい。',
+    '行き当たりばったりな方だ。',
+    '多くの悩みごとを抱えている。',
+    '芸術，音楽，文学に魅了されている。',
+    '上に立つ方で，リーダーとして活動する。',
+    '他人を見下すことがある。',
+    'なかなか作業に取り掛かることができない。',
+    '憂うつになり，落胆する方だ。',
+    '抽象的な知識にはほとんど関心がない。',
+    '活力にあふれている。',
+    '人々のいちばん良いところを思い浮かべる。',
+    'ちゃんとしていて，いつも周りから当てにされる。',
+    '情緒が安定しており，簡単には取り乱さない。',
+    '個性的で，新しいアイディアを思いつく。',
+    '積極的で，社交的である。',
+    '冷淡で思いやりに欠けることがある。',
+    '物事をきれいに揃えたりまとめたりする。',
+    'リラックスしていて，ストレスにうまく対処している。',
+    '芸術的関心があまりない。',
+    '他の人にリーダーシップを発揮してもらうほうが良いと思う。',
+    '礼儀正しく，他人に敬意をもって接する。',
+    '根気強く，与えられた課題が終わるまで取り組む。',
+    '安心感を抱いており，心地よい。',
+    '考え方が複雑で，深く考える人間だ。',
+    '他の人と比べて活発ではない。',
+    '他人の欠点を見つけ出す方だ。',
+    '少し不注意なところがある。',
+    '神経質で，感情的になりやすい。',
+    '創造性がほとんどない。'
+  ];
+
+  // ==========================================
+  // 逆転項目の定義
+  // ==========================================
+  // これらの項目は得点を反転させる必要がある（6 - 元の得点）
+  // 例：項目1「無口な方だ」→ 低い得点ほど外向性が高い
+  const REVERSED_ITEMS = new Set([1, 3, 7, 8, 10, 14, 17, 19, 20, 21, 24, 26, 27, 28, 30]);
+  
+  // ==========================================
+  // ドメイン（5因子）と項目番号のマッピング
+  // ==========================================
+  // 各ドメインは6項目で構成される
+  const DOMAINS = {
+    E: [1, 6, 11, 16, 21, 26],   // 外向性 (Extraversion)
+    A: [2, 7, 12, 17, 22, 27],   // 協調性 (Agreeableness)
+    C: [3, 8, 13, 18, 23, 28],   // 勤勉性 (Conscientiousness)
+    N: [4, 9, 14, 19, 24, 29],   // 神経症傾向 (Neuroticism)
+    O: [5, 10, 15, 20, 25, 30]   // 開放性 (Openness)
+  };
+  
+  // ==========================================
+  // ファセット（15下位尺度）と項目番号のマッピング
+  // ==========================================
+  // 各ファセットは2項目で構成される
+  const FACETS = {
+    // 外向性（E）の3ファセット
+    'E：社交性': [1, 16],
+    'E：自己主張性': [6, 21],
+    'E：活力': [11, 26],
+    // 協調性（A）の3ファセット
+    'A：思いやり': [2, 17],
+    'A：敬意': [7, 22],
+    'A：信用': [12, 27],
+    // 勤勉性（C）の3ファセット
+    'C：秩序': [3, 18],
+    'C：生産性': [8, 23],
+    'C：責任感': [13, 28],
+    // 神経症傾向（N）の3ファセット
+    'N：不安': [4, 19],
+    'N：抑うつ': [9, 24],
+    'N：情緒不安定性': [14, 29],
+    // 開放性（O）の3ファセット
+    'O：美的感性': [5, 20],
+    'O：知的好奇心': [10, 25],
+    'O：創造的想像力': [15, 30]
+  };
+  
+  // ドメインの日本語ラベル
+  const DOMAIN_LABELS = { 
+    E: '外向性', 
+    A: '協調性', 
+    C: '勤勉性', 
+    N: '神経症傾向', 
+    O: '開放性' 
+  };
+  
+  // ==========================================
+  // 日本人大学生サンプルの平均値（参考値）
+  // ==========================================
+  // Survey2データからの平均値（ドメインレベル）
+  const SURVEY2_DOMAIN_MEANS = { 
+    E: 2.48,   // 外向性
+    A: 3.25,   // 協調性
+    C: 3.02,   // 勤勉性
+    N: 3.10,   // 神経症傾向
+    O: 2.98    // 開放性
+  };
+  
+  // Survey2データからの平均値（ファセットレベル）
+  const SURVEY2_FACET_MEANS = {
+    'E：社交性': 2.63,
+    'E：自己主張性': 2.20,
+    'E：活力': 2.61,
+    'A：思いやり': 3.29,
+    'A：敬意': 3.48,
+    'A：信用': 2.97,
+    'C：秩序': 3.15,
+    'C：生産性': 3.17,
+    'C：責任感': 2.73,
+    'N：不安': 3.27,
+    'N：抑うつ': 3.03,
+    'N：情緒不安定性': 3.00,
+    'O：美的感性': 3.00,
+    'O：知的好奇心': 3.13,
+    'O：創造的想像力': 2.81
+  };
+
+  // 最後に計算されたサマリーを保存する変数
+  let lastSummary = null;
+
+  // ==========================================
+  // 2. DOM 初期化とユーティリティ
+  // ==========================================
+  
+  /**
+   * システム情報（ブラウザとOS）を検出する関数
+   * @returns {Object} { browser, os, userAgent }
+   */
+  function detectSystemInfo() {
+    const ua = navigator.userAgent || '';
+    const browser = (() => {
+      if (/Edg\//.test(ua)) return 'Edge';
+      if (/OPR\//.test(ua)) return 'Opera';
+      if (/Chrome\//.test(ua)) return 'Chrome';
+      if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return 'Safari';
+      if (/Firefox\//.test(ua)) return 'Firefox';
+      if (/MSIE |Trident\//.test(ua)) return 'Internet Explorer';
+      return 'Unknown';
+    })();
+
+    const os = (() => {
+      if (/Windows NT/.test(ua)) return 'Windows';
+      if (/Mac OS X/.test(ua)) return 'macOS';
+      if (/Linux/.test(ua)) return 'Linux';
+      if (/Android/.test(ua)) return 'Android';
+      if (/(iPhone|iPad|iPod)/.test(ua)) return 'iOS';
+      return 'Unknown';
+    })();
+
+    return { browser, os, userAgent: ua };
+  }
+
+  /**
+   * 日本時間（JST）で日付をフォーマットする関数
+   * @param {Date} date - フォーマットする日付オブジェクト
+   * @returns {string} YYYY/MM/DD HH:MM:SS 形式の文字列
+   */
+  function formatJst(date) {
+    try {
+      return new Intl.DateTimeFormat('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(date);
+    } catch (error) {
+      console.warn('JSTフォーマットに失敗', error);
+      return date.toISOString();
+    }
+  }
+
+  /**
+   * 進捗バーのラベルを日本語に設定する関数
+   * jsPsychが生成する進捗バーのラベル（デフォルトは英語）を日本語の「進捗」に変更します。
+   * DOMが準備できていない場合は、MutationObserverで要素の出現を監視して設定します。
+   * 
+   * 処理の流れ：
+   * 1. trySetLabel(): 進捗バーのspan要素を取得し、日本語テキストを設定
+   * 2. 即座に設定できた場合は終了
+   * 3. できなかった場合はMutationObserverでDOM変更を監視し、要素が出現したら設定
+   */
+  function setProgressLabelToJapanese() {
+    const trySetLabel = () => {
       const span = document.querySelector('#jspsych-progressbar-container span');
-      if (span) { span.innerHTML = '進捗状況'; return true; }
+      if (span) {
+        span.innerHTML = PROGRESS_LABEL_TEXT; // 「進捗」に設定
+        return true;
+      }
       return false;
     };
-    if (!setLabel()) {
-      const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
-      mo.observe(document.body, { childList: true, subtree: true });
-    }
-  })();
-  
-  const ITEMS = ["無口な方だ。","思いやりがあり，優しい。","行き当たりばったりな方だ。","多くの悩みごとを抱えている。","芸術，音楽，文学に魅了されている。","上に立つ方で，リーダーとして活動する。","他人を見下すことがある。","なかなか作業に取り掛かることができない。","憂うつになり，落胆する方だ。","抽象的な知識にはほとんど関心がない。","活力にあふれている。","人々のいちばん良いところを思い浮かべる。","ちゃんとしていて，いつも周りから当てにされる。","情緒が安定しており，簡単には取り乱さない。","個性的で，新しいアイディアを思いつく。","積極的で，社交的である。","冷淡で思いやりに欠けることがある。","物事をきれいに揃えたりまとめたりする。","リラックスしていて，ストレスにうまく対処している。","芸術的関心があまりない。","他の人にリーダーシップを発揮してもらうほうが良いと思う。","礼儀正しく，他人に敬意をもって接する。","根気強く，与えられた課題が終わるまで取り組む。","安心感を抱いており，心地よい。","考え方が複雑で，深く考える人間だ。","他の人と比べて活発ではない。","他人の欠点を見つけ出す方だ。","少し不注意なところがある。","神経質で，感情的になりやすい。","創造性がほとんどない。"];
-  const REVERSED = new Set([1,3,7,8,10,14,17,19,20,21,24,26,27,28,30]);
-  const DOMAINS = { E: [1,6,11,16,21,26], A: [2,7,12,17,22,27], C: [3,8,13,18,23,28], N: [4,9,14,19,24,29], O: [5,10,15,20,25,30] };
-  const FACETS = {"E：社交性": [1,16], "E：自己主張性": [6,21], "E：活力": [11,26], "A：思いやり": [2,17], "A：敬意": [7,22], "A：信用": [12,27], "C：秩序": [3,18], "C：生産性": [8,23], "C：責任感": [13,28], "N：不安": [4,19], "N：抑うつ": [9,24], "N：情緒不安定性": [14,29], "O：美的感性": [5,20], "O：知的好奇心": [10,25], "O：創造的想像力": [15,30]};
-  const DOMAIN_LABELS = {E:"外向性",A:"協調性",C:"勤勉性",N:"神経症傾向",O:"開放性"};
-  const SURVEY2_DOMAIN_MEANS = { E: 2.48, A: 3.25, C: 3.02, N: 3.10, O: 2.98 };
-  const SURVEY2_FACET_MEANS = {"E：社交性": 2.63, "E：自己主張性": 2.20, "E：活力": 2.61, "A：思いやり": 3.29, "A：敬意": 3.48, "A：信用": 2.97, "C：秩序": 3.15, "C：生産性": 3.17, "C：責任感": 2.73, "N：不安": 3.27, "N：抑うつ": 3.03, "N：情緒不安定性": 3.00, "O：知的好奇心": 3.13, "O：美的感性": 3.00, "O：創造的想像力": 2.81};
-  
-  const updateProgressBar = (fraction) => {
-    const barInner = document.querySelector('#jspsych-progressbar-inner');
-    if (barInner) barInner.style.width = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
-  };
 
-  // Ensure Likert labels have data-label attributes for hover tooltips.
-  const LIKERT_LABELS = ['全くあてはまらない','あてはまらない','どちらかともいえない','あてはまる','とてもよくあてはまる'];
-  function ensureLikertTooltips() {
-    // Prefer the inner option label element if present (jsPsych uses .jspsych-survey-likert-opt-label)
-    document.querySelectorAll('.jspsych-survey-likert-opt').forEach(opt => {
-      const innerLabels = opt.querySelectorAll('.jspsych-survey-likert-opt-label');
-      if (innerLabels && innerLabels.length) {
-        innerLabels.forEach((ilabel, i) => {
-          try {
-            const idx = i % LIKERT_LABELS.length;
-            if (!ilabel.classList.contains('likert-label-tooltip')) ilabel.classList.add('likert-label-tooltip');
-            if (!ilabel.getAttribute('data-tooltip') || ilabel.getAttribute('data-tooltip') !== LIKERT_LABELS[idx]) {
-              ilabel.setAttribute('data-tooltip', LIKERT_LABELS[idx]);
-            }
-            // Also ensure outer <label> has data-label for existing CSS that relies on it
-            const outer = ilabel.closest('label');
-            if (outer) {
-              if (!outer.classList.contains('likert-label-tooltip')) outer.classList.add('likert-label-tooltip');
-              if (!outer.getAttribute('data-label') || outer.getAttribute('data-label') !== LIKERT_LABELS[idx]) {
-                outer.setAttribute('data-label', LIKERT_LABELS[idx]);
-              }
-            }
-          } catch(e){}
-        });
-      } else {
-        // fallback to applying to the <label> elements
-        const labels = opt.querySelectorAll('label');
-        labels.forEach((label, i) => {
-          try {
-            const idx = i % LIKERT_LABELS.length;
-            if (!label.classList.contains('likert-label-tooltip')) label.classList.add('likert-label-tooltip');
-            if (!label.getAttribute('data-tooltip') || label.getAttribute('data-tooltip') !== LIKERT_LABELS[idx]) {
-              label.setAttribute('data-tooltip', LIKERT_LABELS[idx]);
-            }
-            if (!label.getAttribute('data-label') || label.getAttribute('data-label') !== LIKERT_LABELS[idx]) {
-              label.setAttribute('data-label', LIKERT_LABELS[idx]);
-            }
-          } catch(e){}
-        });
-      }
+    if (trySetLabel()) return;
+
+    const observer = new MutationObserver((_, obs) => {
+      if (trySetLabel()) obs.disconnect();
     });
-    console.debug('[bfi2sj] ensureLikertTooltips applied');
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  // Observe DOM mutations and re-apply data-labels whenever likert option groups are added/changed.
-  const likertObserver = new MutationObserver(mutations => {
-    let needsCheck = false;
-    for (const m of mutations) {
-      if (m.addedNodes && m.addedNodes.length) {
-        for (const n of m.addedNodes) {
-          if (n.nodeType === 1 && (n.classList?.contains('jspsych-survey-likert-opt') || n.querySelector?.('.jspsych-survey-likert-opt'))) {
-            needsCheck = true; break;
+  /**
+   * 進捗バーの表示を更新する関数
+   * @param {number} fraction - 進捗の割合（0.0～1.0）
+   * 
+   * jsPsychの進捗バー（#jspsych-progressbar-inner）の幅を、指定された割合に更新します。
+   * 例: 全30項目中10項目完了なら fraction = 10/30 = 0.333... → バーが33%表示
+   * 
+   * fractionは0～1の範囲にクランプ（制限）されます。
+   */
+  function updateProgressBar(fraction) {
+    const barInner = document.querySelector('#jspsych-progressbar-inner');
+    if (!barInner) return;
+    const clamped = Math.max(0, Math.min(1, fraction)); // 0～1に制限
+    barInner.style.width = `${Math.round(clamped * 100)}%`; // パーセンテージ表示
+  }
+
+  /**
+   * リッカート尺度のツールチップを監視・更新するオブザーバーを起動
+   * 
+   * この関数は、jsPsychがリッカート項目を動的に生成するたびに、
+   * 各選択肢（ラジオボタン）にツールチップ（マウスオーバー時の説明テキスト）を
+   * 自動で付与するためのMutationObserverを設定します。
+   * 
+   * 必要な理由：
+   * - jsPsychのsurvey-likertプラグインは、ページ遷移ごとにDOM要素を再生成する
+   * - 初回だけではなく、すべてのページで選択肢にツールチップを付ける必要がある
+   * - MutationObserverでDOM変更を監視し、リッカート要素が追加されたら自動でツールチップ適用
+   * 
+   * 処理の流れ：
+   * 1. ensureLikertTooltips()で既存の要素にツールチップを適用
+   * 2. MutationObserverで新しい要素の追加を監視
+   * 3. リッカート関連要素が追加されたら、50ms後にensureLikertTooltips()を再実行
+   * 
+   * @returns {MutationObserver} 作成されたオブザーバーオブジェクト
+   */
+  function startLikertTooltipObserver() {
+    ensureLikertTooltips(); // 既存要素に適用
+
+    const observer = new MutationObserver((mutations) => {
+      let shouldUpdate = false;
+      for (const mutation of mutations) {
+        if (mutation.addedNodes && mutation.addedNodes.length) {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType !== 1) continue; // 要素ノード以外はスキップ
+            // リッカート選択肢のクラスを持つ要素が追加されたか確認
+            if (node.classList?.contains('jspsych-survey-likert-opt') || node.querySelector?.('.jspsych-survey-likert-opt')) {
+              shouldUpdate = true;
+              break;
+            }
           }
         }
+        if (shouldUpdate) break;
       }
-      if (needsCheck) break;
+      if (shouldUpdate) {
+        setTimeout(ensureLikertTooltips, 50); // 少し待ってから適用（DOMの安定化待ち）
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    return observer;
+  }
+
+  /**
+   * ページ内のすべてのリッカート選択肢にツールチップを適用
+   * 
+   * この関数は、現在ページに存在するすべてのリッカート尺度の選択肢（ラジオボタン）に対して、
+   * ツールチップ（例: 「全く当てはまらない」「どちらでもない」など）を設定します。
+   * 
+   * 処理の流れ：
+   * 1. '.jspsych-survey-likert-opt'クラスを持つすべての要素を取得
+   * 2. 各要素内のラベル要素（.jspsych-survey-likert-opt-label）を探す
+   * 3. 見つかった各ラベルに対してapplyTooltip()でツールチップを適用
+   * 4. 内部ラベルがない場合は、外側のlabel要素にツールチップを適用
+   * 
+   * ツールチップの内容はLIKERT_LABELS配列（5段階の説明文）から取得されます。
+   */
+  function ensureLikertTooltips() {
+    const options = document.querySelectorAll('.jspsych-survey-likert-opt');
+    if (!options.length) return; // リッカート要素がなければ何もしない
+
+    options.forEach((opt) => {
+      // 内部ラベル（複数の場合もある）を探す
+      const innerLabels = opt.querySelectorAll('.jspsych-survey-likert-opt-label');
+      if (innerLabels.length) {
+        innerLabels.forEach((label, index) => applyTooltip(label, index));
+        return;
+      }
+
+      // 内部ラベルがない場合、外側のlabelを使用
+      const outerLabel = opt.querySelector('label');
+      if (outerLabel) applyTooltip(outerLabel, 0);
+    });
+
+    debugLog('ensureLikertTooltips applied');
+  }
+
+  /**
+   * 個別の要素にツールチップを適用する関数
+   * @param {HTMLElement} element - ツールチップを適用する要素
+   * @param {number} index - LIKERT_LABELS配列のインデックス（0～4）
+   * 
+   * この関数は、リッカート尺度の各選択肢（ラジオボタン）に対して、
+   * data-tooltip属性とCSSクラスを設定することで、マウスオーバー時にツールチップを表示します。
+   * 
+   * 処理内容：
+   * 1. 要素の最も近いlabel要素（親または自身）を取得
+   * 2. LIKERT_LABELS配列からインデックスに対応するテキストを取得
+   * 3. 'likert-label-tooltip'クラスを追加（CSSでツールチップスタイルを適用）
+   * 4. data-tooltip属性とdata-label属性にテキストを設定
+   * 
+   * 例: index=0 → 「全く当てはまらない」
+   *     index=2 → 「どちらでもない」
+   *     index=4 → 「非常に当てはまる」
+   */
+  function applyTooltip(element, index) {
+    const host = element.closest('label') || element;
+    if (!host) return;
+
+    const text = LIKERT_LABELS[index % LIKERT_LABELS.length]; // インデックスを配列長で割った余りで取得
+
+    host.classList.add('likert-label-tooltip'); // ツールチップ用CSSクラスを追加
+    host.setAttribute('data-tooltip', text); // ツールチップテキストを設定
+    host.setAttribute('data-label', text); // ラベルテキストも設定（アクセシビリティ用）
+
+    if (element !== host) {
+      element.classList.add('likert-label-tooltip');
+      element.setAttribute('data-tooltip', text);
+      element.setAttribute('data-label', text);
     }
-    if (needsCheck) {
-      setTimeout(() => { ensureLikertTooltips(); }, 100);
-    }
-  });
-  likertObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // ==========================================
+  // 3. データ処理・スコア計算関数
+  // ==========================================
   
-  function computeScores(responses) {
-    const scored = {}, domainMeans = {}, facetMeans = {};
-    for (let i=1; i<=30; i++) {
-      const v = responses[i-1];
-      const num = (v === undefined || v === null) ? null : (typeof v === 'number' ? v+1 : parseInt(String(v).match(/^\d+/)[0], 10));
-      scored[i] = (num === null) ? null : (REVERSED.has(i) ? 6-num : num);
+  /**
+   * リッカート尺度の値を解析して1～5の数値に変換
+   * @param {*} value - jsPsychから取得した値（数値またはインデックス）
+   * @returns {number|null} 1～5の数値、または解析失敗時はnull
+   * 
+   * jsPsychのsurvey-likertプラグインは0始まりのインデックス（0～4）を返すため、
+   * 実際の尺度値（1～5）に変換する必要があります。
+   * 
+   * 変換例:
+   * - プラグインが返す値: 0, 1, 2, 3, 4
+   * - 実際の尺度値:      1, 2, 3, 4, 5
+   * 
+   * 処理内容：
+   * 1. 値がnullまたはundefinedの場合はnullを返す
+   * 2. 数値の場合: 0～4なら+1して1～5に変換
+   * 3. 文字列の場合: 数値部分を抽出して変換
+   */
+  function parseLikertValue(value) {
+    if (value == null) return null;
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      // survey-likert プラグインは 0 始まりのインデックスを返す
+      return value + 1; // 0～4 → 1～5 に変換
     }
-    for (const d of Object.keys(DOMAINS)) {
-      const vals = DOMAINS[d].map(i => scored[i]).filter(x => x != null);
-      domainMeans[d] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+
+    // 文字列の場合、先頭の数値を抽出
+    const match = /^\d+/.exec(String(value));
+    if (!match) return null;
+
+    const parsed = Number(match[0]);
+    if (!Number.isFinite(parsed)) return null;
+    if (parsed >= 0 && parsed <= 4) return parsed + 1; // 0～4なら+1
+    return parsed; // それ以外はそのまま
+  }
+
+  /**
+   * 全項目の回答に対して逆転項目の処理を適用
+   * @param {Array<number>} responses - 1～5の素点の配列（30項目分）
+   * @returns {Object} { 1: スコア, 2: スコア, ..., 30: スコア } の形式
+   * 
+   * この関数は、30項目すべての回答に対して、
+   * 逆転項目（REVERSED_ITEMS）かどうかを確認し、
+   * 逆転項目なら「6 - 素点」でスコアを反転させます。
+   * 
+   * 逆転項目の例:
+   * - 項目1「無口な方だ」は外向性の逆転項目
+   * - 素点が1（全く当てはまらない）→ 換算後は5（外向性が高い）
+   * - 素点が5（非常に当てはまる）→ 換算後は1（外向性が低い）
+   * 
+   * 通常項目の例:
+   * - 項目2「他人に対してほぼいつも思いやりがある」
+   * - 素点が1 → 換算後も1（協調性が低い）
+   * - 素点が5 → 換算後も5（協調性が高い）
+   * 
+   * 返り値の形式: { 1: 5, 2: 4, 3: 2, ..., 30: 3 }
+   */
+  function scoreResponses(responses) {
+    const scored = {};
+    for (let index = 1; index <= TOTAL_ITEMS; index += 1) {
+      const raw = responses[index - 1]; // 配列は0始まりなのでindex-1
+      if (!Number.isFinite(raw)) {
+        scored[index] = null; // 未回答や無効な値はnull
+        continue;
+      }
+      // 逆転項目なら 6-素点、通常項目ならそのまま
+      scored[index] = REVERSED_ITEMS.has(index) ? 6 - raw : raw;
     }
-    for (const f of Object.keys(FACETS)) {
-      const vals = FACETS[f].map(i => scored[i]).filter(x => x != null);
-      facetMeans[f] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
-    }
+    return scored;
+  }
+
+  /**
+   * スコア化された回答から領域平均とファセット平均を計算
+   * @param {Array<number>} responses - 1～5の素点の配列（30項目分）
+   * @returns {Object} { domainMeans: {...}, facetMeans: {...} }
+   * 
+   * この関数は、BFI-2-S-Jの結果を集計して、
+   * 5つの領域（外向性、協調性、誠実性、神経症傾向、開放性）と
+   * 15のファセット（各領域2～3の下位次元）の平均得点を計算します。
+   * 
+   * 処理の流れ：
+   * 1. scoreResponses()で逆転項目を処理したスコアを取得
+   * 2. DOMAINS定義に基づいて、各領域の6項目の平均を計算
+   * 3. FACETS定義に基づいて、各ファセットの2項目の平均を計算
+   * 
+   * 例（外向性: E）:
+   * - E領域: 項目[1, 6, 11, 16, 21, 26]の平均
+   * - Eの3ファセット:
+   *   - E：社交性 [1, 16]
+   *   - E：自己主張 [6, 21]
+   *   - E：活力 [11, 26]
+   * 
+   * 返り値の例:
+   * {
+   *   domainMeans: { 'E': 3.5, 'A': 4.2, ... },
+   *   facetMeans: { 'E：社交性': 3.0, 'E：自己主張': 4.0, ... }
+   * }
+   */
+  function computeSummary(responses) {
+    const scored = scoreResponses(responses); // 逆転項目を処理
+    const domainMeans = {};
+    const facetMeans = {};
+
+    // 各領域（5つ）の平均を計算
+    Object.entries(DOMAINS).forEach(([domain, indices]) => {
+      const values = indices.map((idx) => scored[idx]).filter((val) => Number.isFinite(val));
+      domainMeans[domain] = values.length ? average(values) : null;
+    });
+
+    // 各ファセット（15個）の平均を計算
+    Object.entries(FACETS).forEach(([facet, indices]) => {
+      const values = indices.map((idx) => scored[idx]).filter((val) => Number.isFinite(val));
+      facetMeans[facet] = values.length ? average(values) : null;
+    });
+
     return { domainMeans, facetMeans };
   }
-  
-  const intro = { type: window.jsPsychHtmlButtonResponse,
-     stimulus: `<div class="card"><h2>BFI-2-S-J</h2><h3>日本語版Big Five Inventory-2短縮版</h3><h4>「感情・人格心理学」受講者用</h4><p class="note">
-              これはBig Fiveパーソナリティモデルを評価するアンケートであり，講義内容の理解を促進するために利用されます。<br>データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。</p>
-            <ul class="small muted">
-              回答時間の目安：5〜7分 <br>
-              出典<br>吉野伸哉・下司忠大・橋本泰央・上野雄己・三枝高大・小塩真司. (2026). 日本語版Big Five Inventory-2の短縮版の検討. 心理学研究, https://doi.org/10.4992/jjpsy.96.24214
 
-            </ul></div>`, choices: ['次へ'] };
-  
-  const demographics = { type: window.jsPsychSurvey, survey_json: { showQuestionNumbers: false, pages: [{name: 'demographics', elements: [{type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true}, {type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答']}]}], pageNextText: '次へ', completeText: '次へ' }, on_finish: (data) => { const r = data.response||{}; jsPsych.data.addProperties({ age: r.age||'', gender: r.gender||'' }); } };
-  
-  const pageGroups = [Array.from({length:12}, (_,i)=>i+1), Array.from({length:12}, (_,i)=>i+13), Array.from({length:6}, (_,i)=>i+25)];
-  const surveyTimeline = pageGroups.map((groupNums, idx) => ({
-    type: window.jsPsychSurveyLikert,
-    preamble: `<div class="card"><b>質問 ${groupNums[0]}–${groupNums[groupNums.length-1]} / 30</b><div class="small muted">以下の項目は,あなたにどの程度あてはまりますか。各項目について「1. 全くあてはまらない」から 「5. とてもよくあてはまる」までの選択肢で最も近いと思うものを選んでください。<br><br>
-      選択肢：<br>
-      1=全くあてはまらない<br>
-      2=あてはまらない<br>
-      3=どちらかともいえない<br>
-      4=あてはまる<br>
-      5=とてもよくあてはまる</div></div>`,
-    questions: groupNums.map(num => ({ prompt: ITEMS[num-1], labels: ['1','2','3','4','5'], name: `Q${num}`, required: true })),
-    button_label: idx === pageGroups.length - 1 ? '結果を見る' : '次へ',
-    on_load: () => { 
-      const opts = ['全くあてはまらない','あてはまらない','どちらかともいえない','あてはまる','とてもよくあてはまる'];
-      setTimeout(() => {
-        document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
-          if (!label.classList.contains('likert-label-tooltip')) {
-            label.classList.add('likert-label-tooltip');
+  /**
+   * 配列の平均値を計算する補助関数
+   * @param {Array<number>} values - 数値の配列
+   * @returns {number|null} 平均値、または空配列の場合はnull
+   */
+  function average(values) {
+    if (!values.length) return null;
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  }
+
+  /**
+   * 平均値を小数点2桁の文字列にフォーマット
+   * @param {number|null} value - 平均値
+   * @returns {string} 小数点2桁の文字列（例: "3.45"）、またはnullの場合は"-"
+   */
+  function formatMean(value) {
+    return value == null ? '-' : value.toFixed(2);
+  }
+
+  /**
+   * jsPsychのデータから全30項目の回答を収集する関数
+   * @returns {Array<number>} 1～5の数値の配列（30項目分）
+   * 
+   * この関数は、jsPsychが記録した全トライアルのデータから、
+   * survey-likertタイプのトライアルを抽出し、
+   * Q1～Q30という名前の回答を集めて配列に格納します。
+   * 
+   * 処理の流れ：
+   * 1. 30要素のnull配列を作成
+   * 2. jsPsych.data.get()で全トライアルを取得
+   * 3. trial_type='survey-likert'でフィルタ
+   * 4. 各トライアルのresponseオブジェクトから Q1, Q2, ... Q30 を抽出
+   * 5. parseLikertValue()で値を1～5に変換
+   * 6. 配列の適切な位置（0始まり）に格納
+   * 
+   * 例: trial.response = { Q1: 0, Q2: 3, Q3: 1, ... }
+   *     → responses = [1, 4, 2, ...]
+   * 
+   * 返り値: [1, 4, 2, 5, 3, ...] （30要素）
+   */
+  function collectResponses() {
+    const responses = new Array(TOTAL_ITEMS).fill(null); // 30項目分の配列
+
+    jsPsych.data.get()
+      .filter({ trial_type: 'survey-likert' }) // リッカートトライアルのみ
+      .values()
+      .forEach((trial) => {
+        const trialResponse = trial.response || {};
+        Object.entries(trialResponse).forEach(([name, rawValue]) => {
+          const match = /^Q(\d+)$/.exec(name); // Q1, Q2, ... Q30 を抽出
+          if (!match) return;
+
+          const index = Number(match[1]); // Q1 → 1, Q2 → 2, ...
+          if (index < 1 || index > TOTAL_ITEMS) return; // 範囲外はスキップ
+
+          const numeric = parseLikertValue(rawValue); // 0～4を1～5に変換
+          if (numeric != null) {
+            responses[index - 1] = numeric; // 配列は0始まりなのでindex-1
           }
-          label.setAttribute('data-tooltip', opts[i % 5]);
-          label.setAttribute('data-label', opts[i % 5]);
         });
-      }, 100);
-    },
-    on_finish: () => { updateProgressBar((groupNums[groupNums.length-1])/30); }
-  }));
+      });
+
+    debugLog('Collected responses', responses);
+    return responses;
+  }
+
+  // ==========================================
+  // 4. タイムライン生成関数
+  // ==========================================
   
-  const subject_id = jsPsych.randomization.randomID(10);
-  const save_data = { type: window.jsPsychPipe, action: 'save', experiment_id: 'd5cclNdXjcZX', filename: `${subject_id}.csv`, data_string: () => jsPsych.data.get().csv() };
-  
-  const results = {
-    type: window.jsPsychHtmlButtonResponse,
-    stimulus: () => `<div class="grid"><div class="card"><h2>ドメイン</h2><div class="chart-wrap"><canvas id="chart-domain"></canvas></div><div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">注：「日本人平均」は吉野他（2026）Table S5のSurvey2の平均値</div><table id="dom-table"><thead><tr><th>ドメイン</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div><div class="card"><h2>ファセット</h2><div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div><div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">注：「日本人平均」は吉野他（2026）Table S19のSurvey2の平均値</div><table id="facet-table"><thead><tr><th>ファセット</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead><tbody></tbody></table></div></div>`,
-    choices: ['終了'],
-      on_finish: () => {
-        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+  /**
+   * 導入画面（イントロ）を生成する関数
+   * @returns {Object} jsPsychのトライアルオブジェクト
+   * 
+   * この関数は、実験の最初に表示される説明画面を生成します。
+   * 
+   * 表示内容：
+   * - タイトル: BFI-2-S-J（日本語版 Big Five Inventory-2 短縮版）
+   * - 説明: 講義の一環であること、個人は特定されないこと
+   * - 所要時間の目安: 5～7分
+   * - 出典: 吉野ら (2026) の論文情報
+   * 
+   * トライアルの設定：
+   * - type: html-button-response（HTMLを表示してボタンで次へ進む）
+   * - choices: ['次へ'] ボタン
+   * - data: page_number='intro'（データ記録用）
+   */
+  function createIntroTrial() {
+    return {
+      type: window.jsPsychHtmlButtonResponse,
+      data: { page_number: 'intro', page_items: [] },
+      stimulus: `
+        <div class="card">
+          <h2>BFI-2-S-J</h2>
+          <h3>日本語版 Big Five Inventory-2 短縮版</h3>
+          <h4>「感情・人格心理学」受講者用</h4>
+          <p class="note">
+            これは Big Five パーソナリティモデルを評価するアンケートであり，講義内容の理解を促進するために利用されます。<br>
+            データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。
+          </p>
+          <ul class="small muted">
+            回答時間の目安：5〜7分<br>
+            出典：吉野伸哉・下司忠大・橋本泰央・上野雄己・三枝高大・小塩真司 (2026). 日本語版 Big Five Inventory-2 の短縮版の検討. 心理学研究, https://doi.org/10.4992/jjpsy.96.24214
+          </ul>
+        </div>
+      `,
+      choices: ['次へ']
+    };
+  }
+
+  /**
+   * デモグラフィック情報（年齢・性別）を収集するトライアルを生成
+   * @returns {Object} jsPsychのトライアルオブジェクト
+   * 
+   * この関数は、参加者の基本情報（年齢と性別）を入力してもらう画面を生成します。
+   * 
+   * 入力項目：
+   * 1. 年齢: 数値入力（必須）
+   * 2. 性別: ドロップダウン選択（必須）
+   *    - 選択肢: 男性、女性、その他、未回答
+   * 
+   * トライアルの設定：
+   * - type: survey（SurveyJSを使用したフォーム）
+   * - survey_json: SurveyJSの設定オブジェクト
+   * - on_finish: 回答終了時にjsPsychのデータに年齢と性別を追加
+   * 
+   * on_finish処理：
+   * - data.responseから年齢と性別を取得
+   * - jsPsych.data.addProperties()で全トライアルに共通データとして追加
+   * - これにより、後のトライアルでも参加者情報を参照可能
+   */
+  function createDemographicsTrial() {
+    return {
+      type: window.jsPsychSurvey,
+      data: { page_number: 'demographics', page_items: ['age', 'gender'] },
+      survey_json: {
+        showQuestionNumbers: false, // 質問番号を非表示
+        pages: [{
+          name: 'demographics',
+          elements: [
+            { type: 'text', name: 'age', title: '年齢', inputType: 'number', isRequired: true },
+            { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性', '女性', 'その他', '未回答'] }
+          ]
+        }],
+        pageNextText: '次へ',
+        completeText: '次へ'
       },
-    on_load: () => {
-      const trials = jsPsych.data.get().filter({trial_type:'survey-likert'}).values();
-      const responses = new Array(30).fill(null);
-      trials.forEach(tr => {
-        const resp = tr.response||{};
-        Object.entries(resp).forEach(([name, idx]) => {
-          const n = parseInt(name.replace('Q',''),10);
-          if (n>=1 && n<=30) responses[n-1] = Number(idx)+1;
+      on_finish: (data) => {
+        const response = data.response || {};
+        // 年齢と性別を全トライアルの共通データとして追加
+        jsPsych.data.addProperties({
+          age: response.age || '',
+          gender: response.gender || ''
         });
-      });
-      
-      const { domainMeans, facetMeans } = computeScores(responses);
-      
-      const domRows = Object.entries(domainMeans).map(([d,m]) => `<tr><td>${DOMAIN_LABELS[d]}</td><td>${m?.toFixed(2)??'-'}</td><td>${SURVEY2_DOMAIN_MEANS[d]?.toFixed(2)??'-'}</td></tr>`).join('');
-      document.querySelector('#dom-table tbody').innerHTML = domRows;
-      
-      const facetRows = Object.entries(facetMeans).map(([f,m]) => `<tr><td>${f}</td><td>${m?.toFixed(2)??'-'}</td><td>${SURVEY2_FACET_MEANS[f]?.toFixed(2)??'-'}</td></tr>`).sort().join('');
-      document.querySelector('#facet-table tbody').innerHTML = facetRows;
-      
-      const palette = {selfBorder:'#1976D2', selfFill:'rgba(25,118,210,0.15)', normBorder:'#D32F2F', normFill:'rgba(211,47,47,0.15)'};
-      
-      const canvasDom = document.getElementById('chart-domain');
-      const wrapDom = canvasDom.parentElement;
-      canvasDom.width = wrapDom.offsetWidth;
-      canvasDom.height = wrapDom.offsetHeight;
-      
-      new Chart(canvasDom.getContext('2d'), {
-        type: 'radar',
+      }
+    };
+  }
+
+  /**
+   * 質問ページ（リッカート尺度）を生成する関数
+   * @param {Array<number>} groupNumbers - このページに表示する項目番号の配列（例: [1,2,3,...,12]）
+   * @param {number} pageIndex - ページ番号（0始まり: 0=1ページ目、1=2ページ目、2=3ページ目）
+   * @returns {Object} jsPsychのsurvey-likertトライアルオブジェクト
+   * 
+   * この関数は、BFI-2-S-Jの30項目を複数ページに分割して表示するための
+   * リッカート尺度ページを生成します。
+   * 
+   * ページ構成（PAGE_GROUPS定義による）:
+   * - 1ページ目: 項目1～12（12項目）
+   * - 2ページ目: 項目13～24（12項目）
+   * - 3ページ目: 項目25～30（6項目）
+   * 
+   * 各ページの内容：
+   * - preamble: 質問の説明文と5段階の選択肢の説明
+   * - questions: 各項目のテキストとリッカート尺度（1～5）
+   * - button_label: 最終ページなら「結果を見る」、それ以外は「次へ」
+   * 
+   * on_load処理：
+   * - ensureLikertTooltips(): 選択肢にマウスオーバー時の説明を追加
+   * - updateProgressBar(): 進捗バーを更新（例: 12/30 → 40%表示）
+   * 
+   * on_finish処理（重要）：
+   * このページで回答された各項目について、以下の4つの情報をCSVに記録します：
+   * 1. Q1_raw: 素点（1～5）
+   * 2. Q1_scored: 逆転処理後の得点（逆転項目なら6-素点、通常項目ならそのまま）
+   * 3. Q1_reversed: 逆転項目フラグ（1=逆転項目、0=通常項目）
+   * 4. Q1_item_number: 項目番号（1～30）
+   * 
+   * 逆転項目の処理例:
+   * - 項目1「無口な方だ」は逆転項目
+   * - 参加者が「1（全く当てはまらない）」と回答
+   * - Q1_raw = 1, Q1_scored = 5, Q1_reversed = 1, Q1_item_number = 1
+   * → 外向性が高いと解釈される
+   */
+  function createSurveyPage(groupNumbers, pageIndex) {
+    const questionStart = groupNumbers[0]; // このページの開始項目番号
+    const questionEnd = groupNumbers[groupNumbers.length - 1]; // このページの終了項目番号
+    const isLastPage = pageIndex === PAGE_GROUPS.length - 1; // 最終ページかどうか
+    const questionNames = groupNumbers.map((number) => `Q${number}`); // ['Q1', 'Q2', ...]
+
+    return {
+      type: window.jsPsychSurveyLikert,
+      data: { page_number: `page_${pageIndex + 1}`, page_items: questionNames },
+      preamble: `
+        <div class="card">
+          <b>質問 ${questionStart}–${questionEnd} / ${TOTAL_ITEMS}</b>
+          <div class="small muted">
+            以下の項目は，あなたにどの程度当てはまりますか。各項目について「1. 全くあてはまらない」から「5. とてもよくあてはまる」までの選択肢で最も近いと思うものを選んでください。<br><br>
+            選択肢：<br>
+            1 = 全くあてはまらない<br>
+            2 = あてはまらない<br>
+            3 = どちらかともいえない<br>
+            4 = あてはまる<br>
+            5 = とてもよくあてはまる
+          </div>
+        </div>
+      `,
+      // 各項目の質問を生成
+      questions: groupNumbers.map((number, idx) => ({
+        prompt: ITEMS[number - 1], // 項目テキスト
+        labels: ['1', '2', '3', '4', '5'], // 選択肢ラベル
+        name: questionNames[idx], // 変数名（Q1, Q2, ...）
+        required: true // 回答必須
+      })),
+      button_label: isLastPage ? '結果を見る' : '次へ',
+      on_load: () => {
+        setTimeout(ensureLikertTooltips, 50); // ツールチップを適用
+        updateProgressBar(questionEnd / TOTAL_ITEMS); // 進捗バーを更新
+      },
+      on_finish: (data) => {
+        // ==========================================
+        // 各回答に詳細なメタデータを追加
+        // ==========================================
+        const resp = data.response || {};
+        
+        // 各項目について、raw（素点）、scored（換算後）、reversed（逆転フラグ）を記録
+        Object.entries(resp).forEach(([qName, idx]) => {
+          const match = /^Q(\d+)$/.exec(qName); // Q1, Q2, ... を抽出
+          if (!match) return;
+          
+          const itemNum = Number(match[1]); // 項目番号（1～30）
+          const raw = parseLikertValue(idx);  // 0-based → 1～5に変換
+          const isReversed = REVERSED_ITEMS.has(itemNum); // 逆転項目かチェック
+          const scored = isReversed ? (6 - raw) : raw; // 逆転処理
+          
+          // CSVに記録される変数名
+          data[`${qName}_raw`] = raw;           // 素点（1～5）
+          data[`${qName}_scored`] = scored;     // 換算後の得点（逆転処理済み）
+          data[`${qName}_reversed`] = isReversed ? 1 : 0;  // 逆転項目フラグ（1=逆転、0=通常）
+          data[`${qName}_item_number`] = itemNum;  // 項目番号（1～30）
+        });
+        
+        // ページ情報を記録
+        data.page_items = questionNames.join(','); // 'Q1,Q2,Q3,...'
+      }
+    };
+  }
+
+  /**
+   * データ保存トライアルを生成する関数
+   * @param {string} subjectId - 参加者ID（UUIDなど）
+   * @returns {Object} jsPsychのデータ保存トライアルオブジェクト
+   * 
+   * この関数は、jsPsych-pipeプラグインを使用して、
+   * 実験データをOSF（Open Science Framework）に保存するトライアルを生成します。
+   * 
+   * 保存内容：
+   * - 全トライアルのデータ（CSV形式）
+   * - 年齢、性別、各項目の回答（raw, scored, reversed, item_number）
+   * - システム情報（browser, os, user_agent, timestamps, duration）
+   * 
+   * 設定：
+   * - action: 'save' （データを保存）
+   * - experiment_id: 'd5cclNdXjcZX' （OSF上の実験ID）
+   * - filename: 参加者IDをファイル名にして保存（例: abc123.csv）
+   * - data_string: jsPsych.data.get().csv() でCSV形式のデータを生成
+   * 
+   * 注意: このトライアルは画面に何も表示せず、バックグラウンドでデータ保存を実行します。
+   */
+  function createSaveTrial(subjectId) {
+    return {
+      type: window.jsPsychPipe,
+      data: { page_number: 'save_data', page_items: [] },
+      action: 'save',
+      experiment_id: 'd5cclNdXjcZX',
+      filename: `${subjectId}.csv`,
+      data_string: () => jsPsych.data.get().csv()
+    };
+  }
+
+  /**
+   * 結果表示トライアルを生成する関数
+   * @returns {Object} jsPsychのトライアルオブジェクト
+   * 
+   * この関数は、実験の最後に結果を表示するトライアルを生成します。
+   * 
+   * 表示内容：
+   * 1. 5つの領域（外向性、協調性、誠実性、神経症傾向、開放性）のスコア
+   *    - 参加者のスコアと日本の大学生の平均値を比較
+   *    - レーダーチャート（5軸）で視覚化
+   * 
+   * 2. 15のファセット（各領域の下位次元）のスコア
+   *    - 参加者のスコアと日本の大学生の平均値を比較
+   *    - レーダーチャート（15軸）で視覚化
+   * 
+   * 処理の流れ：
+   * 1. stimulus関数内でcollectResponses()を実行し、全30項目の回答を収集
+   * 2. computeSummary()で領域平均とファセット平均を計算
+   * 3. createResultsHtml()でHTML（表とチャート）を生成
+   * 4. lastSummaryに計算結果を保存（チャート描画時に使用）
+   * 
+   * on_finish処理：
+   * - 「終了」ボタンをクリックすると、メインページにリダイレクト
+   * 
+   * on_load処理：
+   * - 進捗バーを100%に更新
+   * - setTimeout()でチャート描画関数を実行（DOM要素が準備できるまで待機）
+   */
+  function createResultsTrial() {
+    return {
+      type: window.jsPsychHtmlButtonResponse,
+      data: { page_number: 'results', page_items: [] },
+      stimulus: () => {
+        const responses = collectResponses(); // 全30項目の回答を収集
+        const summary = computeSummary(responses); // 領域・ファセット平均を計算
+        lastSummary = summary; // グローバル変数に保存（チャート描画用）
+        return createResultsHtml(summary); // HTML生成
+      },
+      choices: ['終了'],
+      on_finish: () => {
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/'; // メインページへ
+      },
+      on_load: () => {
+        updateProgressBar(1); // 進捗バーを100%に
+        const endTimestamp = Date.now();
+        const endTimeJst = formatJst(new Date(endTimestamp));
+        const durationMs = endTimestamp - SESSION_START;
+        const durationSec = Number((durationMs / 1000).toFixed(2));
+        const durationMin = Number((durationMs / 60000).toFixed(2));
+        jsPsych.data.addProperties({
+          end_timestamp: endTimestamp,
+          end_time_jst: endTimeJst,
+          total_duration_ms: durationMs,
+          total_duration_sec: durationSec,
+          total_duration_min: durationMin
+        });
+        if (!lastSummary) {
+          debugLog('結果の集計が見つかりません');
+          return;
+        }
+        renderResultsCharts(lastSummary);
+      }
+    };
+  }
+
+  /**
+   * 結果表示画面のHTMLを生成する関数
+   * @param {Object} summary - computeSummary()が返した集計結果
+   * @param {Object} summary.domainMeans - 5つの領域の平均得点 { 'E': 3.5, 'A': 4.2, ... }
+   * @param {Object} summary.facetMeans - 15のファセットの平均得点 { 'E：社交性': 3.0, ... }
+   * @returns {string} 結果表示用のHTML文字列
+   * 
+   * この関数は、BFI-2-S-Jの結果を視覚化するHTMLを生成します。
+   * 
+   * 生成される内容：
+   * 1. 左側のカード: ドメイン（5つの領域）
+   *    - レーダーチャート（5軸）: あなたのスコア vs 日本人平均
+   *    - 表: 各領域のスコアと平均値を数値で表示
+   * 
+   * 2. 右側のカード: ファセット（15の下位次元）
+   *    - レーダーチャート（15軸）: あなたのスコア vs 日本人平均
+   *    - 表: 各ファセットのスコアと平均値を数値で表示
+   * 
+   * データ出典：
+   * - SURVEY2_DOMAIN_MEANS: 吉野他 (2026) Table S5 Survey2の平均値
+   * - SURVEY2_FACET_MEANS: 吉野他 (2026) Table S19 Survey2の平均値
+   * 
+   * HTMLの構造：
+   * - div.grid: 2カラムのグリッドレイアウト
+   * - canvas#chart-domain: ドメインのチャート描画エリア
+   * - canvas#chart-facet: ファセットのチャート描画エリア
+   * - table: スコアの数値表示
+   */
+  function createResultsHtml(summary) {
+    // ドメイン（5つの領域）の表の行を生成
+    const domainRows = DOMAIN_ORDER
+      .map((domain) => {
+        const mean = summary.domainMeans[domain];
+        return `
+          <tr>
+            <td>${DOMAIN_LABELS[domain]}</td>
+            <td>${formatMean(mean)}</td>
+            <td>${formatMean(SURVEY2_DOMAIN_MEANS[domain])}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    // ファセット（15の下位次元）の表の行を生成
+    const facetRows = FACET_ORDER
+      .map((facet) => `
+          <tr>
+            <td>${facet}</td>
+            <td>${formatMean(summary.facetMeans[facet])}</td>
+            <td>${formatMean(SURVEY2_FACET_MEANS[facet])}</td>
+          </tr>
+        `)
+      .join('');
+
+    return `
+      <div class="grid">
+        <div class="card">
+          <h2>ドメイン</h2>
+          <div class="chart-wrap"><canvas id="chart-domain"></canvas></div>
+          <div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">
+            注：「日本人平均」は吉野他 (2026) Table S5 Survey2 の平均値
+          </div>
+          <table id="dom-table">
+            <thead><tr><th>ドメイン</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead>
+            <tbody>${domainRows}</tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h2>ファセット</h2>
+          <div class="chart-wrap facet"><canvas id="chart-facet"></canvas></div>
+          <div class="small muted" style="margin-top:0.5rem; font-size:0.8rem;">
+            注：「日本人平均」は吉野他 (2026) Table S19 Survey2 の平均値
+          </div>
+          <table id="facet-table">
+            <thead><tr><th>ファセット</th><th>あなたのスコア</th><th>日本人平均</th></tr></thead>
+            <tbody>${facetRows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // ==========================================
+  // 5. チャート描画（Chart.js使用）
+  // ==========================================
+  
+  /**
+   * 結果画面のレーダーチャートを描画する関数
+   * @param {Object} summary - computeSummary()が返した集計結果
+   * 
+   * この関数は、Chart.js（version 4.4.1）を使用して、
+   * 2つのレーダーチャートを描画します：
+   * 1. ドメインチャート（5軸）: 外向性、協調性、誠実性、神経症傾向、開放性
+   * 2. ファセットチャート（15軸）: 各領域の下位次元
+   * 
+   * チャートの設定：
+   * - 2つのデータセット: あなたのスコア（青）と日本人平均（赤）
+   * - スケール: 1～5（5段階評価の範囲）
+   * - 各データポイントには半透明の塗りつぶしと実線の枠
+   * 
+   * カラーパレット：
+   * - あなた: 青（#1976D2, 透明度15%）
+   * - 平均: 赤（#D32F2F, 透明度15%）
+   * 
+   * 既存チャートの削除：
+   * - すでにチャートが描画されている場合は、destroy()で削除してから再描画
+   * - これにより、メモリリークを防ぎ、正しく更新される
+   * 
+   * レスポンシブ対応：
+   * - canvas要素の幅と高さを親要素のサイズに合わせて設定
+   * - responsive=falseで自動リサイズを無効化（手動サイズ指定のため）
+   */
+  function renderResultsCharts(summary) {
+    // チャートの色設定
+    const palette = {
+      selfBorder: '#1976D2',      // あなたのスコア（青）の枠線
+      selfFill: 'rgba(25,118,210,0.15)',  // あなたのスコアの塗りつぶし（透明度15%）
+      normBorder: '#D32F2F',      // 平均スコア（赤）の枠線
+      normFill: 'rgba(211,47,47,0.15)'    // 平均スコアの塗りつぶし（透明度15%）
+    };
+
+    // ==========================================
+    // ドメインチャート（5軸）を描画
+    // ==========================================
+    const domainCanvas = document.getElementById('chart-domain');
+    if (domainCanvas) {
+      const parent = domainCanvas.parentElement;
+      if (parent) {
+        // 親要素のサイズに合わせてcanvasサイズを設定
+        domainCanvas.width = parent.offsetWidth;
+        domainCanvas.height = parent.offsetHeight;
+      }
+
+      // 既存のチャートがあれば破棄（メモリリーク防止）
+      if (window.bfiDomainChart && typeof window.bfiDomainChart.destroy === 'function') {
+        window.bfiDomainChart.destroy();
+      }
+
+      // 新しいレーダーチャートを作成
+      window.bfiDomainChart = new Chart(domainCanvas.getContext('2d'), {
+        type: 'radar', // レーダーチャート
         data: {
-          labels: ['E','A','C','N','O'].map(d => DOMAIN_LABELS[d]),
+          labels: DOMAIN_ORDER.map((domain) => DOMAIN_LABELS[domain]), // 5つの軸ラベル
           datasets: [
-            {label: 'あなた', data: ['E','A','C','N','O'].map(d => domainMeans[d]??null), fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 2.2, tension: 0, pointRadius: 3},
-            {label: '平均', data: ['E','A','C','N','O'].map(d => SURVEY2_DOMAIN_MEANS[d]??null), fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 2.2, tension: 0, pointRadius: 3}
+            {
+              label: 'あなた', // 青色のデータセット
+              data: DOMAIN_ORDER.map((domain) => summary.domainMeans[domain] ?? null),
+              fill: true,
+              borderColor: palette.selfBorder,
+              backgroundColor: palette.selfFill,
+              borderWidth: 2,
+              pointRadius: 3 // データポイントの円の半径
+            },
+            {
+              label: '平均', // 赤色のデータセット
+              data: DOMAIN_ORDER.map((domain) => SURVEY2_DOMAIN_MEANS[domain] ?? null),
+              fill: true,
+              borderColor: palette.normBorder,
+              backgroundColor: palette.normFill,
+              borderWidth: 2,
+              pointRadius: 3
+            }
           ]
         },
-        options: { responsive: false, maintainAspectRatio: false, scales: { r: { suggestedMin: 1, suggestedMax: 5, ticks: {stepSize: 1, font: {size: 12}} } }, plugins: {legend: {position: 'bottom', labels: {font: {size: 12}, padding: 15}}}, elements: {line: {tension: 0}} }
-      });
-      
-      const canvasFacet = document.getElementById('chart-facet');
-      const wrapFacet = canvasFacet.parentElement;
-      canvasFacet.width = wrapFacet.offsetWidth;
-      canvasFacet.height = wrapFacet.offsetHeight;
-      
-      new Chart(canvasFacet.getContext('2d'), {
-        type: 'radar',
-        data: {
-          labels: Object.keys(FACETS),
-          datasets: [
-            {label: 'あなた', data: Object.keys(FACETS).map(k => facetMeans[k]??null), fill:true, borderColor: palette.selfBorder, backgroundColor: palette.selfFill, borderWidth: 1.8, tension: 0, pointRadius: 2},
-            {label: '平均', data: Object.keys(FACETS).map(k => SURVEY2_FACET_MEANS[k]??null), fill:true, borderColor: palette.normBorder, backgroundColor: palette.normFill, borderWidth: 1.8, tension: 0, pointRadius: 2}
-          ]
-        },
-        options: { responsive: false, maintainAspectRatio: false, scales: { r: {suggestedMin: 1, suggestedMax: 5, ticks: {stepSize: 1, font: {size: 10}}, padding: 40} }, plugins: {legend: {position: 'bottom', labels: {font: {size: 11}, padding: 10}}}, elements: {line: {tension: 0}} }
+        options: {
+          responsive: false, // 自動リサイズを無効化
+          maintainAspectRatio: false, // アスペクト比固定を無効化
+          scales: {
+            r: { // レーダーチャートのスケール設定
+              suggestedMin: 1, // 最小値: 1
+              suggestedMax: 5, // 最大値: 5
+              ticks: { stepSize: 1, font: { size: 12 } } // 1刻みで目盛り表示
+            }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 15 } } // 凡例を下部に表示
+          }
+        }
       });
     }
-  };
-  
-  jsPsych.run([intro, demographics, ...surveyTimeline, save_data, results]);
+
+    // ==========================================
+    // ファセットチャート（15軸）を描画
+    // ==========================================
+    const facetCanvas = document.getElementById('chart-facet');
+    if (facetCanvas) {
+      const parent = facetCanvas.parentElement;
+      if (parent) {
+        // 親要素のサイズに合わせてcanvasサイズを設定
+        facetCanvas.width = parent.offsetWidth;
+        facetCanvas.height = parent.offsetHeight;
+      }
+
+      // 既存のチャートがあれば破棄（メモリリーク防止）
+      if (window.bfiFacetChart && typeof window.bfiFacetChart.destroy === 'function') {
+        window.bfiFacetChart.destroy();
+      }
+
+      // 新しいレーダーチャートを作成（15軸）
+      window.bfiFacetChart = new Chart(facetCanvas.getContext('2d'), {
+        type: 'radar', // レーダーチャート
+        data: {
+          labels: FACET_ORDER, // 15のファセット名
+          datasets: [
+            {
+              label: 'あなた', // 青色のデータセット
+              data: FACET_ORDER.map((facet) => summary.facetMeans[facet] ?? null),
+              fill: true,
+              borderColor: palette.selfBorder,
+              backgroundColor: palette.selfFill,
+              borderWidth: 1.6, // 軸が多いので線を少し細く
+              pointRadius: 2    // ポイントも小さく
+            },
+            {
+              label: '平均', // 赤色のデータセット
+              data: FACET_ORDER.map((facet) => SURVEY2_FACET_MEANS[facet] ?? null),
+              fill: true,
+              borderColor: palette.normBorder,
+              backgroundColor: palette.normFill,
+              borderWidth: 1.6,
+              pointRadius: 2
+            }
+          ]
+        },
+        options: {
+          responsive: false, // 自動リサイズを無効化
+          maintainAspectRatio: false, // アスペクト比固定を無効化
+          scales: {
+            r: { // レーダーチャートのスケール設定
+              suggestedMin: 1, // 最小値: 1
+              suggestedMax: 5, // 最大値: 5
+              ticks: { stepSize: 1, font: { size: 10 } }, // フォントを小さく（軸が多いため）
+              grid: { circular: true } // グリッド線を円形に表示
+            }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } // 凡例を下部に表示
+          }
+        }
+      });
+    }
+  }
 })();
   </script>
 </body>

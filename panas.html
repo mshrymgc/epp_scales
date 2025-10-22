@@ -10,60 +10,153 @@
   <!-- Survey (for demographics only) -->
   <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif; }
-    .note { font-size: 0.95rem; color: #333; line-height: 1.6; }
-    .small { font-size: 0.85rem; }
-    .muted { color:#666 }
-    .footer { margin-top: 2rem; font-size: .8rem; color:#666 }
-    .jspsych-content { max-width: 1150px; }
-    .grid { display:grid; gap: 1rem }
-    .card { background:#fff; border:1px solid #eee; border-radius:12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,.04) }
-    .danger { color:#b00020 }
-    details summary { cursor: pointer; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { padding: .4rem .3rem; border-bottom: 1px solid #eee; }
+    /* ==========================================
+       基本レイアウト
+       ========================================== */
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+    }
+    .jspsych-content {
+      max-width: 1150px;
+    }
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+    .danger {
+      color: #b00020;
+    }
+    details summary {
+      cursor: pointer;
+    }
 
-    /* Likert ラベルを小さめに */
-    .jspsych-survey-likert .jspsych-survey-likert-opt-label { font-size: 12px; line-height: 1.2; cursor: pointer; }
-    .jspsych-survey-likert .jspsych-survey-likert-statement { font-size: 0.95rem; }
-    
-    /* ツールチップ */
-    .likert-label-tooltip { position: relative; }
-    .likert-label-tooltip::after { 
-      content: attr(data-tooltip); 
-      position: absolute; 
-      bottom: 110%; 
-      left: 50%; 
-      transform: translateX(-50%); 
-      background: #333; 
-      color: #fff; 
-      padding: 6px 10px; 
-      border-radius: 4px; 
-      font-size: 11px; 
-      white-space: nowrap; 
-      opacity: 0; 
-      pointer-events: none; 
+    /* ==========================================
+       テキストと注記
+       ========================================== */
+    .note {
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.6;
+    }
+    .small {
+      font-size: 0.85rem;
+    }
+    .muted {
+      color: #666;
+    }
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    /* ==========================================
+       テーブル
+       ========================================== */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th,
+    td {
+      padding: 0.4rem 0.3rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* ==========================================
+       リッカート表示
+       ========================================== */
+    .jspsych-survey-likert .jspsych-survey-likert-opt-label {
+      font-size: 12px;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+    .jspsych-survey-likert .jspsych-survey-likert-statement {
+      font-size: 0.95rem;
+    }
+    .likert-label-tooltip {
+      position: relative;
+    }
+    .likert-label-tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
       transition: opacity 0.2s;
       z-index: 1000;
     }
-    .likert-label-tooltip:hover::after { opacity: 1; }
+    .likert-label-tooltip:hover::after {
+      opacity: 1;
+    }
 
-    /* ===== Dark theme support (default light; allow optional dark via ?theme=dark) ===== */
-    :root { color-scheme: light; }
-    body.dark { background:#000; color:#fff; }
-    body.dark .card { background:#111; border-color:#333; color:#fff; }
-    body.dark a { color:#9cd3ff; }
-    body.dark .muted { color:#bbb }
-    body.dark table th, body.dark table td { border-color:#333; }
+    /* ==========================================
+       ダークテーマ (?theme=dark)
+       ========================================== */
+    :root {
+      color-scheme: light;
+    }
+    body.dark {
+      background: #000;
+      color: #fff;
+    }
+    body.dark .card {
+      background: #111;
+      border-color: #333;
+      color: #fff;
+    }
+    body.dark a {
+      color: #9cd3ff;
+    }
+    body.dark .muted {
+      color: #bbb;
+    }
+    body.dark table th,
+    body.dark table td {
+      border-color: #333;
+    }
 
-    /* Chart responsive wrappers */
-    .chart-wrap{ position:relative; width:100%; height:46vh; max-height:420px; }
-    @media (max-width: 600px){
-      .chart-wrap{ height:48vh; max-height:360px; }
-      .jspsych-content { padding: 0 16px; }
-      .card{ padding: .9rem; }
-      .jspsych-survey-likert .jspsych-survey-likert-opt-label{ font-size: 11px; }
-      .jspsych-survey-likert .jspsych-survey-likert-statement{ font-size: .95rem; }
+    /* ==========================================
+       チャートレイアウト
+       ========================================== */
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 46vh;
+      max-height: 420px;
+    }
+    @media (max-width: 600px) {
+      .chart-wrap {
+        height: 48vh;
+        max-height: 360px;
+      }
+      .jspsych-content {
+        padding: 0 16px;
+      }
+      .card {
+        padding: 0.9rem;
+      }
+      .jspsych-survey-likert .jspsych-survey-likert-opt-label {
+        font-size: 11px;
+      }
+      .jspsych-survey-likert .jspsych-survey-likert-statement {
+        font-size: 0.95rem;
+      }
     }
   </style>
 
@@ -81,98 +174,207 @@
   <div id="jspsych-target"></div>
 
   <script>
-  (function(){
-    const { initJsPsych } = window.jsPsychModule || {};
-    const jsPsychHtmlButtonResponse = window.jsPsychHtmlButtonResponse;
-    const jsPsychSurvey = window.jsPsychSurvey;
-    const jsPsychSurveyLikert = window.jsPsychSurveyLikert;
-    const jsPsychPipe = window.jsPsychPipe;
+(() => {
+  // ==========================================
+  // 0. jsPsych の初期化と基本設定
+  // ==========================================
+  // jsPsychモジュールとプラグインの読み込み確認
+  const module = window.jsPsychModule || {};
+  const initJsPsych = module.initJsPsych;
+  const htmlButtonPlugin = window.jsPsychHtmlButtonResponse;
+  const surveyPlugin = window.jsPsychSurvey;
+  const surveyLikertPlugin = window.jsPsychSurveyLikert;
+  const pipePlugin = window.jsPsychPipe;
 
-    if (!initJsPsych || !jsPsychHtmlButtonResponse || !jsPsychSurvey || !jsPsychSurveyLikert) {
-      console.error('必要な jsPsych コンポーネントが読み込まれていません。dist/ 内のファイルパスを確認してください。');
-      return;
-    }
-    if (!jsPsychPipe || typeof jsPsychPipe.saveData !== 'function') {
-      console.error('jsPsych Pipe プラグインが読み込まれていません。<script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"> を確認してください。');
-      return;
-    }
+  // 必須コンポーネントが読み込まれているか確認
+  if (!initJsPsych || !htmlButtonPlugin || !surveyPlugin || !surveyLikertPlugin) {
+    console.error('必要な jsPsych コンポーネントが読み込まれていません。dist/ 配下のファイルを確認してください。');
+    return;
+  }
+  if (!pipePlugin) {
+    console.error('jsPsych Pipe プラグインが読み込まれていません。plugin-pipe のスクリプトタグを確認してください。');
+    return;
+  }
 
-    // ===== Optional Theme (default light; allow manual dark with ?theme=dark) =====
-    (function setTheme(){
-      try {
-        const params = new URLSearchParams(location.search);
-        if (params.get('theme') && params.get('theme').toLowerCase() === 'dark') {
-          document.body.classList.add('dark');
-        }
-      } catch(e){}
-    })();
+  // ==========================================
+  // 定数定義
+  // ==========================================
+  // 進捗バーの表示テキスト
+  const PROGRESS_LABEL_TEXT = '進捗状況';
+  
+  // 各ステップでの進捗率（0.0〜1.0）
+  const PROGRESS_STEPS = { 
+    demographics: 0.1,  // 属性情報：10%
+    state: 0.5,         // 現在気分：50%
+    month: 0.9,         // 1か月頻度：90%
+    complete: 1         // 完了：100%
+  };
+  
+  // Likertスケールの選択肢（1-6の6件法）
+  const LIKERT_VALUES = ['1', '2', '3', '4', '5', '6'];
 
-    // 「Completion Progress」を「進捗状況」に置換（進捗バーが生成されたら処理）
-    (function setProgressLabel(){
-      const setLabel = () => {
-        const span = document.querySelector('#jspsych-progressbar-container span');
-        if (span) { span.innerHTML = '進捗状況'; return true; }
-        return false;
-      };
-      if (!setLabel()) {
-        const mo = new MutationObserver((_, obs) => { if (setLabel()) obs.disconnect(); });
-        mo.observe(document.body, { childList: true, subtree: true });
-      }
-    })();
+  // システム情報とセッション開始時刻を記録
+  const SYSTEM_INFO = detectSystemInfo();
+  const SESSION_START = Date.now();
+  const START_TIME_JST = formatJst(new Date(SESSION_START));
 
-    const updateProgressBar = (fraction) => {
-      const barInner = document.querySelector('#jspsych-progressbar-inner');
-      if (barInner) { const clamped = Math.max(0, Math.min(1, fraction)); barInner.style.width = `${Math.round(clamped * 100)}%`; }
-    };
+  // ==========================================
+  // PANAS項目の定義
+  // ==========================================
+  // ネガティブ情動（NA）の8項目
+  const NA_ITEMS = [
+    'びくびくした',
+    'おびえた',
+    'うろたえた',
+    '心配した',
+    '苦悩した',
+    'ぴりぴりした',
+    '恥じた',
+    'いらだった'
+  ];
+  
+  // ポジティブ情動（PA）の8項目
+  const PA_ITEMS = [
+    '活気のある',
+    '誇らしい',
+    '強気な',
+    '気合いの入った',
+    'きっぱりとした',
+    'わくわくした',
+    '機敏な',
+    '熱狂した'
+  ];
 
-    // ===== PANAS 日本語版（佐藤・安田, 2001）16項目 =====
-    // NA（8）
-    const NA_ITEMS = [
-      'びくびくした',
-      'おびえた',
-      'うろたえた',
-      '心配した',
-      '苦悩した',
-      'ぴりぴりした',
-      '恥じた',
-      'いらだった'
-    ];
-    // PA（8）
-    const PA_ITEMS = [
-      '活気のある',
-      '誇らしい',
-      '強気な',
-      '気合いの入った',
-      'きっぱりとした',
-      'わくわくした',
-      '機敏な',
-      '熱狂した'
-    ];
+  // ==========================================
+  // 各選択肢のツールチップ（説明文）
+  // ==========================================
+  // 現在の気分用（6件法）
+  const STATE_TOOLTIPS = [
+    '全く当てはまらない',
+    '当てはまらない',
+    'どちらかといえば当てはまらない',
+    'どちらかといえば当てはまる',
+    '当てはまる',
+    '非常によく当てはまる'
+  ];
+  
+  // 過去1か月の頻度用（6件法）
+  const MONTH_TOOLTIPS = [
+    '全くなかった',
+    'めったになかった',
+    'ときどきあった',
+    'しばしばあった',
+    'ほとんどいつもだった',
+    'いつもそうだった'
+  ];
 
-    // ラベル（6件法）
-    const LABELS_STATE = ['1', '2', '3', '4', '5', '6'];
-    const LABELS_MONTH = ['1', '2', '3', '4', '5', '6'];
+  // ==========================================
+  // 教示文の定義
+  // ==========================================
+  // 現在の気分測定用の教示文
+  const STATE_INSTRUCTIONS = [
+    '今この瞬間のあなたの気分について、最も近い選択肢を選んでください。',
+    '',
+    '1=全く当てはまらない',
+    '2=当てはまらない',
+    '3=どちらかといえば当てはまらない',
+    '4=どちらかといえば当てはまる',
+    '5=当てはまる',
+    '6=非常によく当てはまる'
+  ].join('<br>');
 
-    // ===== 実験本体 =====
-    const jsPsych = initJsPsych({
-      display_element: 'jspsych-target',
-      show_progress_bar: true,
-      auto_update_progress_bar: false
-    });
+  // 過去1か月の頻度測定用の教示文
+  const MONTH_INSTRUCTIONS = [
+    'この1か月のあいだに、それぞれの気分をどの程度経験したかを選んでください。',
+    '',
+    '1=全くなかった',
+    '2=めったになかった',
+    '3=ときどきあった',
+    '4=しばしばあった',
+    '5=ほとんどいつもだった',
+    '6=いつもそうだった'
+  ].join('<br>');
 
-    // Datapipe: unique subject_id & filename
-    const subject_id = jsPsych.randomization.randomID(10);
-    const filename   = `${subject_id}.csv`;
-    jsPsych.data.addProperties({
-      subject_id,
-      timestamp_start: new Date().toISOString()
-    });
+  // ==========================================
+  // 尺度定義の構築
+  // ==========================================
+  // 現在の気分を測定する尺度（State）
+  const STATE_SCALE = buildScaleDefinition({
+    prefix: 'S',                                    // 変数名のプレフィックス
+    title: '現在の気分（16項目 / 6件法）',         // ページタイトル
+    instructions: STATE_INSTRUCTIONS,               // 教示文
+    tooltips: STATE_TOOLTIPS,                       // 選択肢のツールチップ
+    buttonLabel: '次へ',                            // ボタンラベル
+    progress: PROGRESS_STEPS.state                  // 進捗率
+  });
 
-    const timeline = [];
+  // 過去1か月の頻度を測定する尺度（Month）
+  const MONTH_SCALE = buildScaleDefinition({
+    prefix: 'M',                                    // 変数名のプレフィックス
+    title: '過去1か月の頻度（16項目 / 6件法）',    // ページタイトル
+    instructions: MONTH_INSTRUCTIONS,               // 教示文
+    tooltips: MONTH_TOOLTIPS,                       // 選択肢のツールチップ
+    buttonLabel: '結果を見る',                      // ボタンラベル
+    progress: PROGRESS_STEPS.month                  // 進捗率
+  });
 
-    // ウェルカム
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
+  // ==========================================
+  // 初期化処理
+  // ==========================================
+  // URLパラメータからダークテーマを設定
+  setThemeFromQuery();
+  // 進捗バーのラベルを日本語化
+  setProgressLabelObserver();
+
+  // ==========================================
+  // jsPsych実験の初期化
+  // ==========================================
+  const jsPsych = initJsPsych({
+    display_element: 'jspsych-target',     // 実験を表示するHTML要素
+    show_progress_bar: true,                // 進捗バーを表示
+    auto_update_progress_bar: false        // 進捗バーは手動更新
+  });
+
+  // ==========================================
+  // 参加者IDとメタデータの設定
+  // ==========================================
+  const subjectId = jsPsych.randomization.randomID(10);  // 10文字のランダムID
+  jsPsych.data.addProperties({
+    subject_id: subjectId,
+    timestamp_start: new Date().toISOString(),  // ISO形式の開始時刻
+    start_timestamp: SESSION_START,              // Unixタイムスタンプ
+    start_time_jst: START_TIME_JST,              // JST形式の開始時刻
+    browser: SYSTEM_INFO.browser,                // ブラウザ名
+    os: SYSTEM_INFO.os,                          // OS名
+    user_agent: SYSTEM_INFO.userAgent            // ユーザーエージェント文字列
+  });
+
+  // ==========================================
+  // タイムラインの構築と実行
+  // ==========================================
+  const timeline = [
+    createIntroTrial(),           // 1. イントロページ
+    createDemographicsTrial(),    // 2. 属性情報（年齢・性別）
+    createScaleTrial(STATE_SCALE), // 3. 現在の気分測定
+    createScaleTrial(MONTH_SCALE), // 4. 過去1か月の頻度測定
+    createSaveTrial(subjectId),   // 5. データ保存
+    createResultsTrial()          // 6. 結果表示
+  ];
+
+  jsPsych.run(timeline);
+
+  // ==========================================
+  // 1. タイムライン定義関数
+  // ==========================================
+  
+  /**
+   * イントロページのトライアルを作成
+   * PANASの概要と倫理的配慮を説明
+   */
+  function createIntroTrial() {
+    return {
+      type: htmlButtonPlugin,
+      data: { page_number: 'intro', page_items: [] },
       stimulus: `
         <div class="grid">
           <div class="card">
@@ -180,7 +382,7 @@
             <h3>現在の気分 & 過去1か月の頻度</h3>
             <p class="note">
               このアンケートは <b>ポジティブ情動（PA）</b> と <b>ネガティブ情動（NA）</b> を簡便に測定する尺度です。<br>
-              <b>現在の気分</b>と<b>過去1か月の頻度</b>の2つの時間についてあなたの気分を確認します。<br>
+              <b>現在の気分</b>と<b>過去1か月の頻度</b>の2つの観点で回答してください。
             </p>
             <ul class="small muted">
               目安時間：5〜8分<br>
@@ -192,152 +394,137 @@
         </div>
       `,
       choices: ['はじめる']
-    });
+    };
+  }
 
-    // 属性（年齢・性別のみ）
-    timeline.push({
-      type: jsPsychSurvey,
+  /**
+   * 属性情報収集ページのトライアルを作成
+   * 年齢と性別を収集
+   */
+  function createDemographicsTrial() {
+    return {
+      type: surveyPlugin,
+      data: { page_number: 'demographics', page_items: ['age', 'gender'] },
       survey_json: {
-        showQuestionNumbers: false,
+        showQuestionNumbers: false,  // 質問番号を非表示
         pages: [{
           name: 'demographics',
           elements: [
             { type: 'text', name: 'age', title: '年齢', inputType: 'number', min: 0, max: 120, isRequired: true },
-            { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性','女性','その他','未回答'] }
+            { type: 'dropdown', name: 'gender', title: '性別', isRequired: true, choices: ['男性', '女性', 'その他', '未回答'] }
           ]
         }],
-        pageNextText: '次へ', pagePrevText: '戻る', completeText: '次へ'
+        pageNextText: '次へ',
+        pagePrevText: '戻る',
+        completeText: '次へ'
       },
       on_finish: (data) => {
-        const r = data.response || {};
-        jsPsych.data.addProperties({ age: r.age || '', gender: r.gender || '' });
-        updateProgressBar(0.1);
+        // 回答をグローバルデータに追加
+        const response = data.response || {};
+        jsPsych.data.addProperties({ 
+          age: response.age || '', 
+          gender: response.gender || '' 
+        });
+        updateProgressBar(PROGRESS_STEPS.demographics);
       }
-    });
+    };
+  }
 
-    // ===== 現在の気分（STATE） =====
-    const STATE_ITEMS = [
-      ...NA_ITEMS.map((txt, i) => ({ key: `S_NA_${i+1}`, txt, group: 'NA' })),
-      ...PA_ITEMS.map((txt, i) => ({ key: `S_PA_${i+1}`, txt, group: 'PA' })),
-    ];
-
-    timeline.push({
-      type: jsPsychSurveyLikert,
-      preamble: `<div class="card"><b>現在の気分（16項目 / 6件法）</b><div class="small muted">今この瞬間のあなたの気分について、最も近い選択肢を選んでください。<br><br>
-      1=全く当てはまらない<br>
-      2=当てはまらない<br>
-      3=どちらかといえば当てはまらない<br>
-      4=どちらかといえば当てはまる<br>
-      5=当てはまる<br>
-      6=非常によく当てはまる</div></div>`,
+  /**
+   * Likert尺度ページのトライアルを作成
+   * @param {Object} scale - 尺度定義オブジェクト（STATE_SCALE または MONTH_SCALE）
+   */
+  function createScaleTrial(scale) {
+    return {
+      type: surveyLikertPlugin,
+      data: { page_number: scale.prefix.toLowerCase(), page_items: scale.items.map((item) => item.key) },
+      preamble: `
+        <div class="card">
+          <b>${scale.title}</b>
+          <div class="small muted">${scale.instructions}</div>
+        </div>
+      `,
       randomize_question_order: true,
-      button_label: '次へ',
-      questions: STATE_ITEMS.map(({key, txt}) => ({
-        prompt: `<div class="note">${txt}</div>`,
-        labels: LABELS_STATE,
+      button_label: scale.buttonLabel,
+      questions: scale.items.map(({ key, text }) => ({
+        prompt: `<div class="note">${text}</div>`,
+        labels: LIKERT_VALUES,
         required: true,
         name: key
       })),
       on_load: () => {
-        const tooltips_state = ['全く当てはまらない', '当てはまらない', 'どちらかといえば当てはまらない', 'どちらかといえば当てはまる', '当てはまる', '非常によく当てはまる'];
-        setTimeout(() => {
-          document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
-            if (!label.classList.contains('likert-label-tooltip')) {
-              label.classList.add('likert-label-tooltip');
-              label.setAttribute('data-tooltip', tooltips_state[i % 6]);
-            }
-          });
-        }, 100);
+        setTimeout(() => applyLikertTooltips(scale.tooltips), 60);
+        updateProgressBar(scale.progress);
       },
-      on_finish: () => { updateProgressBar(0.5); window.scrollTo({top:0, behavior:'smooth'}); }
-    });
+      on_finish: (data) => {
+        // ==========================================
+        // 各回答に詳細なメタデータを追加
+        // ==========================================
+        const resp = data.response || {};
+        
+        // 各項目について、raw（素点）、scored（換算後）、reversed（逆転フラグ）、item_numberを記録
+        Object.entries(resp).forEach(([key, idx]) => {
+          const raw = parseLikertValue(idx);  // 0-based → 1-6
+          
+          // PANASには逆転項目がないため、raw = scored
+          const scored = raw;
+          const isReversed = false;
+          
+          // 項目番号を抽出（例：S_NA_1 → 1, M_PA_8 → 8）
+          const itemNumMatch = key.match(/_(\d+)$/);
+          const itemNumber = itemNumMatch ? parseInt(itemNumMatch[1], 10) : null;
+          
+          // CSVに記録される変数名
+          data[`${key}_raw`] = raw;              // 素点（1-6）
+          data[`${key}_scored`] = scored;        // 換算後の得点（PANASは逆転なしなのでrawと同じ）
+          data[`${key}_reversed`] = isReversed ? 1 : 0;  // 逆転項目フラグ（常に0）
+          data[`${key}_item_number`] = itemNumber;  // 項目番号（1-8）
+          data[`${key}_domain`] = key.includes('_NA_') ? 'NA' : 'PA';  // ドメイン（PA/NA）
+        });
+        
+        // ページ情報を記録
+        const itemKeys = scale.items.map((item) => item.key);
+        data.page_items = itemKeys.join(',');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+  }
 
-    // ===== 過去1か月の頻度（MONTH） =====
-    const MONTH_ITEMS = [
-      ...NA_ITEMS.map((txt, i) => ({ key: `M_NA_${i+1}`, txt, group: 'NA' })),
-      ...PA_ITEMS.map((txt, i) => ({ key: `M_PA_${i+1}`, txt, group: 'PA' })),
-    ];
-
-    timeline.push({
-      type: jsPsychSurveyLikert,
-      preamble: `<div class="card"><b>過去1か月の頻度（16項目 / 6件法）</b><div class="small muted">この1か月のあいだに、それぞれの気分をどの程度経験したかを選んでください。<br><br>
-      1=全くなかった<br>
-      2=めったになかった<br>
-      3=ときどきあった<br>
-      4=しばしばあった<br>
-      5=ほとんどいつもだった<br>
-      6=いつもそうだった</div></div>`,
-      randomize_question_order: true,
-      button_label: '結果を見る',
-      questions: MONTH_ITEMS.map(({key, txt}) => ({
-        prompt: `<div class="note">${txt}</div>`,
-        labels: LABELS_MONTH,
-        required: true,
-        name: key
-      })),
-      on_load: () => {
-        const tooltips_month = ['全くなかった', 'めったになかった', 'ときどきあった', 'しばしばあった', 'ほとんどいつもだった', 'いつもそうだった'];
-        setTimeout(() => {
-          document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
-            if (!label.classList.contains('likert-label-tooltip')) {
-              label.classList.add('likert-label-tooltip');
-              label.setAttribute('data-tooltip', tooltips_month[i % 6]);
-            }
-          });
-        }, 100);
-      },
-      on_finish: () => { updateProgressBar(0.9); window.scrollTo({top:0, behavior:'smooth'}); }
-    });
-
-    // ===== スコア計算 =====
-    function getScores() {
-      const all = jsPsych.data.get().filter({ trial_type: 'survey-likert' }).values();
-      const resp = {};
-      all.forEach(tr => {
-        const r = tr.response || {};
-        Object.entries(r).forEach(([k, v]) => { resp[k] = Number(v) + 1; /* 1..6 */ });
-      });
-
-      const sum = keys => keys.reduce((a, k) => a + (resp[k] || 0), 0);
-
-      const S_NA_KEYS = STATE_ITEMS.filter(x=>x.group==='NA').map(x=>x.key);
-      const S_PA_KEYS = STATE_ITEMS.filter(x=>x.group==='PA').map(x=>x.key);
-      const M_NA_KEYS = MONTH_ITEMS.filter(x=>x.group==='NA').map(x=>x.key);
-      const M_PA_KEYS = MONTH_ITEMS.filter(x=>x.group==='PA').map(x=>x.key);
-
-      const scores = {
-        state: { PA: sum(S_PA_KEYS), NA: sum(S_NA_KEYS) },
-        month: { PA: sum(M_PA_KEYS), NA: sum(M_NA_KEYS) },
-        raw: resp
-      };
-
-      return scores;
-    }
-
-    // ===== Datapipe 保存 =====
-    const save_data = {
-      type: jsPsychPipe,
+  /**
+   * データ保存トライアルを作成
+   * OSFにCSVデータをアップロード
+   * @param {string} subjectId - 参加者ID
+   */
+  function createSaveTrial(subjectId) {
+    return {
+      type: pipePlugin,
+      data: { page_number: 'save_data', page_items: [] },
       action: 'save',
-      experiment_id: 'TZPhTMQhxHSu', // ← Datapipe の実験ID
-      filename: filename,
+      experiment_id: 'TZPhTMQhxHSu',  // OSFのExperiment ID
+      filename: `${subjectId}.csv`,
       wait_message: `
         <div class="card">
           <h3>計算中です...</h3>
           <p class="small muted">数秒お待ちください。</p>
         </div>
       `,
-      data_string: () => jsPsych.data.get().csv(),
+      data_string: () => jsPsych.data.get().csv(),  // CSV形式でデータを取得
       on_start: () => {
-        const sc = getScores();
+        // 合計得点を計算してグローバルデータに追加
+        const scores = getScores();
         jsPsych.data.addProperties({
-          pa_state: sc.state.PA, na_state: sc.state.NA,
-          pa_month: sc.month.PA, na_month: sc.month.NA,
-          timestamp_end: new Date().toISOString()
+          pa_state: scores.state.PA,   // 現在気分のPA得点
+          na_state: scores.state.NA,   // 現在気分のNA得点
+          pa_month: scores.month.PA,   // 1か月頻度のPA得点
+          na_month: scores.month.NA,   // 1か月頻度のNA得点
+          timestamp_end: new Date().toISOString()  // 終了時刻
         });
-        updateProgressBar(1);
-        console.log('[PANAS] Saving via Pipe', { filename });
+        updateProgressBar(PROGRESS_STEPS.complete);
+        console.log('[PANAS] Saving via Pipe', { filename: `${subjectId}.csv` });
       },
       on_finish: (data) => {
+        // 保存結果を記録
         const result = data?.result || {};
         window.__pipe_result = {
           success: data?.success === true && !result.error,
@@ -346,95 +533,322 @@
         };
       }
     };
+  }
 
-    timeline.push(save_data);
-
-    // ===== 結果表示 =====
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
+  /**
+   * 結果表示トライアルを作成
+   * PA/NAの得点と比較チャートを表示
+   */
+  function createResultsTrial() {
+    return {
+      type: htmlButtonPlugin,
+      data: { page_number: 'results', page_items: [] },
       stimulus: () => {
-        updateProgressBar(1);
-        const sc = getScores();
-
-        // 保存ステータス
-        let saveNote = '';
-        try {
-          const pr = window.__pipe_result;
-          if (pr && pr.success === true) {
-            saveNote = `<div class="small muted">✓ 計算が完了しました。</div>`;
-          } else if (pr && pr.success === false) {
-            saveNote = `<div class="small danger">⚠ データ保存に失敗しました（${pr.error || 'unknown error'}）。ブラウザには結果が表示されています。</div>`;
-          } else {
-            saveNote = `<div class="small muted">データ保存の状態を確認できませんでした。ブラウザには結果が表示されています。</div>`;
-          }
-        } catch(e) { saveNote = `<div class="small danger">⚠ 保存状態の確認に失敗しました。</div>`; }
-
-        const tbl = `
-          <table>
-            <thead><tr><th style="text-align:left">尺度</th><th style="text-align:right">PA</th><th style="text-align:right">NA</th></tr></thead>
-            <tbody>
-              <tr><td>現在の気分</td><td style="text-align:right">${sc.state.PA}</td><td style="text-align:right">${sc.state.NA}</td></tr>
-              <tr><td>過去1か月の頻度</td><td style="text-align:right">${sc.month.PA}</td><td style="text-align:right">${sc.month.NA}</td></tr>
-            </tbody>
-          </table>`;
-
-        return `
-          <div class="card">
-            <h3>回答ありがとうございました。</h3>
-            ${saveNote}
-            <p>合計スコア（各 8項目 × 1〜6点 = 最大48点）</p>
-            ${tbl}
-            <h4 style="margin-top:1rem">比較チャート（PA/NA × 現在 vs 1か月）</h4>
-            <div class="chart-wrap"><canvas id="panas-bar"></canvas></div>
-            <div class="footer muted" style="margin-top:1rem">
-              <div>参考：佐藤徳・安田朝子（2001）日本語版PANAS。性格心理学研究, 9(2), 138-139。／ Watson, Clark, & Tellegen（1988）。</div>
-            </div>
-          </div>
-        `;
+        updateProgressBar(PROGRESS_STEPS.complete);
+        const scores = getScores();
+        const saveStatus = buildSaveStatusNote();
+        return createResultsHtml(scores, saveStatus);
       },
       choices: ['終了'],
       on_finish: () => {
+        // 実験終了後、トップページに遷移
         window.location.href = 'https://mshrymgc.github.io/epp_scales/';
       },
       on_load: () => {
-        // Chart 描画
-        const isDark = document.body.classList.contains('dark');
-        const txtColor = isDark ? '#ffffff' : '#000000';
-        const gridColor = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
-        const palette = isDark
-          ? { s:'#4FC3F7', m:'#FFB74D' }
-          : { s:'#1976D2', m:'#D32F2F' };
-
-        const sc = getScores();
-        const dataNow = [sc.state.PA, sc.state.NA];
-        const dataMon = [sc.month.PA, sc.month.NA];
-
-        const ctx = document.getElementById('panas-bar');
-        if (ctx) new window.Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: ['PA','NA'],
-            datasets: [
-              { label: '現在の気分', data: dataNow, borderColor: palette.s, backgroundColor: palette.s, borderWidth: 1 },
-              { label: '過去1か月', data: dataMon, borderColor: palette.m, backgroundColor: palette.m, borderWidth: 1 }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: { ticks: { color: txtColor }, grid: { color: gridColor } },
-              y: { beginAtZero: true, max: 48, ticks: { color: txtColor }, grid: { color: gridColor } }
-            },
-            plugins: { legend: { position: 'bottom', labels: { color: txtColor } }, tooltip: { enabled: true } }
-          }
+        // 終了時刻と所要時間を計算
+        const endTimestamp = Date.now();
+        const endTimeJst = formatJst(new Date(endTimestamp));
+        const durationMs = endTimestamp - SESSION_START;
+        const durationSec = Number((durationMs / 1000).toFixed(2));
+        const durationMin = Number((durationMs / 60000).toFixed(2));
+        
+        // タイムスタンプと所要時間をグローバルデータに追加
+        jsPsych.data.addProperties({
+          end_timestamp: endTimestamp,           // 終了時刻（Unixタイムスタンプ）
+          end_time_jst: endTimeJst,              // 終了時刻（JST形式）
+          total_duration_ms: durationMs,         // 所要時間（ミリ秒）
+          total_duration_sec: durationSec,       // 所要時間（秒）
+          total_duration_min: durationMin        // 所要時間（分）
         });
+        
+        // 結果チャートを描画
+        renderResultsChart(getScores());
+      }
+    };
+  }
+
+  // ==========================================
+  // 2. ユーティリティ関数
+  // ==========================================
+  
+  /**
+   * システム情報（ブラウザとOS）を検出する関数
+   * @returns {Object} { browser, os, userAgent }
+   */
+  function detectSystemInfo() {
+    const ua = navigator.userAgent || '';
+    
+    // ブラウザの判定
+    const browser = (() => {
+      if (/Edg\//.test(ua)) return 'Edge';
+      if (/OPR\//.test(ua)) return 'Opera';
+      if (/Chrome\//.test(ua)) return 'Chrome';
+      if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return 'Safari';
+      if (/Firefox\//.test(ua)) return 'Firefox';
+      if (/MSIE |Trident\//.test(ua)) return 'Internet Explorer';
+      return 'Unknown';
+    })();
+
+    // OSの判定
+    const os = (() => {
+      if (/Windows NT/.test(ua)) return 'Windows';
+      if (/Mac OS X/.test(ua)) return 'macOS';
+      if (/Linux/.test(ua)) return 'Linux';
+      if (/Android/.test(ua)) return 'Android';
+      if (/(iPhone|iPad|iPod)/.test(ua)) return 'iOS';
+      return 'Unknown';
+    })();
+
+    return { browser, os, userAgent: ua };
+  }
+
+  /**
+   * 日本時間（JST）で日付をフォーマットする関数
+   * @param {Date} date - フォーマットする日付オブジェクト
+   * @returns {string} YYYY/MM/DD HH:MM:SS 形式の文字列
+   */
+  function formatJst(date) {
+    try {
+      return new Intl.DateTimeFormat('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(date);
+    } catch (error) {
+      console.warn('JSTフォーマットに失敗', error);
+      return date.toISOString();
+    }
+  }
+
+  /**
+   * 尺度定義オブジェクトを構築する関数
+   * @param {Object} config - 尺度の設定オブジェクト
+   * @returns {Object} 項目リストとキーを含む尺度定義
+   * 
+   * NA項目8つとPA項目8つを結合して16項目の尺度を作成
+   */
+  function buildScaleDefinition({ prefix, title, instructions, tooltips, buttonLabel, progress }) {
+    // NA項目とPA項目を変数名付きで作成
+    const items = [
+      ...NA_ITEMS.map((text, index) => ({ 
+        key: `${prefix}_NA_${index + 1}`,  // 例：S_NA_1, M_NA_1
+        text, 
+        domain: 'NA' 
+      })),
+      ...PA_ITEMS.map((text, index) => ({ 
+        key: `${prefix}_PA_${index + 1}`,  // 例：S_PA_1, M_PA_1
+        text, 
+        domain: 'PA' 
+      }))
+    ];
+    
+    return {
+      prefix,
+      title,
+      instructions,
+      tooltips,
+      buttonLabel,
+      progress,
+      items,
+      naKeys: items.filter((item) => item.domain === 'NA').map((item) => item.key),
+      paKeys: items.filter((item) => item.domain === 'PA').map((item) => item.key)
+    };
+  }
+
+  /**
+   * URLパラメータからダークテーマを設定する関数
+   * ?theme=dark が指定されている場合にダークモードを有効化
+   */
+  function setThemeFromQuery() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('theme') && params.get('theme').toLowerCase() === 'dark') {
+        document.body.classList.add('dark');
+      }
+    } catch (error) {
+      console.warn('テーマの設定に失敗しました', error);
+    }
+  }
+
+  /**
+   * 進捗バーのラベルを日本語化する関数
+   * DOMが生成されるまでMutationObserverで監視
+   */
+  function setProgressLabelObserver() {
+    const trySetLabel = () => {
+      const span = document.querySelector('#jspsych-progressbar-container span');
+      if (span) {
+        span.innerHTML = PROGRESS_LABEL_TEXT;
+        return true;
+      }
+      return false;
+    };
+
+    if (trySetLabel()) return;
+
+    const observer = new MutationObserver((_, obs) => {
+      if (trySetLabel()) obs.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function updateProgressBar(fraction) {
+    const barInner = document.querySelector('#jspsych-progressbar-inner');
+    if (!barInner) return;
+    const clamped = Math.max(0, Math.min(1, fraction));
+    barInner.style.width = `${Math.round(clamped * 100)}%`;
+  }
+
+  function applyLikertTooltips(texts) {
+    const labels = document.querySelectorAll('.jspsych-survey-likert-opt-label');
+    labels.forEach((label, index) => {
+      const text = texts[index % texts.length];
+      const host = label.closest('label') || label;
+      host.classList.add('likert-label-tooltip');
+      host.setAttribute('data-tooltip', text);
+      host.setAttribute('data-label', text);
+      if (label !== host) {
+        label.classList.add('likert-label-tooltip');
+        label.setAttribute('data-tooltip', text);
+        label.setAttribute('data-label', text);
       }
     });
+  }
 
-    // 実行
-    jsPsych.run(timeline);
-  })();
+  function parseLikertValue(value) {
+    if (value == null) return null;
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value + 1;
+    }
+    const match = /^\d+/.exec(String(value));
+    if (!match) return null;
+    const parsed = Number(match[0]);
+    if (!Number.isFinite(parsed)) return null;
+    return parsed >= 0 && parsed <= 4 ? parsed + 1 : parsed;
+  }
+
+  function collectResponses() {
+    const responses = {};
+    jsPsych.data.get()
+      .filter({ trial_type: 'survey-likert' })
+      .values()
+      .forEach((trial) => {
+        const trialResponse = trial.response || {};
+        Object.entries(trialResponse).forEach(([key, rawValue]) => {
+          const numeric = parseLikertValue(rawValue);
+          if (numeric != null) {
+            responses[key] = numeric;
+          }
+        });
+      });
+    return responses;
+  }
+
+  function sumValues(map, keys) {
+    return keys.reduce((total, key) => total + (map[key] || 0), 0);
+  }
+
+  function getScores() {
+    const responses = collectResponses();
+    return {
+      state:
+        { PA: sumValues(responses, STATE_SCALE.paKeys), NA: sumValues(responses, STATE_SCALE.naKeys) },
+      month:
+        { PA: sumValues(responses, MONTH_SCALE.paKeys), NA: sumValues(responses, MONTH_SCALE.naKeys) },
+      raw: responses
+    };
+  }
+
+  function buildSaveStatusNote() {
+    try {
+      const result = window.__pipe_result;
+      if (result && result.success === true) {
+        return '<div class="small muted">✓ 計算が完了しました。</div>';
+      }
+      if (result && result.success === false) {
+        return `<div class="small danger">⚠ データ保存に失敗しました（${result.error || 'unknown error'}）。ブラウザには結果が表示されています。</div>`;
+      }
+      return '<div class="small muted">データ保存の状態を確認できませんでした。ブラウザには結果が表示されています。</div>';
+    } catch (error) {
+      return '<div class="small danger">⚠ 保存状態の確認に失敗しました。</div>';
+    }
+  }
+
+  function createResultsHtml(scores, saveStatus) {
+    const table = `
+      <table>
+        <thead><tr><th style="text-align:left">尺度</th><th style="text-align:right">PA</th><th style="text-align:right">NA</th></tr></thead>
+        <tbody>
+          <tr><td>現在の気分</td><td style="text-align:right">${scores.state.PA}</td><td style="text-align:right">${scores.state.NA}</td></tr>
+          <tr><td>過去1か月の頻度</td><td style="text-align:right">${scores.month.PA}</td><td style="text-align:right">${scores.month.NA}</td></tr>
+        </tbody>
+      </table>
+    `;
+
+    return `
+      <div class="card">
+        <h3>回答ありがとうございました。</h3>
+        ${saveStatus}
+        <p>合計スコア（各 8項目 × 1〜6点 = 最大48点）</p>
+        ${table}
+        <h4 style="margin-top:1rem">比較チャート（PA/NA × 現在 vs 1か月）</h4>
+        <div class="chart-wrap"><canvas id="panas-bar"></canvas></div>
+        <div class="footer muted" style="margin-top:1rem">
+          <div>参考：佐藤徳・安田朝子（2001）日本語版PANAS。性格心理学研究, 9(2), 138-139。／ Watson, Clark, & Tellegen（1988）。</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderResultsChart(scores) {
+    const canvas = document.getElementById('panas-bar');
+    if (!canvas) return;
+
+    if (window.panasChart && typeof window.panasChart.destroy === 'function') {
+      window.panasChart.destroy();
+    }
+
+    const isDark = document.body.classList.contains('dark');
+    const textColor = isDark ? '#ffffff' : '#000000';
+    const gridColor = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
+    const palette = isDark ? { state: '#4FC3F7', month: '#FFB74D' } : { state: '#1976D2', month: '#D32F2F' };
+
+    window.panasChart = new window.Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['PA', 'NA'],
+        datasets: [
+          { label: '現在の気分', data: [scores.state.PA, scores.state.NA], borderColor: palette.state, backgroundColor: palette.state, borderWidth: 1 },
+          { label: '過去1か月', data: [scores.month.PA, scores.month.NA], borderColor: palette.month, backgroundColor: palette.month, borderWidth: 1 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: textColor }, grid: { color: gridColor } },
+          y: { beginAtZero: true, max: 48, ticks: { color: textColor }, grid: { color: gridColor } }
+        },
+        plugins: { legend: { position: 'bottom', labels: { color: textColor } }, tooltip: { enabled: true } }
+      }
+    });
+  }
+})();
   </script>
 </body>
 </html>
