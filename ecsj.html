@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RRQ 日本語版</title>
+  <title>成人用エフォートフル・コントロール尺度日本語版</title>
   <link rel="stylesheet" href="./dist/jspsych.css" />
   <link rel="stylesheet" href="./dist/survey.min.css" />
   <style>
@@ -140,13 +140,12 @@
   // 0. jsPsych の初期化と基本設定
   // ==========================================
   const PROGRESS_LABEL_TEXT = '進捗状況'; // 進捗バーに表示するテキスト
-  const PAGE_SIZE = 6; // 1ページに表示する質問数（反芻・省察を6問ずつ）
+  const PAGE_SIZE = 12; // 1ページに表示する質問数
   const LIKERT_CHOICES = [
-    { value: 1, text: '1 = 全く当てはまらない' },
-    { value: 2, text: '2 = 当てはまらない' },
-    { value: 3, text: '3 = どちらともいえない' },
-    { value: 4, text: '4 = 当てはまる' },
-    { value: 5, text: '5 = よく当てはまる' }
+    { value: 1, text: '1 = あてはまらない' },
+    { value: 2, text: '2 = あまりあてはまらない' },
+    { value: 3, text: '3 = 少しあてはまる' },
+    { value: 4, text: '4 = あてはまる' }
   ];
   const DEBUG = false; // true にすると処理の流れをコンソールに表示
   const debugLog = (...args) => { if (DEBUG) console.log(...args); };
@@ -163,34 +162,47 @@
   // ==========================================
   // 1. 尺度項目の定義
   // ==========================================
-  const RRQ = {
-    rumination: [
-      { id: 1, text: '自分のある側面について考えるのをやめたいと思っていても，そこに注意が向くことが多い。', reverse: false },
-      { id: 2, text: '最近自分が言ったことやしたことについて，頭の中でいつも思い返しているように思う。', reverse: false },
-      { id: 3, text: '時々，自分自身について考えるのをなかなかやめることができない。', reverse: false },
-      { id: 4, text: '口論や意見の不一致があると，その後長い間私は起こったことを考えつづける。', reverse: false },
-      { id: 5, text: '本当に長い間，自分に起こったことを繰り返し考えたり，つくづくと考えたりしがちだ。', reverse: false },
-      { id: 6, text: '終わったことやしてしまったことを思い返すために時間を使うことはない。', reverse: true },
-      { id: 7, text: '過去にあった場面で，自分がどう振舞ったかを頭の中でよく思い返している。', reverse: false },
-      { id: 8, text: '自分がしたことについて，自らもう一度評価をしていることに気が付くことがよくある。', reverse: false },
-      { id: 9, text: 'あまり長い間，自分自身のことを繰り返し考えたり，じっくり考えたりすることは決してない。', reverse: true },
-      { id: 10, text: '不愉快な考えを頭の中から外へ出すことはたやすい。', reverse: true },
-      { id: 11, text: 'もはや関心を持つべきではない人生の出来事について熟考することがよくある。', reverse: false },
-      { id: 12, text: '私は，恥ずかしい，あるいはがっかりした瞬間を思い返すのに，非常に多くの時間を費やしている。', reverse: false }
+  const ECSJ = {
+    inhibitory_control: [
+      { id: 1, text: '自分がそう望むなら，秘密を守るのはたいてい簡単だ。', reverse: false },
+      { id: 2, text: '笑い声が適切でないような状況で，笑いを抑えるのは簡単だ。', reverse: false },
+      { id: 3, text: '店で魅力的な品物を見かけた時，それを買うのを我慢するのはとても難しい。', reverse: true },
+      { id: 4, text: '興奮していてアイディアを表現したい時でも，順番を外れてしゃべることは簡単に我慢できる。', reverse: false },
+      { id: 5, text: '望ましくないと信じているのに習慣となっている行動パターンをやめようと決意した時には，たいてい成功する。', reverse: false },
+      { id: 6, text: '何かに興奮している時は，起こり得る結果を考える前にそれにすぐ飛びつくのを抑えるのはたいてい難しい。', reverse: true },
+      { id: 7, text: '活力に溢れていると感じられる時でも，必要ならば普通たいした苦もなくじっと座っていられる。', reverse: false },
+      { id: 8, text: 'しばしば，楽しい活動にふけって責任から逃げることがある。', reverse: true },
+      { id: 9, text: '時々，快への衝動（お菓子を食べる，など）を抑えようとすればするほど，そう行動してしまいやすいように思える。', reverse: true },
+      { id: 10, text: '食べたり飲んだりすることへの渇望を我慢することはたいてい難しい。', reverse: true },
+      { id: 11, text: '不適切なおふざけをしないでいるのは簡単だ', reverse: false },
     ],
-    reflection: [
-      { id: 13, text: '哲学的，抽象的な考えは，それほど私の興味を引くものではない。', reverse: true },
-      { id: 14, text: '私はそれほど物事を深く考えるタイプの人ではない。', reverse: true },
-      { id: 15, text: '「内的な」自己を探るのがとても好きだ。', reverse: false },
-      { id: 16, text: '物事に対する自分の態度や気持ちに，強い興味がある。', reverse: false },
-      { id: 17, text: '内省的，自省的な考え方は本当に好きではない。', reverse: true },
-      { id: 18, text: 'なぜそうするのかを分析するのがとても好きだ。', reverse: false },
-      { id: 19, text: '私は，「深い」，内省的なタイプの人だとよく人に言われる。', reverse: false },
-      { id: 20, text: '自己分析はあまり好きではない。', reverse: true },
-      { id: 21, text: 'もともと自己をとても探求したいと思っている。', reverse: false },
-      { id: 22, text: 'ものごとの本質や意味について深く考えることがとても好きだ。', reverse: false },
-      { id: 23, text: '自分の人生を哲学的に見ることがとても好きだとしばしば思う。', reverse: false },
-      { id: 24, text: '自分自身についてじっくり考えることは，楽しいとは思わない。', reverse: true }
+    activation_control: [
+      { id: 12, text: 'たいてい，実際に期限が来る前に物事（お金の支払い，宿題など）を終わらせる。', reverse: false },
+      { id: 13, text: '約束の時間によく遅れる。', reverse: true },
+      { id: 14, text: '最後まで実行しない計画をよく立てる。', reverse: true },
+      { id: 15, text: '面倒な行動計画でも決定したらすぐに，実行に移す。', reverse: false },
+      { id: 16, text: 'やる必要のあることを思いついたら，たいていすぐにそれに取りかかる。', reverse: false },
+      { id: 17, text: '気乗りしない時でも，面倒な課題に取り組むことができる。', reverse: false },
+      { id: 18, text: '今日中に仕事をやり遂げる充分な時間がある時でさえ，しばしば明日やってしまおうと考えることがある。', reverse: true },
+      { id: 19, text: 'もし車や部屋，洗濯物などを掃除したり洗ったりする必要があるのに気づいても，よくそれを明日まで延期してしまう。', reverse: true },
+      { id: 20, text: '時間どおりに物事を終わらせることはめったにない。', reverse: true },
+      { id: 21, text: 'たいてい。責任は少しでも早く果たそうとする。', reverse: false },
+      { id: 22, text: '事態がどうなるか心配な時，たいていその事態に対処することを避けてしまう。', reverse: true },
+      { id: 23, text: '課題を，やりたくない時でもやり続けることができる。', reverse: false }
+    ],
+    attention_control: [
+      { id: 24, text: '何かのことで悲しい時，課題に集中し続けるのは難しい。', reverse: true },
+      { id: 25, text: '何かの結果について不安になっている時，課題に集中し続けるのはとても苦労する。', reverse: true },
+      { id: 26, text: '心悩ませている時，集中するのはとても難しい。', reverse: true },
+      { id: 27, text: '近いうちにおこる出来事について嬉しくて興奮している時，集中力を要する課題に注意を向け続けるのはとても苦労する。', reverse: true },
+      { id: 28, text: 'とりわけ気分がいい時，複数のことを同時に憶えておくことを必要とする課題に集中するのはとても苦労する。', reverse: true },
+      { id: 29, text: '良い報せを聞くと，責任を果たす事に集中できなくなってしまう。', reverse: true },
+      { id: 30, text: '集中しようと努力しても，簡単に気が散ってしまう。', reverse: true },
+      { id: 31, text: '何かに集中しようとしている時でも，気を散らすような考えの侵入を阻止するのは難しい。', reverse: true },
+      { id: 32, text: '何か勉強しようとしている時，周囲の騒音を無視して集中するのは難しい。', reverse: true },
+      { id: 33, text: '中断させられたり注意をそらされたりした時，たいていはそれまで自分がやっていたことに注意を向けなおすことができる。', reverse: false },
+      { id: 34, text: '通常，周囲で起きている複数の出来事を憶えておくのはとても得意だ。', reverse: false },
+      { id: 35, text: 'しばしば，ふたつの異なる課題を交互にやるのは難しい。', reverse: true }
     ]
   };
 
@@ -367,19 +379,18 @@
       type: window.jsPsychHtmlButtonResponse,
       stimulus: `
         <div class="card">
-          <h2>RRQ 日本語版</h2>
-          <h3>Rumination–Reflection Questionnaire</h3>
+          <h2>成人用エフォートフル・コントロール尺度日本語版</h2>
           <h4>「感情・人格心理学」受講者用</h4>
           <p style="margin:0.6rem 0 0;">
-            これは反芻と内省傾向を測定するアンケートであり，講義内容の理解を促進するために利用されます。この結果だけで医学的診断を行ったり，あなたの性格そのものを測定することはできませんので注意してください。データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。
+            これはエフォートフルコントロールの程度を測定するアンケートであり，講義内容の理解を促進するために利用されます。この結果だけで医学的診断を行ったり，あなたの性格そのものを測定することはできませんので注意してください。データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。
           </p>
           <p style="margin:0.6rem 0 0;">
             回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>
             また，回答の有無が成績に影響することは一切ありません。
           </p>
           <ul class="small muted" style="margin-top:0.8rem; padding-left:1.2rem;">
-            回答時間の目安：4〜6分<br>
-            出典：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.
+            回答時間の目安：5〜10分<br>
+            出典：山形伸二,・高橋雄介・繁桝算男・大野裕・木島伸彦. (2005). 成人用エフォートフル・コントロール尺度日本語版の作成とその信頼性・妥当性の検討. パーソナリティ研究, 14(1), 30-41.
           </ul>
         </div>
       `,
@@ -443,7 +454,7 @@
                 <div class="card">
                   <b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b>
                   <p style="margin:0.5rem 0 0;">
-                    以下の各文について、あなたがどの程度当てはまるかを1つ選んでください。直感的に答えて構いません。
+                    以下の各文章は，あなたにどのくらいあてはまりますか。<br>最も適当なものを一つ選んでください。
                   </p>
                 </div>
               `
@@ -468,7 +479,7 @@
         // ページ番号を記録（1-based）
         data.page_number = pageIndex + 1;
         
-        // このページで回答した項目のリスト（domain:id形式、例: "R1,F3,R5"）
+        // このページで回答した項目のリスト（domain:id形式，例: "R1,F3,R5"）
         const pageItemsList = items.map(item => `${item.domain}${item.id}`).join(',');
         data.page_items = pageItemsList;
         
@@ -490,15 +501,15 @@
           }
           
           if (rawScore == null || !Number.isFinite(rawScore)) return;
-          
-          // 1-5の範囲に収める
-          if (rawScore < 1 || rawScore > 5) return;
-          
-          // 逆転項目の場合は反転処理（6 - 値）
-          const scoredValue = item.reverse ? (6 - rawScore) : rawScore;
-          
+
+          // 1-4の範囲に収める
+          if (rawScore < 1 || rawScore > 4) return;
+
+          // 逆転項目の場合は反転処理（5 - 値）
+          const scoredValue = item.reverse ? (5 - rawScore) : rawScore;
+
           // CSVに記録する変数を追加
-          data[`${name}_raw`] = rawScore;           // 生得点（1-5）
+          data[`${name}_raw`] = rawScore;           // 生得点（1-4）
           data[`${name}_scored`] = scoredValue;      // 逆転処理済み得点
           data[`${name}_reversed`] = item.reverse;   // 逆転項目かどうか
           data[`${name}_original_id`] = item.originalId; // 元の項目番号
@@ -655,78 +666,86 @@
   // 7. 表示用ユーティリティ
   // ==========================================
   function createResultsHtml(summary) {
-    const rumRow = `<tr><td>反芻 (Rumination)</td><td>${formatInt(summary.rumination.sum)} / 60</td><td>${formatMean(summary.rumination.mean)}</td></tr>`;
-    const refRow = `<tr><td>省察 (Reflection)</td><td>${formatInt(summary.reflection.sum)} / 60</td><td>${formatMean(summary.reflection.mean)}</td></tr>`;
+    const icRow = `<tr><td>行動抑制の制御</td><td>${formatInt(summary.inhibitory_control.sum)} / 60</td><td>${formatMean(summary.inhibitory_control.mean)}</td></tr>`;
+    const acRow = `<tr><td>行動始発の制御</td><td>${formatInt(summary.activation_control.sum)} / 60</td><td>${formatMean(summary.activation_control.mean)}</td></tr>`;
+    const attRow = `<tr><td>注意の制御</td><td>${formatInt(summary.attention_control.sum)} / 60</td><td>${formatMean(summary.attention_control.mean)}</td></tr>`;
+    const totalRow = `<tr><td>全体合計</td><td>${formatInt(summary.total.sum)} / 60</td><td>${formatMean(summary.total.mean)}</td></tr>`;
 
     return `
       <div class="card">
         <h2>結果</h2>
         <p style="margin:0.4rem 0 0.8rem;">
-          各下位尺度は12項目・5件法で構成され，合計得点の範囲は12〜60です。平均値（1〜5）は逆転項目を処理した後に算出しています。
+          平均値（1〜4）は逆転項目を処理した後に算出しています。
         </p>
         <table>
           <thead>
-            <tr><th>特性</th><th>合計得点</th><th>平均 (1〜5)</th></tr>
+            <tr><th>特性</th><th>合計得点</th><th>平均 (1〜4)</th></tr>
           </thead>
-          <tbody>${rumRow}${refRow}</tbody>
+          <tbody>${icRow}${acRow}${attRow}</tbody>
         </table>
         <div class="result-grid">
           <div style="grid-column:1/-1">
-            <h3 style="margin:1rem 0 0.5rem;">反芻と省察の合計得点</h3>
+            <h3 style="margin:1rem 0 0.5rem;">行動抑制の制御と行動始発の制御，注意の制御の合計得点</h3>
             <div class="chart-wrap chart-small"><canvas id="rrq-chart"></canvas></div>
             <div id="rrq-values" style="margin-top:0.6rem; font-weight:600; text-align:center;">
-              合計（反芻 / 省察）: ${formatInt(summary.rumination.sum)} / ${formatInt(summary.reflection.sum)}　
-              平均（反芻 / 省察）: ${formatMean(summary.rumination.mean)} / ${formatMean(summary.reflection.mean)}
+              合計（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体合計）: ${formatInt(summary.inhibitory_control.sum)} / ${formatInt(summary.activation_control.sum)} / ${formatInt(summary.attention_control.sum)} / ${formatInt(summary.total.sum)}<br>
+              平均（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体平均）: ${formatMean(summary.inhibitory_control.mean)} / ${formatMean(summary.activation_control.mean)} / ${formatMean(summary.attention_control.mean)} / ${formatMean(summary.total.mean)}
             </div>
             <div class="description-box" style="margin-top:0.8rem;">
-              <div class="score-label">反芻（Rumination）</div>
+              <div class="score-label">行動抑制の制御（Inhibitory Control）</div>
               <p style="margin:0.2rem 0 0;">
-                ネガティブな出来事や気分に対して，同じことを繰り返し考え続ける傾向。問題解決ではなく思考が堂々巡りになりやすい場合は心理的負担が増すことがあります。
+                不適切な接近行動を抑制する能力
               </p>
-              <div class="score-label" style="margin-top:0.6rem;">省察（Reflection）</div>
+              <div class="score-label" style="margin-top:0.6rem;">行動始発の制御（Activation Control）</div>
               <p style="margin:0.2rem 0 0;">
-                自分の感情や行動を振り返り，経験から学ぼうとする傾向。建設的な内省が高いほど，自己理解や成長への関心が高いことを示します。
+                ある行動を回避したい時でもそれを遂行する能力
+              </p>
+              <div class="score-label" style="margin-top:0.6rem;">注意の制御（Attention Control）</div>
+              <p style="margin:0.2rem 0 0;">
+                必要に応じて，集中したり注意を切り替えたりする能力
               </p>
             </div>
           </div>
         </div>
         <div class="small muted" style="margin-top:1rem;">
-          注：高野慶輔・丹野義彦 (2008). Rumination–Reflection Questionnaire 日本語版作成の試み. パーソナリティ研究, 16, 259–261.
+          注：日本人平均は山形他（2005）Table 1の値を使用
         </div>
       </div>
     `;
   }
 
   function renderResultsChart(summary) {
-    const canvas = document.getElementById('rrq-chart');
+    const canvas = document.getElementById('ecsj-chart');
     if (!canvas) {
       debugLog('結果グラフ用の canvas が見つかりません');
       return;
     }
 
-    if (window.rrqChart && typeof window.rrqChart.destroy === 'function') {
-      window.rrqChart.destroy();
+    if (window.ecsjChart && typeof window.ecsjChart.destroy === 'function') {
+      window.ecsjChart.destroy();
     }
 
-    const ruminationScore = Number(summary.rumination.sum) || 0;
-    const reflectionScore = Number(summary.reflection.sum) || 0;
+    const icScore = Number(summary.inhibitory_control.sum) || 0;
+    const acScore = Number(summary.activation_control.sum) || 0;
+    const attScore = Number(summary.attention_control.sum) || 0;
+    const totalScore = Number(summary.total.sum) || 0;
 
-    const valuesEl = document.getElementById('rrq-values');
+    const valuesEl = document.getElementById('ecsj-values');
     if (valuesEl) {
       valuesEl.innerText = (
-        `合計（反芻 / 省察）: ${formatInt(ruminationScore)} / ${formatInt(reflectionScore)}　` +
-        `平均（反芻 / 省察）: ${formatMean(summary.rumination.mean)} / ${formatMean(summary.reflection.mean)}`
+        `合計（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体合計）: ${formatInt(icScore)} / ${formatInt(acScore)} / ${formatInt(attScore)} / ${formatInt(totalScore)}　` +
+        `平均（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体平均）: ${formatMean(summary.inhibitory_control.mean)} / ${formatMean(summary.activation_control.mean)} / ${formatMean(summary.attention_control.mean)} / ${formatMean(summary.total.mean)}`
       );
     }
 
-    window.rrqChart = new Chart(canvas.getContext('2d'), {
+    window.ecsjChart = new Chart(canvas.getContext('2d'), {
       type: 'bar',
       data: {
-        labels: ['反芻 (R)', '省察 (F)'],
+        labels: ['行動抑制の制御 (IC)', '行動始発の制御 (AC)', '注意の制御 (AT)', '全体合計 (IC + AC + AT)'],
         datasets: [{
-          label: '合計得点 (12〜60)',
-          data: [ruminationScore, reflectionScore],
-          backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(56,142,60,0.85)']
+          label: '合計得点',
+          data: [icScore, acScore, attScore, totalScore],
+          backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(56,142,60,0.85)', 'rgba(255,193,7,0.85)', 'rgba(0,0,0,0.85)']
         }]
       },
       options: {
@@ -738,7 +757,7 @@
             min: 12,
             max: 60,
             ticks: { stepSize: 6 },
-            title: { display: true, text: '合計得点 (12〜60)' }
+            title: { display: true, text: '合計得点' }
           }
         }
       }
