@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドットプローブ課題</title>
+    <script src="./dist/jspsych.js"></script>
+    <script src="./dist/plugin-html-button-response.js"></script>
+    <script src="./dist/plugin-html-keyboard-response.js"></script>
+    <link rel="stylesheet" href="./dist/jspsych.css">
+    <style>
+        /* jsPsychのデフォルトスタイルをオーバーライド */
+        html, body {
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        #jspsych-target {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .jspsych-display-element {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 40px auto;
+        }
+
+        .stimulus-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 600px;
+            height: 300px;
+            margin: 40px auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            position: relative;
+            gap: 180px;
+        }
+
+        .face-stimulus {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+            padding: 10px;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .face-stimulus:hover {
+            transform: scale(1.05);
+        }
+
+        .probe {
+            width: 20px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            animation: pulse 0.3s ease-in;
+            touch-action: none;
+        }
+
+        .probe:hover {
+            background: #2980b9;
+            transform: scale(1.1);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .fixation {
+            font-size: 36px;
+            color: #3498db;
+            font-weight: bold;
+            margin: 40px 0;
+        }
+
+        .instruction-text {
+            font-size: 16px;
+            color: #2c3e50;
+            line-height: 1.8;
+            max-width: 600px;
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        .title {
+            font-size: 28px;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .results-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .result-label {
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .jspsych-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            padding: 12px 30px !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
+        }
+
+        .jspsych-btn:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
+        }
+
+        .jspsych-btn:active {
+            transform: translateY(0) !important;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // デバイス判定
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // jsPsychの初期化
+        const jsPsych = initJsPsych({
+            override_safe_mode: true
+        });
+
+        // 試行のタイムラインを作成
+        const timeline = [];
+
+        // ウェルカム画面
+        const deviceType = isMobile ? 'スマートフォン（タッチ）' : 'PC（キーボード）';
+        const instructionText = isMobile 
+            ? '青い丸をタップしてください。'
+            : 'スペースキーを押すか、青い丸をクリックしてください。';
+
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: `
+                <div class="title">ドットプローブ課題</div>
+                <div class="subtitle">反応時間測定課題</div>
+                <div class="instruction-text">
+                    <p>2つの単語が表示されます。その後、青い丸が画面に現れます。</p>
+                    <p>${instructionText}</p>
+                    <p>できるだけ速く反応してください。</p>
+                    <div style="font-size: 12px; color: #95a5a6; margin-top: 15px;">【検出デバイス: ${deviceType}】</div>
+                </div>
+            `,
+            choices: ['開始']
+        });
+
+        // 練習試行
+        const practice_trials = create_probe_trials(true, 4, isMobile);
+        timeline.push({
+            timeline: practice_trials,
+            randomize_order: true
+        });
+
+        // 練習完了メッセージ
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: `
+                <div class="instruction-text">
+                    <p style="font-size: 18px; font-weight: 600; color: #667eea;">練習完了</p>
+                    <p>本試行に進みます。これからの試行は採点されます。</p>
+                </div>
+            `,
+            choices: ['本試行へ']
+        });
+
+        // 本試行
+        const main_trials = create_probe_trials(false, 32, isMobile);
+        timeline.push({
+            timeline: main_trials,
+            randomize_order: true
+        });
+
+        // 結果表示
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function() {
+                const data = jsPsych.data.get().filter({ practice: false }).values();
+                
+                if (data.length === 0) {
+                    return '<div class="instruction-text"><p>データがありません。</p></div>';
+                }
+
+                const rts = data.filter(trial => trial.response !== null).map(trial => trial.rt);
+                const trial_count = data.length;
+                const mean_rt = (rts.reduce((a, b) => a + b, 0) / rts.length).toFixed(0);
+                const congruent_rts = data.filter(trial => trial.congruent === true && trial.response !== null).map(trial => trial.rt);
+                const incongruent_rts = data.filter(trial => trial.congruent === false && trial.response !== null).map(trial => trial.rt);
+                const mean_congruent = congruent_rts.length > 0 ? (congruent_rts.reduce((a, b) => a + b, 0) / congruent_rts.length).toFixed(0) : 'N/A';
+                const mean_incongruent = incongruent_rts.length > 0 ? (incongruent_rts.reduce((a, b) => a + b, 0) / incongruent_rts.length).toFixed(0) : 'N/A';
+                const bias = mean_congruent !== 'N/A' && mean_incongruent !== 'N/A' ? (mean_incongruent - mean_congruent).toFixed(0) : 'N/A';
+
+                // バイアスの解釈
+                let biasInterpretation = '';
+                if (bias !== 'N/A') {
+                    const biasNum = parseInt(bias);
+                    if (biasNum > 100) {
+                        biasInterpretation = '<span style="color: #e74c3c; font-weight: 600;">【脅威的刺激への強い注意バイアス】</span><br>脅威的刺激（怒り、悲しみなど）への注意が優先される傾向が強いです。不安症状や警戒心が高い可能性があります。';
+                    } else if (biasNum > 0) {
+                        biasInterpretation = '<span style="color: #f39c12; font-weight: 600;">【脅威的刺激への弱い注意バイアス】</span><br>脅威的刺激への注意がやや優先される傾向があります。';
+                    } else if (biasNum > -100) {
+                        biasInterpretation = '<span style="color: #3498db; font-weight: 600;">【注意バイアスなし】</span><br>脅威的刺激と中立的刺激への注意配分がほぼ同等です。';
+                    } else {
+                        biasInterpretation = '<span style="color: #27ae60; font-weight: 600;">【中立的刺激への注意バイアス】</span><br>中立的刺激への注意が優先される傾向があります。';
+                    }
+                }
+
+                return `
+                    <div class="title">実験完了</div>
+                    <div class="results-container">
+                        <div class="result-item">
+                            <span class="result-label">実施した試行数:</span>
+                            <span class="result-value">${trial_count}試行</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">総反応時間の平均:</span>
+                            <span class="result-value">${mean_rt} ms</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">一致試行の平均反応時間:</span>
+                            <span class="result-value">${mean_congruent} ms</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">不一致試行の平均反応時間:</span>
+                            <span class="result-value">${mean_incongruent} ms</span>
+                        </div>
+                        <div class="result-item" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3);">
+                            <span class="result-label" style="font-size: 16px;">注意バイアス値:</span>
+                            <span class="result-value" style="font-size: 20px;">${bias} ms</span>
+                        </div>
+                    </div>
+                    <div class="instruction-text" style="margin-top: 30px; font-size: 14px; color: #2c3e50; line-height: 1.8;">
+                        <p style="font-weight: 600; margin-bottom: 10px; font-size: 15px;">【注意バイアス値の解釈】</p>
+                        <div style="background: rgba(102, 126, 234, 0.1); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            ${biasInterpretation}
+                        </div>
+                        <p style="font-size: 13px; color: #7f8c8d; margin-top: 15px;">
+                            <strong>注意バイアス値 = 不一致試行の反応時間 - 一致試行の反応時間</strong><br><br>
+                            • <strong>正の値 (+)</strong>: 脅威的刺激への注意バイアスがある<br>
+                            • <strong>ゼロ (0)</strong>: 注意バイアスがない（中立的）<br>
+                            • <strong>負の値 (-)</strong>: 中立的刺激への注意バイアスがある
+                        </p>
+                        <div style="background: rgba(200, 200, 200, 0.1); padding: 12px; border-left: 4px solid #95a5a6; margin-top: 15px; font-size: 12px; text-align: left;">
+                            <p style="margin: 5px 0; color: #7f8c8d; text-align: left;">
+                                <strong>【このテストについて】</strong><br>
+                                このテストでは、日本語の単語を用いた反応時間測定課題を実施しました。表示された2つの単語と、ドットの位置関係から、注意がどちらに引きつけられやすいかを分析しています。<br>
+                                使用した単語：<br>
+                                • グループA：怒り、悲しみ、恐怖、不安、嫌悪<br>
+                                • グループB：中立、平静、無表情、普通、淡々
+                            </p>
+                        </div>
+                        <div style="background: rgba(200, 200, 200, 0.1); padding: 12px; border-left: 4px solid #95a5a6; margin-top: 10px; font-size: 12px; text-align: left;">
+                            <p style="margin: 5px 0; color: #7f8c8d; text-align: left;">
+                                <strong>【解釈基準の出典】</strong><br>
+                                このツールの注意バイアス値の解釈基準（±100ms）は、以下の研究に基づいています：<br>
+                                • MacLeod, C. M., Mathews, A., & Tata, P. (1986). Attentional bias in emotional disorders. Journal of Abnormal Psychology, 95(1), 15-20.<br>
+                                • Fox, E., Russo, R., & Dutton, K. (2002). Attentional bias for threat: Evidence for delayed disengagement from emotional faces. Visual Cognition, 9(4-5), 534-541.<br><br>
+                                一般集団では50-100ms程度のバイアスが観測され、臨床的に有意とされるのは100msを超えるバイアスです。
+                            </p>
+                        </div>
+                        <div style="background: rgba(230, 200, 200, 0.1); padding: 12px; border-left: 4px solid #e74c3c; margin-top: 10px; font-size: 12px; text-align: left;">
+                            <p style="margin: 5px 0; color: #7f8c8d; text-align: left;">
+                                <strong>【注意事項】</strong><br>
+                                • このテストの結果は参考値です。臨床診断や精神医学的評価ではありません。<br>
+                                • 1回の測定では個人のバイアスの正確な評価に不十分です。複数回の実施による安定性の確認が推奨されます。<br>
+                                • 反応時間は個人の注意のみでなく、動作速度や集中度などの要因にも影響されます。<br>
+                                • 結果の解釈には専門家の指導が必要です。<br>
+                                • ドットプローブ課題にはバリエーション（例：顔刺激ではなく単語や画像を使用する方法、プローブの種類、刺激呈示時間など）が存在します。このバージョンでは日本語の脅威語と中立語を使用していますが、他の刺激セットでの結果と直接比較することは推奨されません。<br>
+                                • 本課題で使用している脅威語（怒り、悲しみ、恐怖、不安、嫌悪）と中立語（中立、平静、無表情、普通、淡々）は、教育目的で選定されたものです。実際の臨床応用では、より厳密に検証された刺激セットの使用が推奨されます。
+                            </p>
+                        </div>
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button id="exit-button" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+                                実験を終了する
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+            choices: 'NO_KEYS',
+            on_load: function() {
+                // ボタンのクリックイベントを追加
+                setTimeout(() => {
+                    const exitButton = document.getElementById('exit-button');
+                    if (exitButton) {
+                        exitButton.addEventListener('click', function() {
+                            window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+                        });
+                        // ホバーエフェクト
+                        exitButton.addEventListener('mouseover', function() {
+                            this.style.transform = 'translateY(-2px)';
+                            this.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+                        });
+                        exitButton.addEventListener('mouseout', function() {
+                            this.style.transform = 'translateY(0)';
+                            this.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                        });
+                    }
+                }, 100);
+            }
+        });
+
+        // ドットプローブ課題の試行を作成
+        function create_probe_trials(is_practice, num_trials, mobile) {
+            const trials = [];
+            // 脅威語のバリエーション
+            const threats = ['怒り', '悲しみ', '恐怖', '不安', '嫌悪'];
+            // 中立語のバリエーション
+            const neutrals = ['中立', '平静', '無表情', '普通', '淡々'];
+            const positions = ['left', 'right'];
+
+            for (let i = 0; i < num_trials; i++) {
+                // 各試行でランダムに感情を決定
+                const is_threat_left = Math.random() > 0.5;
+                const left_emotion = is_threat_left ? threats[Math.floor(Math.random() * threats.length)] : neutrals[Math.floor(Math.random() * neutrals.length)];
+                const right_emotion = !is_threat_left ? threats[Math.floor(Math.random() * threats.length)] : neutrals[Math.floor(Math.random() * neutrals.length)];
+                
+                const probe_position = positions[Math.floor(Math.random() * positions.length)];
+                const threat_position = is_threat_left ? 'left' : 'right';
+                const is_congruent = probe_position === threat_position;
+
+                // 固視点の表示
+                trials.push({
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: '<div class="fixation">+</div>',
+                    choices: 'NO_KEYS',
+                    trial_duration: 500
+                });
+
+                // 顔ペアの表示
+                trials.push({
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: `
+                        <div class="stimulus-container">
+                            <div class="face-stimulus">${left_emotion}</div>
+                            <div class="face-stimulus">${right_emotion}</div>
+                        </div>
+                    `,
+                    choices: 'NO_KEYS',
+                    trial_duration: 500
+                });
+
+                // プローブの表示と反応計測
+                if (mobile) {
+                    // モバイル版：タッチ対応
+                    trials.push({
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: function() {
+                            return `
+                                <div class="stimulus-container" id="probe-container">
+                                    <div style="position: absolute; left: ${probe_position === 'left' ? '30%' : '70%'}; top: 50%; transform: translate(-50%, -50%);">
+                                        <div class="probe" id="probe-element" style="cursor: pointer;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        },
+                        choices: 'NO_KEYS',
+                        trial_duration: null,
+                        on_load: function() {
+                            const probe = document.getElementById('probe-element');
+                            const startTime = performance.now();
+                            
+                            probe.addEventListener('touchstart', function(e) {
+                                e.preventDefault();
+                                const endTime = performance.now();
+                                const rt = endTime - startTime;
+                                jsPsych.finishTrial({
+                                    rt: rt,
+                                    response: 'touch',
+                                    practice: is_practice,
+                                    probe_position: probe_position,
+                                    threat_position: threat_position,
+                                    congruent: is_congruent,
+                                    correct: true
+                                });
+                            });
+                        }
+                    });
+                } else {
+                    // PC版：キーボード + クリック対応
+                    trials.push({
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: function() {
+                            return `
+                                <div class="stimulus-container" id="probe-container">
+                                    <div style="position: absolute; left: ${probe_position === 'left' ? '30%' : '70%'}; top: 50%; transform: translate(-50%, -50%);">
+                                        <div class="probe" id="probe-element" style="cursor: pointer;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        },
+                        choices: [' '],
+                        trial_duration: null,
+                        on_load: function() {
+                            const probe = document.getElementById('probe-element');
+                            const startTime = performance.now();
+                            let responded = false;
+                            
+                            // クリック反応
+                            const handleClick = function(e) {
+                                e.preventDefault();
+                                if (responded) return;
+                                responded = true;
+                                
+                                const endTime = performance.now();
+                                const rt = endTime - startTime;
+                                probe.removeEventListener('click', handleClick);
+                                
+                                jsPsych.finishTrial({
+                                    rt: rt,
+                                    response: 'click',
+                                    practice: is_practice,
+                                    probe_position: probe_position,
+                                    threat_position: threat_position,
+                                    congruent: is_congruent,
+                                    correct: true
+                                });
+                            };
+                            
+                            probe.addEventListener('click', handleClick);
+                        },
+                        on_finish: function(data) {
+                            // キーボード（スペースキー）での反応
+                            if (data.response === ' ') {
+                                data.response = 'key';
+                                data.practice = is_practice;
+                                data.probe_position = probe_position;
+                                data.threat_position = threat_position;
+                                data.congruent = is_congruent;
+                                data.correct = true;
+                            }
+                        }
+                    });
+                }
+            }
+
+            return trials;
+        }
+
+        // タイムラインを実行
+        jsPsych.run(timeline);
+    </script>
+</body>
+</html>

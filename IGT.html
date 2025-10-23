@@ -34,12 +34,50 @@
       text-align: center;
     }
 
+    h2 {
+      color: #0071e3;
+      font-size: 1.3rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+
     .instruction {
       color: #555;
       line-height: 1.8;
       font-size: 0.95rem;
       margin: 1rem 0 1.5rem 0;
       text-align: center;
+    }
+
+    .subtitle {
+      color: #666;
+      text-align: center;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .content {
+      color: #555;
+      line-height: 1.8;
+      font-size: 0.95rem;
+    }
+
+    .content p {
+      margin-bottom: 1rem;
+    }
+
+    .content ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .content li {
+      margin-bottom: 0.5rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
     }
 
     .status-bar {
@@ -105,6 +143,45 @@
       display: block;
     }
 
+    .deck-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .deck-card {
+      padding: 1.2rem;
+      background: #f9f9fb;
+      border-radius: 8px;
+      border-left: 4px solid #999;
+    }
+
+    .deck-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .deck-label {
+      font-size: 0.85rem;
+      color: #999;
+      margin-bottom: 0.3rem;
+    }
+
+    .deck-value {
+      font-size: 0.95rem;
+      margin: 0.3rem 0;
+    }
+
+    .advantageous {
+      border-left-color: #34c759;
+    }
+
+    .disadvantageous {
+      border-left-color: #ff3b30;
+    }
+
     .feedback {
       padding: 1.5rem;
       border-radius: 8px;
@@ -146,6 +223,32 @@
     .feedback-details {
       font-size: 0.95rem;
       margin-top: 0.8rem;
+    }
+
+    .important-box {
+      background: #e3f2fd;
+      border-left: 4px solid #0071e3;
+      padding: 1.2rem;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+    }
+
+    .important-box p {
+      color: #1565c0;
+      margin: 0;
+    }
+
+    .example-box {
+      background: #f0f7ff;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    .example-box strong {
+      color: #0071e3;
     }
 
     .result-grid {
@@ -203,6 +306,16 @@
       background: #0071e3;
     }
 
+    .highlight {
+      color: #0071e3;
+      font-weight: 600;
+    }
+
+    .icon {
+      font-size: 1.5rem;
+      margin-right: 0.5rem;
+    }
+
     @media (max-width: 600px) {
       .card {
         padding: 1.5rem;
@@ -210,6 +323,10 @@
 
       h1 {
         font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.1rem;
       }
 
       .deck-container {
@@ -234,30 +351,54 @@
       .result-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+
+      .deck-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <script>
-    // 定数定義
+    // =====================================
+    // ステート管理
+    // =====================================
+    let appState = 'welcome'; // 'welcome', 'game'
+    let jsPsych = null;
     const TRIALS_PER_BLOCK = 16;
     const NUM_BLOCKS = 4;
     const TOTAL_TRIALS = TRIALS_PER_BLOCK * NUM_BLOCKS;
     const INITIAL_MONEY = 2000;
 
-    // デッキベース定義
+    // =====================================
+    // デッキ定義（報酬と損失を変動させる）
+    // =====================================
     const baseDeckDefinitions = {
-      A: { gains: [100], losses: [250, 250, 250, 250] },
-      B: { gains: [100], losses: [1250] },
-      C: { gains: [50], losses: [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
-      D: { gains: [50], losses: [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
+      // 山 A: 高リスク・高リターン（平均獲得：100、平均損失：−250）
+      A: { 
+        gains: [75, 100, 125],
+        losses: [200, 250, 250, 300]
+      },
+      // 山 B: 超高リスク・高リターン（平均獲得：100、平均損失：−1250）
+      B: { 
+        gains: [75, 100, 125],
+        losses: [1000, 1250, 1250, 1500]
+      },
+      // 山 C: 低リスク・低リターン（平均獲得：50、平均損失：−25（50%の確率で0））
+      C: { 
+        gains: [25, 50, 75],
+        losses: [25, 50, 50, 75, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      // 山 D: 低リスク・低リターン（平均獲得：50、平均損失：−100（50%の確率で0））
+      D: { 
+        gains: [25, 50, 75],
+        losses: [150, 200, 200, 250, 0, 0, 0, 0, 0, 0, 0, 0]
+      }
     };
 
-    // ブロックごとのデッキ割り当てをランダマイズ
     function generateBlockDecks() {
       const blockDecks = [];
       for (let i = 0; i < NUM_BLOCKS; i++) {
-        // ブロックごとに有利・不利デッキをランダムに割り当て
         const disadvantageous = Math.random() > 0.5 ? ['A', 'B'] : ['B', 'A'];
         const advantageous = Math.random() > 0.5 ? ['C', 'D'] : ['D', 'C'];
         const decks = {};
@@ -272,198 +413,370 @@
       return blockDecks;
     }
 
-    const blockDecks = generateBlockDecks();
+    // =====================================
+    // WelcomeページHTMLの生成
+    // =====================================
+    function generateWelcomeContent() {
+      return `
+        <div class="card" style="max-width: 800px; margin: 2rem auto;">
+          <h1><span class="icon">🎰</span>アイオワギャンブリング課題</h1>
+          <p class="subtitle">ゲームルール説明</p>
 
-    // 試行データ
-    let totalMoney = INITIAL_MONEY;
-    let blockResults = [];
-    let allDeckChoices = { A: 0, B: 0, C: 0, D: 0 };
-    let allGains = [];
-    let allLosses = [];
-
-    // jsPsych初期化
-    const jsPsych = initJsPsych();
-
-    // タイムラインの構築
-    const timeline = [];
-
-    // ブロックループ構築関数
-    function buildBlockTimeline(blockNum) {
-      const currentBlockDecks = blockDecks[blockNum];
-      let blockGains = [];
-      let blockLosses = [];
-      let blockDeckChoices = { A: 0, B: 0, C: 0, D: 0 };
-
-      // ブロック開始メッセージ
-      timeline.push({
-        type: jsPsychHtmlButtonResponse,
-        stimulus: `
-          <div class="card">
-            <h1>ブロック ${blockNum + 1}/${NUM_BLOCKS}</h1>
-            <p style="color: #666; text-align: center; margin: 1.5rem 0; font-size: 1.1rem;">
-              このブロックでは16回の試行を行います。<br>
-              4つの札の山（A, B, C, D）から1つを選んでください。
-            </p>
-            <div class="status-bar">
-              <div class="status-item">
-                <div class="status-label">現在の資金</div>
-                <div class="status-value">${INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0)}</div>
-              </div>
-              <div class="status-item">
-                <div class="status-label">進捗</div>
-                <div class="status-value">${blockNum + 1}/${NUM_BLOCKS}</div>
-              </div>
+          <div class="section">
+            <h2>📝 課題の目的</h2>
+            <div class="content">
+              <p>この課題は、<span class="highlight">意思決定能力と学習能力を測定</span>します。あなたは4つの札の山から繰り返し選択を行い、利益を最大化することを目指します。</p>
             </div>
           </div>
-        `,
-        choices: ['開始'],
-        button_html: '<button class="jspsych-btn">%choice%</button>'
-      });
 
-      // ブロック内の16試行
-      for (let trialInBlock = 1; trialInBlock <= TRIALS_PER_BLOCK; trialInBlock++) {
-        // デッキ選択試行
-        const trialBlockNum = blockNum;
-        const trialNum = trialInBlock;
+          <div class="section">
+            <h2>🎮 ゲームの流れ</h2>
+            <div class="content">
+              <p>課題は<span class="highlight">4つのブロック</span>で構成され、各ブロックで<span class="highlight">16回の試行</span>を行います。（合計64試行）</p>
+              <ul>
+                <li><strong>初期資金:</strong> 2,000</li>
+                <li><strong>各ブロック:</strong> 16回の選択</li>
+                <li><strong>ブロック間:</strong> 資金がリセットされます</li>
+                <li><strong>最終結果:</strong> すべてのブロックの成績を集計します</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>📊 試行の流れ</h2>
+            <div class="content">
+              <p><strong>各試行では以下の手順を繰り返します：</strong></p>
+              <ol style="margin-left: 1.5rem;">
+                <li>4つの札の山（A, B, C, D）から1つを選択します</li>
+                <li>その山から札を1枚引きます</li>
+                <li>獲得額と損失額が表示されます</li>
+                <li>「次へ」ボタンをクリックして次の試行に進みます</li>
+              </ol>
+            </div>
+
+            <div class="example-box">
+              <strong>例）山 C を選んだ場合：</strong><br>
+              獲得: +50 / 損失: −0 → <span style="color: #34c759; font-weight: 700;">+50 の利益</span><br>
+              <br>
+              <strong>例）山 A を選んだ場合：</strong><br>
+              獲得: +100 / 損失: −250 → <span style="color: #ff3b30; font-weight: 700;">−150 の損失</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>💡 ポイント</h2>
+            <div class="content">
+              <ul>
+                <li><strong>学習が重要:</strong> 最初は各山の特性が分かりませんが、試行を重ねるにつれて学習します</li>
+                <li><strong>リアルタイム表示:</strong> 現在の資金と試行数はいつでも確認できます</li>
+                <li><strong>ペース管理:</strong> 自分のペースで進めてください。時間制限はありません</li>
+                <li><strong>戦略性:</strong> 短期的な利益と長期的な最適性のバランスが求められます</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>📈 結果表示</h2>
+            <div class="content">
+              <p>各ブロック終了時と課題全体終了時に以下の統計が表示されます：</p>
+              <ul>
+                <li>最終資金</li>
+                <li>総収支（利益・損失）</li>
+                <li>各山の選択回数</li>
+                <li>有利な山（C・D）の選択率</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="important-box">
+            <p><strong>✨ 準備はいいですか？</strong><br>
+            以下の「開始」ボタンをクリックすると、課題がスタートします。</p>
+          </div>
+
+          <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+            <button class="jspsych-btn" onclick="location.href='index.html'" style="background: #f0f0f0; color: #333;">← 戻る</button>
+            <button class="jspsych-btn" onclick="startGame();">🎮 課題を開始</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // =====================================
+    // ゲーム開始関数
+    // =====================================
+    function startGame() {
+      appState = 'game';
+      document.body.innerHTML = '';
+      
+      jsPsych = initJsPsych();
+      const blockDecks = generateBlockDecks();
+
+      // 試行データ
+      let allDeckChoices = { A: 0, B: 0, C: 0, D: 0 };
+      let allGains = [];
+      let allLosses = [];
+      let blockResults = [];
+
+      // タイムラインの構築
+      const timeline = [];
+
+      // ブロックループ構築関数
+      function buildBlockTimeline(blockNum) {
+        const currentBlockDecks = blockDecks[blockNum];
+        let blockGains = [];
+        let blockLosses = [];
+        let blockDeckChoices = { A: 0, B: 0, C: 0, D: 0 };
+
+        // ブロック開始メッセージ
         timeline.push({
           type: jsPsychHtmlButtonResponse,
-          stimulus: function() {
-            const currentMoney = INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0);
-            return `
-              <div class="card">
-                <h1>ブロック ${trialBlockNum + 1}/${NUM_BLOCKS}</h1>
-                <div class="instruction">
-                  <p>4つの札の山（A, B, C, D）から1つを選んでください。</p>
+          stimulus: `
+            <div class="card">
+              <h1>ブロック ${blockNum + 1}/${NUM_BLOCKS}</h1>
+              <p style="color: #666; text-align: center; margin: 1.5rem 0; font-size: 1.1rem;">
+                このブロックでは16回の試行を行います。<br>
+                4つの札の山（A, B, C, D）から1つを選んでください。
+              </p>
+              <div class="status-bar">
+                <div class="status-item">
+                  <div class="status-label">現在の資金</div>
+                  <div class="status-value">${INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0)}</div>
                 </div>
-                <div class="status-bar">
-                  <div class="status-item">
-                    <div class="status-label">現在の資金</div>
-                    <div class="status-value">${currentMoney}</div>
-                  </div>
-                  <div class="status-item">
-                    <div class="status-label">試行数</div>
-                    <div class="status-value">${trialNum}/${TRIALS_PER_BLOCK}</div>
-                  </div>
-                </div>
-                <div class="deck-container">
-                  <button class="deck-btn">A<span class="deck-icon">🂡</span></button>
-                  <button class="deck-btn">B<span class="deck-icon">🂲</span></button>
-                  <button class="deck-btn">C<span class="deck-icon">🂳</span></button>
-                  <button class="deck-btn">D<span class="deck-icon">🂴</span></button>
+                <div class="status-item">
+                  <div class="status-label">進捗</div>
+                  <div class="status-value">${blockNum + 1}/${NUM_BLOCKS}</div>
                 </div>
               </div>
-            `;
-          },
-          choices: ['A', 'B', 'C', 'D'],
-          button_html: '<button style="display: none;"></button>',
-          on_load: function() {
-            const buttons = document.querySelectorAll('.deck-btn');
-            const choices = ['A', 'B', 'C', 'D'];
-            buttons.forEach((btn, idx) => {
-              btn.onclick = () => {
-                jsPsych.finishTrial({ choice: choices[idx] });
-              };
-            });
-          },
-          on_finish: function(data) {
-            const choice = data.choice;
-            const deck = currentBlockDecks[choice];
-            const gain = deck.gains[Math.floor(Math.random() * deck.gains.length)];
-            const loss = deck.losses[Math.floor(Math.random() * deck.losses.length)];
-            const net = gain - loss;
-
-            blockGains.push(gain);
-            blockLosses.push(loss);
-            blockDeckChoices[choice]++;
-            allGains.push(gain);
-            allLosses.push(loss);
-            allDeckChoices[choice]++;
-
-            data.gain = gain;
-            data.loss = loss;
-            data.net = net;
-          }
+            </div>
+          `,
+          choices: ['開始'],
+          button_html: '<button class="jspsych-btn">%choice%</button>'
         });
 
-        // フィードバック試行
-        timeline.push({
-          type: jsPsychHtmlButtonResponse,
-          stimulus: function() {
-            const lastData = jsPsych.data.get().last(1).values()[0];
-            const gain = lastData.gain;
-            const loss = lastData.loss;
-            const net = lastData.net;
-            const currentMoney = INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0);
+        // ブロック内の16試行
+        for (let trialInBlock = 1; trialInBlock <= TRIALS_PER_BLOCK; trialInBlock++) {
+          const trialBlockNum = blockNum;
+          const trialNum = trialInBlock;
+          
+          timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: function() {
+              const currentMoney = INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0);
+              return `
+                <div class="card">
+                  <h1>ブロック ${trialBlockNum + 1}/${NUM_BLOCKS}</h1>
+                  <div class="instruction">
+                    <p>4つの札の山（A, B, C, D）から1つを選んでください。</p>
+                  </div>
+                  <div class="status-bar">
+                    <div class="status-item">
+                      <div class="status-label">現在の資金</div>
+                      <div class="status-value">${currentMoney}</div>
+                    </div>
+                    <div class="status-item">
+                      <div class="status-label">試行数</div>
+                      <div class="status-value">${trialNum}/${TRIALS_PER_BLOCK}</div>
+                    </div>
+                  </div>
+                  <div class="deck-container">
+                    <button class="deck-btn">A<span class="deck-icon">🂡</span></button>
+                    <button class="deck-btn">B<span class="deck-icon">🂲</span></button>
+                    <button class="deck-btn">C<span class="deck-icon">🂳</span></button>
+                    <button class="deck-btn">D<span class="deck-icon">🂴</span></button>
+                  </div>
+                </div>
+              `;
+            },
+            choices: ['A', 'B', 'C', 'D'],
+            button_html: '<button style="display: none;"></button>',
+            on_load: function() {
+              const buttons = document.querySelectorAll('.deck-btn');
+              const choices = ['A', 'B', 'C', 'D'];
+              buttons.forEach((btn, idx) => {
+                btn.onclick = () => {
+                  jsPsych.finishTrial({ choice: choices[idx] });
+                };
+              });
+            },
+            on_finish: function(data) {
+              const choice = data.choice;
+              const deck = currentBlockDecks[choice];
+              const gain = deck.gains[Math.floor(Math.random() * deck.gains.length)];
+              const loss = deck.losses[Math.floor(Math.random() * deck.losses.length)];
+              const net = gain - loss;
 
-            let feedbackClass = 'feedback-neutral';
-            let icon = '💫';
-            let message = '相殺されました';
+              blockGains.push(gain);
+              blockLosses.push(loss);
+              blockDeckChoices[choice]++;
+              allGains.push(gain);
+              allLosses.push(loss);
+              allDeckChoices[choice]++;
 
-            if (net > 0) {
-              feedbackClass = 'feedback-positive';
-              icon = '✨';
-              message = '利益を獲得！';
-            } else if (net < 0) {
-              feedbackClass = 'feedback-negative';
-              icon = '💥';
-              message = '損失が発生...';
+              data.gain = gain;
+              data.loss = loss;
+              data.net = net;
             }
+          });
 
-            return `
-              <div class="card">
-                <div class="feedback ${feedbackClass}">
-                  <span class="feedback-icon">${icon}</span>
-                  <div class="feedback-title">${message}</div>
-                  <div class="feedback-details">
-                    <div>獲得: <strong style="font-size: 1.1rem;">+${gain}</strong></div>
-                    <div style="margin-top: 0.3rem;">損失: <strong style="font-size: 1.1rem;">−${loss}</strong></div>
-                    <div style="margin-top: 0.5rem; font-size: 1.2rem; font-weight: 700;">
-                      ${net >= 0 ? '+' : '−'}${Math.abs(net)}
+          // フィードバック試行
+          timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: function() {
+              const lastData = jsPsych.data.get().last(1).values()[0];
+              const gain = lastData.gain;
+              const loss = lastData.loss;
+              const net = lastData.net;
+              const currentMoney = INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0);
+
+              let feedbackClass = 'feedback-neutral';
+              let icon = '💫';
+              let message = '相殺されました';
+
+              if (net > 0) {
+                feedbackClass = 'feedback-positive';
+                icon = '✨';
+                message = '利益を獲得！';
+              } else if (net < 0) {
+                feedbackClass = 'feedback-negative';
+                icon = '💥';
+                message = '損失が発生...';
+              }
+
+              return `
+                <div class="card">
+                  <div class="feedback ${feedbackClass}">
+                    <span class="feedback-icon">${icon}</span>
+                    <div class="feedback-title">${message}</div>
+                    <div class="feedback-details">
+                      <div>獲得: <strong style="font-size: 1.1rem;">+${gain}</strong></div>
+                      <div style="margin-top: 0.3rem;">損失: <strong style="font-size: 1.1rem;">−${loss}</strong></div>
+                      <div style="margin-top: 0.5rem; font-size: 1.2rem; font-weight: 700;">
+                        ${net >= 0 ? '+' : '−'}${Math.abs(net)}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="status-bar" style="margin-top: 1.5rem;">
+                    <div class="status-item">
+                      <div class="status-label">現在の資金</div>
+                      <div class="status-value">${currentMoney}</div>
+                    </div>
+                    <div class="status-item">
+                      <div class="status-label">選択したデッキ</div>
+                      <div class="status-value">${lastData.choice}</div>
                     </div>
                   </div>
                 </div>
-                <div class="status-bar" style="margin-top: 1.5rem;">
-                  <div class="status-item">
-                    <div class="status-label">現在の資金</div>
-                    <div class="status-value">${currentMoney}</div>
+              `;
+            },
+            choices: ['次へ'],
+            button_html: '<button class="jspsych-btn">%choice%</button>'
+          });
+        }
+
+        // ブロック終了フィードバック
+        timeline.push({
+          type: jsPsychHtmlButtonResponse,
+          stimulus: function() {
+            const blockGainsTotal = blockGains.reduce((a, b) => a + b, 0);
+            const blockLossesTotal = blockLosses.reduce((a, b) => a + b, 0);
+            const blockNetResult = blockGainsTotal - blockLossesTotal;
+            const blockFinalMoney = INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0);
+            const advantageousChoices = (blockDeckChoices.C + blockDeckChoices.D) / TRIALS_PER_BLOCK * 100;
+
+            return `
+              <div class="card">
+                <h1>ブロック ${blockNum + 1} 完了</h1>
+                <p style="color: #666; text-align: center; margin: 1rem 0;">このブロックの結果です。</p>
+                <div class="result-grid">
+                  <div class="result-item">
+                    <div class="result-label">ブロック収支</div>
+                    <div class="result-value ${blockNetResult >= 0 ? 'positive' : 'negative'}">
+                      ${blockNetResult >= 0 ? '+' : '−'}${Math.abs(blockNetResult)}
+                    </div>
                   </div>
-                  <div class="status-item">
-                    <div class="status-label">選択したデッキ</div>
-                    <div class="status-value">${lastData.choice}</div>
+                  <div class="result-item">
+                    <div class="result-label">累計資金</div>
+                    <div class="result-value">${blockFinalMoney}</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-label">有利な選択率</div>
+                    <div class="result-value">${advantageousChoices.toFixed(1)}%</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-label">A選択</div>
+                    <div class="result-value">${blockDeckChoices.A}</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-label">B選択</div>
+                    <div class="result-value">${blockDeckChoices.B}</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-label">C選択</div>
+                    <div class="result-value">${blockDeckChoices.C}</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-label">D選択</div>
+                    <div class="result-value">${blockDeckChoices.D}</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-label">ブロック進捗</div>
+                    <div class="result-value">${blockNum + 1}/${NUM_BLOCKS}</div>
                   </div>
                 </div>
               </div>
             `;
           },
-          choices: ['次へ'],
+          choices: [blockNum === NUM_BLOCKS - 1 ? '最終結果へ' : '次のブロックへ'],
           button_html: '<button class="jspsych-btn">%choice%</button>'
+        });
+
+        // ブロック結果を保存
+        blockResults.push({
+          block: blockNum + 1,
+          gains: blockGains,
+          losses: blockLosses,
+          deckChoices: { ...blockDeckChoices }
         });
       }
 
-      // ブロック終了フィードバック
+      // 各ブロックのタイムラインを構築
+      for (let blockNum = 0; blockNum < NUM_BLOCKS; blockNum++) {
+        buildBlockTimeline(blockNum);
+      }
+
+      // 最終結果表示試行
       timeline.push({
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
-          const blockGainsTotal = blockGains.reduce((a, b) => a + b, 0);
-          const blockLossesTotal = blockLosses.reduce((a, b) => a + b, 0);
-          const blockNetResult = blockGainsTotal - blockLossesTotal;
-          const blockFinalMoney = INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0);
-          const advantageousChoices = (blockDeckChoices.C + blockDeckChoices.D) / TRIALS_PER_BLOCK * 100;
+          const totalGains = allGains.reduce((a, b) => a + b, 0);
+          const totalLosses = allLosses.reduce((a, b) => a + b, 0);
+          const finalMoney = INITIAL_MONEY + totalGains - totalLosses;
+          const advantageousChoices = (allDeckChoices.C + allDeckChoices.D) / TOTAL_TRIALS * 100;
 
           return `
             <div class="card">
-              <h1>ブロック ${blockNum + 1} 完了</h1>
-              <p style="color: #666; text-align: center; margin: 1rem 0;">このブロックの結果です。</p>
+              <h1>課題完了</h1>
+              <p style="color: #666; text-align: center; margin: 1rem 0;">すべての試行が完了しました。</p>
               <div class="result-grid">
                 <div class="result-item">
-                  <div class="result-label">ブロック収支</div>
-                  <div class="result-value ${blockNetResult >= 0 ? 'positive' : 'negative'}">
-                    ${blockNetResult >= 0 ? '+' : '−'}${Math.abs(blockNetResult)}
+                  <div class="result-label">最終資金</div>
+                  <div class="result-value ${finalMoney >= INITIAL_MONEY ? 'positive' : 'negative'}">
+                    ${finalMoney}
                   </div>
                 </div>
                 <div class="result-item">
-                  <div class="result-label">累計資金</div>
-                  <div class="result-value">${blockFinalMoney}</div>
+                  <div class="result-label">総収支</div>
+                  <div class="result-value ${finalMoney >= INITIAL_MONEY ? 'positive' : 'negative'}">
+                    ${finalMoney >= INITIAL_MONEY ? '+' : '−'}${Math.abs(finalMoney - INITIAL_MONEY)}
+                  </div>
+                </div>
+                <div class="result-item">
+                  <div class="result-label">総利益</div>
+                  <div class="result-value positive">+${totalGains}</div>
+                </div>
+                <div class="result-item">
+                  <div class="result-label">総損失</div>
+                  <div class="result-value negative">−${totalLosses}</div>
                 </div>
                 <div class="result-item">
                   <div class="result-label">有利な選択率</div>
@@ -471,126 +784,94 @@
                 </div>
                 <div class="result-item">
                   <div class="result-label">A選択</div>
-                  <div class="result-value">${blockDeckChoices.A}</div>
+                  <div class="result-value">${allDeckChoices.A}</div>
                 </div>
                 <div class="result-item">
                   <div class="result-label">B選択</div>
-                  <div class="result-value">${blockDeckChoices.B}</div>
+                  <div class="result-value">${allDeckChoices.B}</div>
                 </div>
                 <div class="result-item">
                   <div class="result-label">C選択</div>
-                  <div class="result-value">${blockDeckChoices.C}</div>
+                  <div class="result-value">${allDeckChoices.C}</div>
                 </div>
                 <div class="result-item">
                   <div class="result-label">D選択</div>
-                  <div class="result-value">${blockDeckChoices.D}</div>
+                  <div class="result-value">${allDeckChoices.D}</div>
                 </div>
-                <div class="result-item">
-                  <div class="result-label">ブロック進捗</div>
-                  <div class="result-value">${blockNum + 1}/${NUM_BLOCKS}</div>
+              </div>
+
+              <div class="section" style="margin-top: 2rem;">
+                <h2 style="margin-top: 0;">🃏 4つの札の山</h2>
+                <div class="content">
+                  <p>課題で使用された4つの札の山の特性です：</p>
+                </div>
+                <div class="deck-grid">
+                  <div class="deck-card disadvantageous">
+                    <div class="deck-name">山 A</div>
+                    <div class="deck-label">高リスク・高リターン</div>
+                    <div class="deck-value">💰 獲得: +100</div>
+                    <div class="deck-value">💔 損失: −250</div>
+                  </div>
+                  <div class="deck-card disadvantageous">
+                    <div class="deck-name">山 B</div>
+                    <div class="deck-label">超高リスク・高リターン</div>
+                    <div class="deck-value">💰 獲得: +100</div>
+                    <div class="deck-value">💔 損失: −1,250</div>
+                  </div>
+                  <div class="deck-card advantageous">
+                    <div class="deck-name">山 C</div>
+                    <div class="deck-label">低リスク・低リターン</div>
+                    <div class="deck-value">💰 獲得: +50</div>
+                    <div class="deck-value">💔 損失: −50（50%）</div>
+                  </div>
+                  <div class="deck-card advantageous">
+                    <div class="deck-name">山 D</div>
+                    <div class="deck-label">低リスク・低リターン</div>
+                    <div class="deck-value">💰 獲得: +50</div>
+                    <div class="deck-value">💔 損失: −200（50%）</div>
+                  </div>
+                </div>
+
+                <div class="important-box">
+                  <p><strong>⚠️ 重要:</strong> 山 C と D は <strong>50%の確率で損失がありません</strong>。これらは長期的に有利ですが、山 A・B よりもリターンが小さいです。</p>
                 </div>
               </div>
             </div>
           `;
         },
-        choices: [blockNum === NUM_BLOCKS - 1 ? '最終結果へ' : '次のブロックへ'],
+        choices: ['終了'],
         button_html: '<button class="jspsych-btn">%choice%</button>'
       });
 
-      // ブロック結果を保存
-      blockResults.push({
-        block: blockNum + 1,
-        gains: blockGains,
-        losses: blockLosses,
-        deckChoices: { ...blockDeckChoices }
-      });
-    }
-
-    // 各ブロックのタイムラインを構築
-    for (let blockNum = 0; blockNum < NUM_BLOCKS; blockNum++) {
-      buildBlockTimeline(blockNum);
-    }
-
-    // 最終結果表示試行
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
-      stimulus: function() {
-        const totalGains = allGains.reduce((a, b) => a + b, 0);
-        const totalLosses = allLosses.reduce((a, b) => a + b, 0);
-        const finalMoney = INITIAL_MONEY + totalGains - totalLosses;
-        const advantageousChoices = (allDeckChoices.C + allDeckChoices.D) / TOTAL_TRIALS * 100;
-
-        return `
+      // 最終メッセージ
+      timeline.push({
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
           <div class="card">
-            <h1>課題完了</h1>
-            <p style="color: #666; text-align: center; margin: 1rem 0;">すべての試行が完了しました。</p>
-            <div class="result-grid">
-              <div class="result-item">
-                <div class="result-label">最終資金</div>
-                <div class="result-value ${finalMoney >= INITIAL_MONEY ? 'positive' : 'negative'}">
-                  ${finalMoney}
-                </div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">総収支</div>
-                <div class="result-value ${finalMoney >= INITIAL_MONEY ? 'positive' : 'negative'}">
-                  ${finalMoney >= INITIAL_MONEY ? '+' : '−'}${Math.abs(finalMoney - INITIAL_MONEY)}
-                </div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">総利益</div>
-                <div class="result-value positive">+${totalGains}</div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">総損失</div>
-                <div class="result-value negative">−${totalLosses}</div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">有利な選択率</div>
-                <div class="result-value">${advantageousChoices.toFixed(1)}%</div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">A選択</div>
-                <div class="result-value">${allDeckChoices.A}</div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">B選択</div>
-                <div class="result-value">${allDeckChoices.B}</div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">C選択</div>
-                <div class="result-value">${allDeckChoices.C}</div>
-              </div>
-              <div class="result-item">
-                <div class="result-label">D選択</div>
-                <div class="result-value">${allDeckChoices.D}</div>
-              </div>
-            </div>
+            <h1>ありがとうございました</h1>
+            <p style="color: #666; text-align: center; line-height: 1.8; margin: 1.5rem 0;">
+              アイオワギャンブリング課題は、意思決定と学習に関する研究で広く使用されています。<br>
+              あなたの選択パターンからリスク選好と学習能力が評価されます。
+            </p>
           </div>
-        `;
-      },
-      choices: ['終了'],
-      button_html: '<button class="jspsych-btn">%choice%</button>'
-    });
+        `,
+        choices: ['完了'],
+        button_html: '<button class="jspsych-btn">%choice%</button>'
+      });
 
-    // 最終メッセージ
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `
-        <div class="card">
-          <h1>ありがとうございました</h1>
-          <p style="color: #666; text-align: center; line-height: 1.8; margin: 1.5rem 0;">
-            アイオワギャンブリング課題は、意思決定と学習に関する研究で広く使用されています。<br>
-            あなたの選択パターンからリスク選好と学習能力が評価されます。
-          </p>
-        </div>
-      `,
-      choices: ['完了'],
-      button_html: '<button class="jspsych-btn">%choice%</button>'
-    });
+      // 実行
+      jsPsych.run(timeline);
+    }
 
-    // 実行
-    jsPsych.run(timeline);
+    // =====================================
+    // ページ初期化
+    // =====================================
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.innerHTML = generateWelcomeContent();
+    });
   </script>
+</head>
+<body>
+  <!-- コンテンツはJavaScriptで動的に挿入 -->
 </body>
 </html>
