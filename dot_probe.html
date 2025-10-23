@@ -2,46 +2,55 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ドットプローブ課題</title>
     <script src="./dist/jspsych.js"></script>
     <script src="./dist/plugin-html-button-response.js"></script>
     <script src="./dist/plugin-html-keyboard-response.js"></script>
     <link rel="stylesheet" href="./dist/jspsych.css">
     <style>
-        /* jsPsychのデフォルトスタイルをオーバーライド */
-        html, body {
-            width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-        }
-
-        #jspsych-target {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
+        /* jsPsychのデフォルトスタイルを完全にオーバーライド */
+        * {
             box-sizing: border-box;
         }
 
-        .jspsych-display-element {
+        html {
+            width: 100% !important;
+            height: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        body.jspsych-display-element {
+            width: 100vw !important;
+            height: auto;
+            min-height: 100vh;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+        }
+
+        #jspsych-target {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+            padding: 20px !important;
+        }
+
+        .jspsych-display-element > * {
             background: white;
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             max-width: 900px;
-            width: 100%;
-            box-sizing: border-box;
-            margin: 40px auto;
+            width: calc(100% - 40px);
+            margin: 40px 20px;
         }
 
         .stimulus-container {

@@ -6,19 +6,21 @@
  <meta name="robots" content="noindex, nofollow" />
  <title>感情・人格心理学で扱った心理尺度一覧</title>
  <style>
-   body { 
-     font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
-     background: #f5f5f7;
-     min-height: 100vh;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     margin: 0;
-     padding: 20px;
-   }
+  body { 
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+    background: #f5f5f7;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+    padding: 20px 12px;
+  }
    .container {
      max-width: 800px;
      width: 100%;
+    margin: 0 auto;
    }
    .card {
      background: #ffffff;
@@ -26,6 +28,8 @@
      padding: 3rem;
      box-shadow: 0 2px 8px rgba(0,0,0,.08);
      text-align: center;
+    display: flex;
+    flex-direction: column;
    }
    h1 {
      color: #333;
@@ -130,11 +134,16 @@
    .btn:active {
      background: #0071e3;
    }
-   .footer {
-     margin-top: 2rem;
-     font-size: 0.85rem;
-     color: #999;
-   }
+  /* footer outside the card and centered across the page */
+  .footer {
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: #999;
+    text-align: center;
+    width: 100%;
+    max-width: 800px;
+    padding: 12px 0 32px 0;
+  }
    @media (max-width: 600px) {
      .card {
        padding: 2rem 1.5rem;
@@ -187,7 +196,7 @@
              <h3>📊 Rumination-Reflection Questionnaire日本語版（RRQ）</h3>
              <p>反芻と省察傾向を測定する尺度。</p>
            </a>
-         </div>
+         </div><br>
          <a href="ops.html" class="scale-item">
              <h3>📊 楽観・悲観性尺度</h3>
              <p>楽観主義と悲観主義傾向を測定する尺度。</p>
@@ -203,11 +212,11 @@
       -->
        </div>
      </div>
-
-     <div class="footer">
-       <p>作成者：大阪教育大学　山口正寛</p>
-     </div>
    </div>
  </div>
+
+<div class="footer">
+  <p>作成者：大阪教育大学　山口正寛</p>
+</div>
 </body>
 </html>
