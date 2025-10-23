@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>アイオワギャンブリング課題</title>
+  <script src="https://unpkg.com/jspsych@7.3.4"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+    }
+
+    .jspsych-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      color: #1d1d1f;
+      font-size: 1.8rem;
+      margin: 0 0 1rem 0;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .instruction {
+      color: #555;
+      line-height: 1.8;
+      font-size: 0.95rem;
+      margin: 1rem 0 1.5rem 0;
+      text-align: center;
+    }
+
+    .status-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #f9f9fb;
+      border-radius: 8px;
+    }
+
+    .status-item {
+      text-align: center;
+    }
+
+    .status-label {
+      font-size: 0.8rem;
+      color: #999;
+      margin-bottom: 0.3rem;
+    }
+
+    .status-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1d1d1f;
+    }
+
+    .deck-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .deck-btn {
+      padding: 1.5rem 1rem;
+      background: #f0f7ff;
+      border: 2px solid #0071e3;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0071e3;
+      font-family: inherit;
+    }
+
+    .deck-btn:hover {
+      background: #0071e3;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .deck-btn:active {
+      transform: translateY(0);
+    }
+
+    .deck-icon {
+      font-size: 2.5rem;
+      margin: 0.8rem 0;
+      display: block;
+    }
+
+    .feedback {
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+      text-align: center;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .feedback-positive {
+      background: #d1f4d1;
+      border-left: 4px solid #34c759;
+      color: #1b5e20;
+    }
+
+    .feedback-negative {
+      background: #fce4ec;
+      border-left: 4px solid #ff3b30;
+      color: #880e4f;
+    }
+
+    .feedback-neutral {
+      background: #e3f2fd;
+      border-left: 4px solid #0071e3;
+      color: #1565c0;
+    }
+
+    .feedback-title {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feedback-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .feedback-details {
+      font-size: 0.95rem;
+      margin-top: 0.8rem;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .result-item {
+      padding: 1rem;
+      background: #f9f9fb;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .result-label {
+      color: #666;
+      font-size: 0.85rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .result-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1d1d1f;
+    }
+
+    .result-value.positive {
+      color: #34c759;
+    }
+
+    .result-value.negative {
+      color: #ff3b30;
+    }
+
+    .next-instruction {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #999;
+      text-align: center;
+    }
+
+    .jspsych-btn {
+      background: #0071e3;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin: 0.5rem;
+      font-family: inherit;
+    }
+
+    .jspsych-btn:hover {
+      background: #0077cc;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .deck-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+      }
+
+      .deck-btn {
+        padding: 1rem 0.7rem;
+      }
+
+      .deck-icon {
+        font-size: 2rem;
+        margin: 0.5rem 0;
+      }
+
+      .status-bar {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .result-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // 定数定義
+    const NUM_TRIALS = 20;
+    const INITIAL_MONEY = 2000;
+
+    // デッキの定義
+    const decks = {
+      A: { gains: [100], losses: [250, 250, 250, 250] },
+      B: { gains: [100], losses: [1250] },
+      C: { gains: [50], losses: [50, 50, 50, 50] },
+      D: { gains: [50], losses: [250] }
+    };
+
+    // 試行データ
+    let currentTrial = 0;
+    let totalMoney = INITIAL_MONEY;
+    let deckChoices = { A: 0, B: 0, C: 0, D: 0 };
+    let gains = [];
+    let losses = [];
+
+    // jsPsych初期化
+    const jsPsych = initJsPsych();
+
+    // タイムラインの構築
+    const timeline = [];
+
+    // 各試行のループ
+    for (let trialNum = 1; trialNum <= NUM_TRIALS; trialNum++) {
+      // デッキ選択試行
+      timeline.push({
+        type: jsPsychHtmlButtonResponse,
+        stimulus: () => {
+          const currentMoney = INITIAL_MONEY + gains.reduce((a, b) => a + b, 0) - losses.reduce((a, b) => a + b, 0);
+          return `
+            <div class="card">
+              <h1>アイオワギャンブリング課題</h1>
+              <div class="instruction">
+                <p>4つの札の山（A, B, C, D）から1つを選んでください。</p>
+              </div>
+              <div class="status-bar">
+                <div class="status-item">
+                  <div class="status-label">現在の資金</div>
+                  <div class="status-value">${currentMoney}</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-label">試行数</div>
+                  <div class="status-value">${trialNum}/${NUM_TRIALS}</div>
+                </div>
+              </div>
+              <div class="deck-container">
+                <button class="deck-btn">A<span class="deck-icon">🂡</span></button>
+                <button class="deck-btn">B<span class="deck-icon">🂲</span></button>
+                <button class="deck-btn">C<span class="deck-icon">🂳</span></button>
+                <button class="deck-btn">D<span class="deck-icon">🂴</span></button>
+              </div>
+            </div>
+          `;
+        },
+        choices: ['A', 'B', 'C', 'D'],
+        button_html: '<button style="display: none;"></button>',
+        on_load: () => {
+          const buttons = document.querySelectorAll('.deck-btn');
+          const choices = ['A', 'B', 'C', 'D'];
+          buttons.forEach((btn, idx) => {
+            btn.onclick = () => {
+              jsPsych.finishTrial({ choice: choices[idx] });
+            };
+          });
+        },
+        on_finish: (data) => {
+          const choice = data.choice;
+          const deck = decks[choice];
+          const gain = deck.gains[Math.floor(Math.random() * deck.gains.length)];
+          const loss = deck.losses[Math.floor(Math.random() * deck.losses.length)];
+          const net = gain - loss;
+
+          gains.push(gain);
+          losses.push(loss);
+          deckChoices[choice]++;
+
+          data.gain = gain;
+          data.loss = loss;
+          data.net = net;
+        }
+      });
+
+      // フィードバック試行
+      timeline.push({
+        type: jsPsychHtmlButtonResponse,
+        stimulus: () => {
+          const lastData = jsPsych.data.get().last(1).values()[0];
+          const gain = lastData.gain;
+          const loss = lastData.loss;
+          const net = lastData.net;
+          const currentMoney = INITIAL_MONEY + gains.reduce((a, b) => a + b, 0) - losses.reduce((a, b) => a + b, 0);
+
+          let feedbackClass = 'feedback-neutral';
+          let icon = '💫';
+          let message = '相殺されました';
+
+          if (net > 0) {
+            feedbackClass = 'feedback-positive';
+            icon = '✨';
+            message = '利益を獲得！';
+          } else if (net < 0) {
+            feedbackClass = 'feedback-negative';
+            icon = '💥';
+            message = '損失が発生...';
+          }
+
+          return `
+            <div class="card">
+              <div class="feedback ${feedbackClass}">
+                <span class="feedback-icon">${icon}</span>
+                <div class="feedback-title">${message}</div>
+                <div class="feedback-details">
+                  <div>獲得: <strong style="font-size: 1.1rem;">+${gain}</strong></div>
+                  <div style="margin-top: 0.3rem;">損失: <strong style="font-size: 1.1rem;">−${loss}</strong></div>
+                  <div style="margin-top: 0.5rem; font-size: 1.2rem; font-weight: 700;">
+                    ${net >= 0 ? '+' : '−'}${Math.abs(net)}
+                  </div>
+                </div>
+              </div>
+              <div class="status-bar" style="margin-top: 1.5rem;">
+                <div class="status-item">
+                  <div class="status-label">現在の資金</div>
+                  <div class="status-value">${currentMoney}</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-label">選択したデッキ</div>
+                  <div class="status-value">${lastData.choice}</div>
+                </div>
+              </div>
+              <div class="next-instruction">画面をクリックして次へ</div>
+            </div>
+          `;
+        },
+        choices: [''],
+        button_html: '<button style="display: none;"></button>',
+        trial_duration: 1200
+      });
+    }
+
+    // 結果表示試行
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        const totalGains = gains.reduce((a, b) => a + b, 0);
+        const totalLosses = losses.reduce((a, b) => a + b, 0);
+        const finalMoney = INITIAL_MONEY + totalGains - totalLosses;
+        const advantageousChoices = (deckChoices.C + deckChoices.D) / NUM_TRIALS * 100;
+
+        return `
+          <div class="card">
+            <h1>課題完了</h1>
+            <p style="color: #666; text-align: center; margin: 1rem 0;">すべての試行が完了しました。</p>
+            <div class="result-grid">
+              <div class="result-item">
+                <div class="result-label">最終資金</div>
+                <div class="result-value ${finalMoney >= INITIAL_MONEY ? 'positive' : 'negative'}">
+                  ${finalMoney}
+                </div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">収支</div>
+                <div class="result-value ${finalMoney >= INITIAL_MONEY ? 'positive' : 'negative'}">
+                  ${finalMoney >= INITIAL_MONEY ? '+' : '−'}${Math.abs(finalMoney - INITIAL_MONEY)}
+                </div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">総利益</div>
+                <div class="result-value positive">+${totalGains}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">総損失</div>
+                <div class="result-value negative">−${totalLosses}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">有利な選択率</div>
+                <div class="result-value">${advantageousChoices.toFixed(1)}%</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">A選択</div>
+                <div class="result-value">${deckChoices.A}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">B選択</div>
+                <div class="result-value">${deckChoices.B}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">C選択</div>
+                <div class="result-value">${deckChoices.C}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">D選択</div>
+                <div class="result-value">${deckChoices.D}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+      choices: [''],
+      button_html: '<button style="display: none;"></button>',
+      trial_duration: 2000
+    });
+
+    // 最終メッセージ
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="card">
+          <h1>ありがとうございました</h1>
+          <p style="color: #666; text-align: center; line-height: 1.8; margin: 1.5rem 0;">
+            アイオワギャンブリング課題は、意思決定と学習に関する研究で広く使用されています。<br>
+            あなたの選択パターンからリスク選好と学習能力が評価されます。
+          </p>
+        </div>
+      `,
+      choices: [],
+      button_html: '<button style="display: none;"></button>',
+      trial_duration: 2000
+    });
+
+    // 実行
+    jsPsych.run(timeline);
+  </script>
+</body>
+</html>
