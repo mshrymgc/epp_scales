@@ -142,10 +142,10 @@
   const PROGRESS_LABEL_TEXT = '進捗状況'; // 進捗バーに表示するテキスト
   const PAGE_SIZE = 12; // 1ページに表示する質問数
   const LIKERT_CHOICES = [
-    { value: 1, text: '1 = あてはまらない' },
-    { value: 2, text: '2 = あまりあてはまらない' },
-    { value: 3, text: '3 = 少しあてはまる' },
-    { value: 4, text: '4 = あてはまる' }
+    { value: 1, text: '1 = あてはまらない', label: '1', tooltip: 'あてはまらない' },
+    { value: 2, text: '2 = あまりあてはまらない', label: '2', tooltip: 'あまりあてはまらない' },
+    { value: 3, text: '3 = 少しあてはまる', label: '3', tooltip: '少しあてはまる' },
+    { value: 4, text: '4 = あてはまる', label: '4', tooltip: 'あてはまる' }
   ];
   const DEBUG = false; // true にすると処理の流れをコンソールに表示
   const debugLog = (...args) => { if (DEBUG) console.log(...args); };
@@ -205,11 +205,34 @@
       { id: 35, text: 'しばしば，ふたつの異なる課題を交互にやるのは難しい。', reverse: true }
     ]
   };
+  
+  // ドメインコード
+  const DOMAIN_CODES = {
+    inhibitory_control: 'IC',
+    activation_control: 'AC',
+    attention_control: 'AT'
+  };
 
-  const TOTAL_ITEMS = RRQ.rumination.length + RRQ.reflection.length;
+  // 論文で報告された平均値（合計得点）
+  const PAPER_MEANS = {
+    IC: 29.7,  // 行動抑制の制御（11項目）
+    AC: 30.3,  // 行動始発の制御（12項目）
+    AT: 27.8,  // 注意の制御（12項目）
+    Total: 87.7 // 全体合計（35項目）
+  };
+
+  // 合計項目数
+  const TOTAL_ITEMS = (
+    ECSJ.inhibitory_control.length +
+    ECSJ.activation_control.length +
+    ECSJ.attention_control.length
+  );
+
+  // 参照用ルックアップ（キーはドメインコードと元の項目ID）
   const ITEM_LOOKUP = {
-    R: Object.fromEntries(RRQ.rumination.map((item, index) => [index + 1, item])),
-    F: Object.fromEntries(RRQ.reflection.map((item, index) => [index + 1, item]))
+    IC: Object.fromEntries(ECSJ.inhibitory_control.map((item) => [item.id, item])),
+    AC: Object.fromEntries(ECSJ.activation_control.map((item) => [item.id, item])),
+    AT: Object.fromEntries(ECSJ.attention_control.map((item) => [item.id, item]))
   };
 
   // システム情報と開始時刻を取得して全トライアルに記録
@@ -227,7 +250,7 @@
 
   const allItems = createQuestionPool();
   jsPsych.data.addProperties({
-    rrq_item_order: JSON.stringify(allItems.map(({ domain, id, originalId, text }) => ({ domain, id, originalId, text })))
+    ecsj_item_order: JSON.stringify(allItems.map(({ domain, id, originalId, text }) => ({ domain, id, originalId, text })))
   });
   const pages = chunkArray(allItems, PAGE_SIZE);
 
@@ -329,18 +352,25 @@
   
   function createQuestionPool() {
     const merged = [
-      ...RRQ.rumination.map((item, index) => ({
+      ...ECSJ.inhibitory_control.map((item) => ({
         text: item.text,
         reverse: item.reverse,
-        domain: 'R',
-        id: index + 1,
+        domain: DOMAIN_CODES.inhibitory_control,
+        id: item.id,            // ドメイン内IDとして元のIDを使用
         originalId: item.id
       })),
-      ...RRQ.reflection.map((item, index) => ({
+      ...ECSJ.activation_control.map((item) => ({
         text: item.text,
         reverse: item.reverse,
-        domain: 'F',
-        id: index + 1,
+        domain: DOMAIN_CODES.activation_control,
+        id: item.id,
+        originalId: item.id
+      })),
+      ...ECSJ.attention_control.map((item) => ({
+        text: item.text,
+        reverse: item.reverse,
+        domain: DOMAIN_CODES.attention_control,
+        id: item.id,
         originalId: item.id
       }))
     ];
@@ -382,7 +412,7 @@
           <h2>成人用エフォートフル・コントロール尺度日本語版</h2>
           <h4>「感情・人格心理学」受講者用</h4>
           <p style="margin:0.6rem 0 0;">
-            これはエフォートフルコントロールの程度を測定するアンケートであり，講義内容の理解を促進するために利用されます。この結果だけで医学的診断を行ったり，あなたの性格そのものを測定することはできませんので注意してください。データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。
+            これはエフォートフルコントロールの程度を測定するアンケートであり，講義内容の理解を促進するために利用されます。<br>この結果だけで医学的診断を行ったり，あなたの性格そのものを測定することはできませんので注意してください。<br>データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。
           </p>
           <p style="margin:0.6rem 0 0;">
             回答は研究や授業の補助に活用されますが，個人が特定されることはありません。<br>
@@ -441,81 +471,74 @@
     const isLastPage = pageIndex === pages.length - 1;
 
     return {
-      type: window.jsPsychSurvey,
-      survey_json: {
-        showQuestionNumbers: false,
-        pages: [{
-          name: `page_${pageIndex}`,
-          elements: [
-            {
-              type: 'html',
-              name: `preamble_${pageIndex}`,
-              html: `
-                <div class="card">
-                  <b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b>
-                  <p style="margin:0.5rem 0 0;">
-                    以下の各文章は，あなたにどのくらいあてはまりますか。<br>最も適当なものを一つ選んでください。
-                  </p>
-                </div>
-              `
-            },
-            ...items.map(item => ({
-              type: 'radiogroup',
-              name: `${item.domain}${item.id}`,
-              title: item.text,
-              isRequired: true,
-              choices: LIKERT_CHOICES.map(choice => ({ ...choice }))
-            }))
-          ]
-        }],
-        pageNextText: '次へ',
-        completeText: isLastPage ? '結果を見る' : '次へ'
-      },
+      type: window.jsPsychSurveyLikert,
+      preamble: `
+        <div class="card">
+          <b>質問 ${pageStart}–${pageEnd} / ${TOTAL_ITEMS}</b>
+          <p style="margin:0.5rem 0 0;">
+            以下の各文章は，あなたにどのくらいあてはまりますか。<br>最も適当なものを一つ選んでください。
+          </p>
+          <p style="margin:0.5rem 0 0; font-size:0.9rem; color:#555;">
+            ${LIKERT_CHOICES.map(c => `<strong>${c.label}</strong> = ${c.tooltip}`).join('　/　')}
+          </p>
+        </div>
+      `,
+      questions: items.map(item => ({
+        prompt: item.text,
+        labels: LIKERT_CHOICES.map(c => c.label), // ['1', '2', '3', '4']
+        name: `${item.domain}${item.id}`,
+        required: true
+      })),
+      button_label: isLastPage ? '結果を見る' : '次へ',
       on_load: () => {
-        debugLog('Loaded RRQ survey page', { pageIndex, pageStart, pageEnd });
+        debugLog('Loaded ECSJ survey-likert page', { pageIndex, pageStart, pageEnd });
         updateProgressBar(pageEnd / TOTAL_ITEMS);
+        
+        // ツールチップを追加
+        setTimeout(() => {
+          const labels = document.querySelectorAll('.jspsych-survey-likert-opts label');
+          labels.forEach((label, index) => {
+            const choiceIndex = index % LIKERT_CHOICES.length;
+            const tooltip = LIKERT_CHOICES[choiceIndex].tooltip;
+            label.classList.add('likert-label-tooltip');
+            label.setAttribute('data-tooltip', tooltip);
+          });
+        }, 100);
       },
       on_finish: (data) => {
         // ページ番号を記録（1-based）
         data.page_number = pageIndex + 1;
-        
-        // このページで回答した項目のリスト（domain:id形式，例: "R1,F3,R5"）
+
+        // このページで回答した項目のリスト（例: "IC1,AC13,AT30"...）
         const pageItemsList = items.map(item => `${item.domain}${item.id}`).join(',');
         data.page_items = pageItemsList;
-        
+
         // 各回答について逆転項目を考慮した得点を記録
         const resp = data.response || {};
-        Object.entries(resp).forEach(([name, value]) => {
-          // 変数名から該当する項目を検索（例: "R1" → domain='R', id=1）
+        Object.entries(resp).forEach(([name, idx0]) => {
+          // 該当項目を検索
           const item = items.find(it => `${it.domain}${it.id}` === name);
           if (!item) return;
-          
-          // 回答値を数値に変換（survey プラグインの場合）
-          let rawScore = null;
-          if (typeof value === 'number') {
-            rawScore = value;
-          } else if (typeof value === 'string') {
-            rawScore = Number(value);
-          } else if (value && typeof value === 'object' && 'value' in value) {
-            rawScore = Number(value.value);
-          }
-          
-          if (rawScore == null || !Number.isFinite(rawScore)) return;
 
-          // 1-4の範囲に収める
+          // survey-likert は 0–3 のインデックスを返す → 1–4 に補正
+          const rawIndex = typeof idx0 === 'number' ? idx0 : Number(idx0);
+          if (!Number.isFinite(rawIndex)) return;
+          const rawScore = rawIndex + 1; // 1–4
+
+          // 範囲チェック
           if (rawScore < 1 || rawScore > 4) return;
 
-          // 逆転項目の場合は反転処理（5 - 値）
+          // 逆転処理（4件法は 5 - 値）
           const scoredValue = item.reverse ? (5 - rawScore) : rawScore;
 
           // CSVに記録する変数を追加
-          data[`${name}_raw`] = rawScore;           // 生得点（1-4）
-          data[`${name}_scored`] = scoredValue;      // 逆転処理済み得点
-          data[`${name}_reversed`] = item.reverse;   // 逆転項目かどうか
+          data[`${name}_raw`] = rawScore;                 // 生得点（1–4）
+          data[`${name}_scored`] = scoredValue;          // 逆転処理済み得点
+          data[`${name}_reversed`] = item.reverse;       // 逆転項目フラグ
           data[`${name}_original_id`] = item.originalId; // 元の項目番号
         });
-        
-        debugLog('Page finished', { pageIndex, pageItemsList });
+
+        debugLog('Page finished (survey-likert)', { pageIndex, pageItemsList });
       }
     };
   }
@@ -524,7 +547,7 @@
     return {
       type: window.jsPsychPipe,
       action: 'save',
-      experiment_id: 'LtNw0mBEbED7',
+      experiment_id: '4MLKGxDsTk6n',
       filename: `${subjectId}.csv`,
       data_string: () => jsPsych.data.get().csv()
     };
@@ -572,7 +595,7 @@
   // 6. 回答処理ロジック
   // ==========================================
   function getResponses() {
-    const responses = { R: {}, F: {} };
+    const responses = { IC: {}, AC: {}, AT: {} };
 
     const surveyTrials = jsPsych.data.get()
       .filter(trial => trial.trial_type && (trial.trial_type === 'survey-likert' || trial.trial_type === 'survey'))
@@ -583,7 +606,7 @@
       debugLog(`Trial ${trialIndex}`, trialResponse);
 
       Object.entries(trialResponse).forEach(([name, value]) => {
-        const match = /^([RF])(\d+)$/.exec(String(name));
+        const match = /^(IC|AC|AT)(\d+)$/.exec(String(name));
         if (!match) return;
 
         const domain = match[1];
@@ -601,10 +624,8 @@
 
   function parseLikertValue(value) {
     if (typeof value === 'number' && Number.isFinite(value)) {
-      // survey-likert プラグインは 0 始まりのインデックスを返すため補正
-      if (value >= 0 && value <= 4) {
-        return value + 1;
-      }
+      // survey-likert プラグインは 0 始まりのインデックスを返すため補正（4件法: 0-3 → 1-4）
+      if (value >= 0 && value <= 3) return value + 1;
       return value;
     }
     if (typeof value === 'string') {
@@ -624,13 +645,21 @@
   function computeSummary() {
     const responses = getResponses();
     const base = {
-      rumination: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] },
-      reflection: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0, 0] }
+      inhibitory_control: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] },
+      activation_control: { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] },
+      attention_control:  { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] },
+      total:              { sum: 0, count: 0, mean: null, counts: [0, 0, 0, 0] }
     };
 
-    ['R', 'F'].forEach((domain) => {
-      const store = domain === 'R' ? base.rumination : base.reflection;
-      const domainResponses = responses[domain] || {};
+    const domainOrder = [
+      { code: 'IC', key: 'inhibitory_control' },
+      { code: 'AC', key: 'activation_control' },
+      { code: 'AT', key: 'attention_control' }
+    ];
+
+    domainOrder.forEach(({ code, key }) => {
+      const store = base[key];
+      const domainResponses = responses[code] || {};
 
       Object.entries(domainResponses).forEach(([idStr, rawValue]) => {
         const id = Number(idStr);
@@ -639,20 +668,23 @@
         const raw = Number(rawValue);
         if (!Number.isFinite(raw)) return;
 
-        const meta = findItem(domain, id);
-        const scored = meta && meta.reverse ? 6 - raw : raw;
+        const meta = findItem(code, id);
+        const scored = meta && meta.reverse ? 5 - raw : raw; // 4件法 → 逆転は (5 - raw)
 
         store.count += 1;
-        if (raw >= 1 && raw <= 5) {
+        base.total.count += 1;
+        if (raw >= 1 && raw <= 4) {
           store.counts[raw - 1] += 1;
+          base.total.counts[raw - 1] += 1;
         }
         store.sum += scored;
+        base.total.sum += scored;
       });
 
-      if (store.count > 0) {
-        store.mean = store.sum / store.count;
-      }
+      if (store.count > 0) store.mean = store.sum / store.count;
     });
+
+    if (base.total.count > 0) base.total.mean = base.total.sum / base.total.count;
 
     debugLog('Summary result', base);
     return base;
@@ -666,40 +698,70 @@
   // 7. 表示用ユーティリティ
   // ==========================================
   function createResultsHtml(summary) {
-    const icRow = `<tr><td>行動抑制の制御</td><td>${formatInt(summary.inhibitory_control.sum)} / 60</td><td>${formatMean(summary.inhibitory_control.mean)}</td></tr>`;
-    const acRow = `<tr><td>行動始発の制御</td><td>${formatInt(summary.activation_control.sum)} / 60</td><td>${formatMean(summary.activation_control.mean)}</td></tr>`;
-    const attRow = `<tr><td>注意の制御</td><td>${formatInt(summary.attention_control.sum)} / 60</td><td>${formatMean(summary.attention_control.mean)}</td></tr>`;
-    const totalRow = `<tr><td>全体合計</td><td>${formatInt(summary.total.sum)} / 60</td><td>${formatMean(summary.total.mean)}</td></tr>`;
+    const icRow = `<tr><td>行動抑制の制御</td><td>${formatInt(summary.inhibitory_control.sum)} / 44</td><td>${formatMean(summary.inhibitory_control.mean)}</td><td>${formatMean(PAPER_MEANS.IC)}</td></tr>`;
+    const acRow = `<tr><td>行動始発の制御</td><td>${formatInt(summary.activation_control.sum)} / 48</td><td>${formatMean(summary.activation_control.mean)}</td><td>${formatMean(PAPER_MEANS.AC)}</td></tr>`;
+    const attRow = `<tr><td>注意の制御</td><td>${formatInt(summary.attention_control.sum)} / 48</td><td>${formatMean(summary.attention_control.mean)}</td><td>${formatMean(PAPER_MEANS.AT)}</td></tr>`;
+    const totalRow = `<tr><td>全体合計</td><td>${formatInt(summary.total.sum)} / 140</td><td>${formatMean(summary.total.mean)}</td><td>${formatMean(PAPER_MEANS.Total)}</td></tr>`;
 
     return `
-      <div class="card">
-        <h2>結果</h2>
-        <p style="margin:0.4rem 0 0.8rem;">
-          平均値（1〜4）は逆転項目を処理した後に算出しています。
-        </p>
-        <table>
-          <thead>
-            <tr><th>特性</th><th>合計得点</th><th>平均 (1〜4)</th></tr>
-          </thead>
-          <tbody>${icRow}${acRow}${attRow}</tbody>
-        </table>
-        <div class="result-grid">
-          <div style="grid-column:1/-1">
-            <h3 style="margin:1rem 0 0.5rem;">行動抑制の制御と行動始発の制御，注意の制御の合計得点</h3>
-            <div class="chart-wrap chart-small"><canvas id="rrq-chart"></canvas></div>
-            <div id="rrq-values" style="margin-top:0.6rem; font-weight:600; text-align:center;">
-              合計（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体合計）: ${formatInt(summary.inhibitory_control.sum)} / ${formatInt(summary.activation_control.sum)} / ${formatInt(summary.attention_control.sum)} / ${formatInt(summary.total.sum)}<br>
-              平均（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体平均）: ${formatMean(summary.inhibitory_control.mean)} / ${formatMean(summary.activation_control.mean)} / ${formatMean(summary.attention_control.mean)} / ${formatMean(summary.total.mean)}
+      <div style="max-width:960px; margin:0 auto; padding:1rem;">
+        <h2 style="text-align:center; margin-bottom:1.5rem;">あなたの結果</h2>
+        
+        <div class="grid" style="gap:1.5rem;">
+          <!-- レーダーチャート: 3下位尺度の比較 -->
+          <div class="card">
+            <h3 style="margin:0 0 1rem;">下位尺度の比較（レーダーチャート）</h3>
+            <div class="chart-wrap">
+              <canvas id="ecsj-radar-chart"></canvas>
             </div>
-            <div class="description-box" style="margin-top:0.8rem;">
+            <p class="small muted" style="margin-top:0.8rem; text-align:center;">
+              青: あなたの得点 | 赤: 論文平均値
+            </p>
+          </div>
+
+          <!-- バーチャート: 全体合計の比較 -->
+          <div class="card">
+            <h3 style="margin:0 0 1rem;">全体合計の比較（バーチャート）</h3>
+            <div class="chart-wrap">
+              <canvas id="ecsj-bar-chart"></canvas>
+            </div>
+            <p class="small muted" style="margin-top:0.8rem; text-align:center;">
+              あなたの合計: ${formatInt(summary.total.sum)} / 論文平均: ${formatMean(PAPER_MEANS.Total)}
+            </p>
+          </div>
+
+          <!-- 結果テーブル -->
+          <div class="card">
+            <h3 style="margin:0 0 1rem;">詳細スコア</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>下位尺度</th>
+                  <th>合計得点</th>
+                  <th>平均</th>
+                  <th>論文平均</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${icRow}
+                ${acRow}
+                ${attRow}
+                ${totalRow}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 説明 -->
+          <div class="card">
+            <div class="description-box">
               <div class="score-label">行動抑制の制御（Inhibitory Control）</div>
               <p style="margin:0.2rem 0 0;">
                 不適切な接近行動を抑制する能力
-              </p>
+              </p><br>
               <div class="score-label" style="margin-top:0.6rem;">行動始発の制御（Activation Control）</div>
               <p style="margin:0.2rem 0 0;">
                 ある行動を回避したい時でもそれを遂行する能力
-              </p>
+              </p><br>
               <div class="score-label" style="margin-top:0.6rem;">注意の制御（Attention Control）</div>
               <p style="margin:0.2rem 0 0;">
                 必要に応じて，集中したり注意を切り替えたりする能力
@@ -707,67 +769,117 @@
             </div>
           </div>
         </div>
-        <div class="small muted" style="margin-top:1rem;">
-          注：日本人平均は山形他（2005）Table 1の値を使用
-        </div>
+
+        <p class="small muted" style="margin-top:1.5rem; text-align:center;">
+          ※ 論文平均は山形他 (2005) のTable 1の値を使用。下位尺度ごとの項目を確認したい場合は，論文を参照してください。
+        </p>
       </div>
     `;
   }
 
   function renderResultsChart(summary) {
-    const canvas = document.getElementById('ecsj-chart');
-    if (!canvas) {
-      debugLog('結果グラフ用の canvas が見つかりません');
-      return;
-    }
-
-    if (window.ecsjChart && typeof window.ecsjChart.destroy === 'function') {
-      window.ecsjChart.destroy();
-    }
-
     const icScore = Number(summary.inhibitory_control.sum) || 0;
     const acScore = Number(summary.activation_control.sum) || 0;
     const attScore = Number(summary.attention_control.sum) || 0;
     const totalScore = Number(summary.total.sum) || 0;
 
-    const valuesEl = document.getElementById('ecsj-values');
-    if (valuesEl) {
-      valuesEl.innerText = (
-        `合計（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体合計）: ${formatInt(icScore)} / ${formatInt(acScore)} / ${formatInt(attScore)} / ${formatInt(totalScore)}　` +
-        `平均（行動抑制の制御 / 行動始発の制御 / 注意の制御 / 全体平均）: ${formatMean(summary.inhibitory_control.mean)} / ${formatMean(summary.activation_control.mean)} / ${formatMean(summary.attention_control.mean)} / ${formatMean(summary.total.mean)}`
-      );
-    }
+    // レーダーチャート: 3下位尺度
+    const radarCanvas = document.getElementById('ecsj-radar-chart');
+    if (radarCanvas) {
+      if (window.ecsjRadarChart && typeof window.ecsjRadarChart.destroy === 'function') {
+        window.ecsjRadarChart.destroy();
+      }
 
-    window.ecsjChart = new Chart(canvas.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: ['行動抑制の制御 (IC)', '行動始発の制御 (AC)', '注意の制御 (AT)', '全体合計 (IC + AC + AT)'],
-        datasets: [{
-          label: '合計得点',
-          data: [icScore, acScore, attScore, totalScore],
-          backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(56,142,60,0.85)', 'rgba(255,193,7,0.85)', 'rgba(0,0,0,0.85)']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: {
-            min: 12,
-            max: 60,
-            ticks: { stepSize: 6 },
-            title: { display: true, text: '合計得点' }
+      window.ecsjRadarChart = new Chart(radarCanvas.getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: ['行動抑制の制御', '行動始発の制御', '注意の制御'],
+          datasets: [
+            {
+              label: 'あなたの得点',
+              data: [icScore, acScore, attScore],
+              backgroundColor: 'rgba(25,118,210,0.2)',
+              borderColor: 'rgba(25,118,210,1)',
+              pointBackgroundColor: 'rgba(25,118,210,1)',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: 'rgba(25,118,210,1)'
+            },
+            {
+              label: '論文平均',
+              data: [PAPER_MEANS.IC, PAPER_MEANS.AC, PAPER_MEANS.AT],
+              backgroundColor: 'rgba(229,57,53,0.2)',
+              borderColor: 'rgba(229,57,53,1)',
+              pointBackgroundColor: 'rgba(229,57,53,1)',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: 'rgba(229,57,53,1)'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 48,
+              ticks: {
+                stepSize: 12
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
           }
         }
-      }
-    });
-
-    try {
-      window.rrqChart.update();
-    } catch (error) {
-      debugLog('Chart update failed', error);
+      });
     }
+
+    // バーチャート: 全体合計
+    const barCanvas = document.getElementById('ecsj-bar-chart');
+    if (barCanvas) {
+      if (window.ecsjBarChart && typeof window.ecsjBarChart.destroy === 'function') {
+        window.ecsjBarChart.destroy();
+      }
+
+      window.ecsjBarChart = new Chart(barCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ['あなたの合計', '論文平均'],
+          datasets: [{
+            label: '全体合計得点',
+            data: [totalScore, PAPER_MEANS.Total],
+            backgroundColor: ['rgba(25,118,210,0.85)', 'rgba(229,57,53,0.85)'],
+            borderColor: ['rgba(25,118,210,1)', 'rgba(229,57,53,1)'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 140,
+              ticks: {
+                stepSize: 20
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    debugLog('Charts rendered', { icScore, acScore, attScore, totalScore });
   }
 
   function formatInt(value) {
