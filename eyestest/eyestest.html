@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>EYES TEST - 心の読み取り検査</title>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+    }
+    .jspsych-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    h1 {
+      color: #1d1d1f;
+      font-size: 1.8rem;
+      margin: 0 0 1rem 0;
+      font-weight: 700;
+      text-align: center;
+    }
+    h2 {
+      color: #0071e3;
+      font-size: 1.3rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+    .jspsych-btn {
+      background-color: #0071e3;
+      color: #fff;
+      border: 1px solid #0071e3;
+      padding: 0.6rem 1.2rem;
+      margin: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+    .jspsych-btn:hover {
+      background-color: #0059b3;
+      border-color: #0059b3;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #f5f5f7;
+      border-radius: 8px;
+    }
+    .status-item {
+      text-align: center;
+    }
+    .status-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.3rem;
+    }
+    .status-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1d1d1f;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .result-item {
+      background: #f5f5f7;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .result-label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1d1d1f;
+    }
+    .result-value.positive {
+      color: #34c759;
+    }
+    .result-value.negative {
+      color: #ff3b30;
+    }
+  </style>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+  <script src="https://unpkg.com/jspsych@7.3.4"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+  <script>
+(() => {
+  function detectSystemInfo() {
+    const ua = navigator.userAgent;
+    let browser = 'Unknown', os = 'Unknown';
+    if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+    else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+    else if (ua.indexOf('Trident') > -1) browser = 'Internet Explorer';
+    else if (ua.indexOf('Edge') > -1 || ua.indexOf('Edg') > -1) browser = 'Edge';
+    else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+    if (ua.indexOf('Win') > -1) os = 'Windows';
+    else if (ua.indexOf('Mac') > -1) os = 'macOS';
+    else if (ua.indexOf('Linux') > -1) os = 'Linux';
+    else if (ua.indexOf('Android') > -1) os = 'Android';
+    else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+    return { browser, os, userAgent: ua };
+  }
+
+  const jsPsych = window.jsPsychModule.initJsPsych({
+    display_element: 'jspsych-target'
+  });
+
+  const subjectId = jsPsych.randomization.randomID(10);
+  const systemInfo = detectSystemInfo();
+  jsPsych.data.addProperties({
+    subject_id: subjectId,
+    timestamp_start: new Date().toISOString(),
+    browser: systemInfo.browser,
+    os: systemInfo.os,
+    task_name: 'EYES_TEST',
+    total_trials: 36
+  });
+
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  const eyeTrials = [
+    { image: "eyes_pngs/eyes_01.png", correct: 1, options: ["おどけている", "慰めようとしている", "いらだっている", "うんざりしている"] },
+    { image: "eyes_pngs/eyes_02.png", correct: 2, options: ["おびえている", "狼狽している", "横柄な気分である", "不愉快に思っている"] },
+    { image: "eyes_pngs/eyes_03.png", correct: 0, options: ["ふざけている", "うろたえている", "欲望を抱いている", "何かを確言している"] },
+    { image: "eyes_pngs/eyes_04.png", correct: 1, options: ["ふざけている", "何かを強く訴えている", "面白がっている", "リラックスしている"] },
+    { image: "eyes_pngs/eyes_05.png", correct: 2, options: ["いらだっている", "皮肉な気分である", "心配している", "親しげな気持ちを抱いている"] },
+    { image: "eyes_pngs/eyes_06.png", correct: 0, options: ["ぎょっとしている", "空想にふけっている", "じりじりしている", "警戒している"] },
+    { image: "eyes_pngs/eyes_07.png", correct: 3, options: ["すまながっている", "親しげな気持ちを抱いている", "落ち着かない気持ちでいる", "元気をなくしている"] },
+    { image: "eyes_pngs/eyes_08.png", correct: 1, options: ["気落ちしている", "ほっとしている", "恥ずかしがっている", "興奮している"] },
+    { image: "eyes_pngs/eyes_09.png", correct: 3, options: ["不愉快に思っている", "敵意を抱いている", "怖がっている", "ほかのことに気を取られている"] },
+    { image: "eyes_pngs/eyes_10.png", correct: 0, options: ["用心している", "何かを強く訴えている", "うんざりしている", "ぎょっとしている"] },
+    { image: "eyes_pngs/eyes_11.png", correct: 2, options: ["おびえている", "面白がっている", "悔やんでいる", "気のあるそぶりをしている"] },
+    { image: "eyes_pngs/eyes_12.png", correct: 3, options: ["無関心である", "きまりが悪い", "疑いを抱いている", "元気をなくしている"] },
+    { image: "eyes_pngs/eyes_13.png", correct: 0, options: ["決意を固めている", "何かを期待している", "脅している", "恥ずかしがっている"] },
+    { image: "eyes_pngs/eyes_14.png", correct: 2, options: ["いらだっている", "がっかりしている", "落ち込んでいる", "非難している"] },
+    { image: "eyes_pngs/eyes_15.png", correct: 0, options: ["黙想している", "うろたえている", "励まそうとしている", "面白がっている"] },
+    { image: "eyes_pngs/eyes_16.png", correct: 3, options: ["いらだっている", "考えにふけっている", "励まそうとしている", "同情している"] },
+    { image: "eyes_pngs/eyes_17.png", correct: 1, options: ["疑っている", "愛情を持っている", "おどけている", "ぎょっとしている"] },
+    { image: "eyes_pngs/eyes_18.png", correct: 0, options: ["決意を固めている", "面白がっている", "ぎょっとしている", "うんざりしている"] },
+    { image: "eyes_pngs/eyes_19.png", correct: 1, options: ["横柄な気分である", "感謝している", "皮肉を言っている", "ためらっている"] },
+    { image: "eyes_pngs/eyes_20.png", correct: 0, options: ["自分が優位に立とうとしている", "親しげな気持ちを抱いている", "気がとがめている", "怖がっている"] },
+    { image: "eyes_pngs/eyes_21.png", correct: 2, options: ["きまりが悪い", "空想にふけっている", "困惑している", "混乱している"] },
+    { image: "eyes_pngs/eyes_22.png", correct: 3, options: ["ほかのことに気を取られている", "感謝している", "何かを強く訴えている", "哀願している"] },
+    { image: "eyes_pngs/eyes_23.png", correct: 0, options: ["満足している", "申し訳ないと思っている", "開き直っている", "好奇心を抱いている"] },
+    { image: "eyes_pngs/eyes_24.png", correct: 0, options: ["物思いにふけっている", "いらだっている", "興奮している", "敵意を抱いている"] },
+    { image: "eyes_pngs/eyes_25.png", correct: 3, options: ["混乱している", "信じられないと思っている", "気落ちしている", "興味を持っている"] },
+    { image: "eyes_pngs/eyes_26.png", correct: 1, options: ["戒している", "恥ずかしがっている", "敵意を抱いている", "不安に思っている"] },
+    { image: "eyes_pngs/eyes_27.png", correct: 0, options: ["ふざけている", "用心している", "横柄な気分である", "安心させようとしている"] },
+    { image: "eyes_pngs/eyes_28.png", correct: 2, options: ["興味を持っている", "ふざけている", "愛情を持っている", "満足している"] },
+    { image: "eyes_pngs/eyes_29.png", correct: 3, options: ["じりじりしている", "ぎょっとしている", "いらだっている", "内面を見つめている"] },
+    { image: "eyes_pngs/eyes_30.png", correct: 0, options: ["感謝している", "気のあるそぶりをしている", "敵意を抱いている", "がっかりしている"] },
+    { image: "eyes_pngs/eyes_31.png", correct: 0, options: ["恥じている", "自信に満ちている", "ふざけている", "元気をなくしている"] },
+    { image: "eyes_pngs/eyes_32.png", correct: 1, options: ["真剣になっている", "恥じている", "当惑している", "警戒している"] },
+    { image: "eyes_pngs/eyes_33.png", correct: 2, options: ["きまりが悪い", "気がとがめている", "空想にふけっている", "心配そうにしている"] },
+    { image: "eyes_pngs/eyes_34.png", correct: 1, options: ["ぎょっとしている", "とまどっている", "頼できないと思っている", "おびえている"] },
+    { image: "eyes_pngs/eyes_35.png", correct: 3, options: ["困っている", "神経質になっている", "何かを強く訴えている", "熟慮している"] },
+    { image: "eyes_pngs/eyes_36.png", correct: 2, options: ["恥じている", "神経質になっている", "疑っている", "決心がつかないでいる"] },
+  ];
+
+  const timeline = [];
+  const shuffledTrials = shuffleArray(eyeTrials);
+  let responses = [];
+
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: '<div class="card"><h1>👁️ EYES TEST</h1><h2>心の読み取り検査</h2><p style="text-align: center; color: #666; margin: 1rem 0;">この課題では、人物の目の領域の画像を見て、その人が何を考えたり、感じたりしているかを推測します。<br>全36問の質問があります。各問題について、最も適切と思われる心理状態や感情を4つの選択肢から選んでください。</p></div>',
+    choices: ['開始する']
+  });
+
+  // 年齢・性別入力
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div class="card" style="max-width: 600px;">
+        <h2 style="text-align: center;">参加者情報の入力</h2>
+        <div style="margin: 2rem 0;">
+          <div style="margin: 1rem 0;">
+            <label for="age_input" style="display: block; margin-bottom: 0.5rem;">年齢: <span style="color: red;">*</span></label>
+            <input type="number" id="age_input" min="1" max="150" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px;" />
+          </div>
+          <div style="margin: 1rem 0;">
+            <label for="gender_input" style="display: block; margin-bottom: 0.5rem;">性別: <span style="color: red;">*</span></label>
+            <select id="gender_input" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px;">
+              <option value="">-- 選択 --</option>
+              <option value="男性">男性</option>
+              <option value="女性">女性</option>
+              <option value="その他">その他</option>
+              <option value="未回答">未回答</option>
+            </select>
+          </div>
+          <div id="error_message" style="color: red; margin-top: 1rem; text-align: center; display: none; font-weight: bold;">
+            年齢と性別は必須です。
+          </div>
+        </div>
+      </div>
+    `,
+    choices: ['次へ進む'],
+    on_load: () => {
+      const button = document.querySelector('.jspsych-btn');
+      button.addEventListener('click', (e) => {
+        const age = document.getElementById('age_input')?.value;
+        const gender = document.getElementById('gender_input')?.value;
+        
+        if (!age || !gender || age === '' || gender === '') {
+          e.preventDefault();
+          e.stopPropagation();
+          document.getElementById('error_message').style.display = 'block';
+          return false;
+        }
+        
+        // バリデーション通過後、データを即座に記録
+        jsPsych.data.addProperties({
+          age: age,
+          gender: gender
+        });
+      });
+    },
+    on_finish: (data) => {
+      const age = document.getElementById('age_input')?.value || '';
+      const gender = document.getElementById('gender_input')?.value || '';
+      data.age = age;
+      data.gender = gender;
+    }
+  });
+
+  shuffledTrials.forEach((trial, index) => {
+    timeline.push({
+      type: window.jsPsychHtmlButtonResponse,
+      stimulus: `<div class="card"><h2>問題 ${index + 1} / 36</h2><p style="text-align: center; color: #666;">この人物は何を考えたり、感じたりしていますか？</p><div style="text-align: center;"><img src="${trial.image}" style="max-width: 400px; height: auto; border-radius: 8px;" alt="eyes" /></div><div class="status-bar"><div class="status-item"><div class="status-label">進捗</div><div class="status-value">${index + 1}/36</div></div></div></div>`,
+      choices: trial.options,
+      button_html: '<button class="jspsych-btn">%choice%</button>',
+      on_finish: (data) => {
+        const isCorrect = data.response === trial.correct;
+        responses.push({ trial: index + 1, is_correct: isCorrect, chosen: data.response });
+      }
+    });
+  });
+
+  // =====================================
+  // データ保存試行（Datapipe経由）- 最終結果表示の前に実行
+  // =====================================
+  timeline.push({
+    type: window.jsPsychPipe,
+    action: 'save',
+    experiment_id: 'nSkF9Rz1SbMV',
+    filename: () => {
+      try {
+        const allData = jsPsych.data.get().values();
+        const subjectId = allData.length > 0 ? allData[0].subject_id : 'unknown_subject';
+        console.log('=== Pipe trial: filename:', subjectId);
+        return `${subjectId}.csv`;
+      } catch (e) {
+        console.error('Filename error:', e);
+        return 'unknown_subject.csv';
+      }
+    },
+    data_string: () => {
+      try {
+        const csvData = jsPsych.data.get().csv();
+        console.log('=== Pipe trial: CSV size:', csvData.length, 'bytes');
+        return csvData;
+      } catch (e) {
+        console.error('CSV error:', e);
+        return '';
+      }
+    },
+    on_finish: () => {
+      console.log('=== Pipe trial on_finish: Data saved successfully ===');
+      // 可能であれば直前のトライアルデータを拾ってステータスを保持（未定義でも問題なし）
+      try {
+        const last = jsPsych.data.get().last(1).values()[0] || {};
+        window.pipeStatus = {
+          success: last.success ?? null,
+          message: last.message ?? '',
+        };
+        console.log('=== Pipe status ===', window.pipeStatus);
+      } catch (e) {
+        console.warn('Pipe status capture failed:', e);
+      } 
+    }
+  });
+
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: function() {
+      const correctCount = responses.filter((r) => r.is_correct).length;
+      const percentage = Math.round((correctCount / 36) * 100);
+      return `<div class="card"><h1>テスト完了</h1><div class="result-grid"><div class="result-item"><div class="result-label">正答数</div><div class="result-value" style="color: #34c759; font-size: 2rem;">${correctCount} / 36</div></div><div class="result-item"><div class="result-label">正答率</div><div class="result-value" style="font-size: 2rem;">${percentage}%</div></div></div></div>`;
+    },
+    choices: ['終了'],
+    on_finish: (data) => {
+      // 結果確認後にトップページへ遷移
+      setTimeout(() => {
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+      }, 500);
+    }
+  });
+
+  jsPsych.run(timeline);
+})();
+  </script>
+</body>
+</html>
