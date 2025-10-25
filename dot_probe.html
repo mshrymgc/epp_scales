@@ -44,14 +44,14 @@
             padding: 20px !important;
         }
 
-        .jspsych-display-element > * {
+        .jspsych-content {
             background: white;
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             max-width: 900px;
             width: calc(100% - 40px);
-            margin: 40px 20px;
+            margin: 40px auto;
         }
 
         .stimulus-container {
@@ -120,7 +120,14 @@
             font-size: 36px;
             color: #3498db;
             font-weight: bold;
-            margin: 40px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 600px;
+            height: 300px;
+            margin: 40px auto;
+            background: #f8f9fa;
+            border-radius: 8px;
         }
 
         .instruction-text {
@@ -270,8 +277,8 @@
             stimulus: `
                 <div class="title">ドットプローブ課題</div>
                 <div class="subtitle">注意バイアスの測定</div>
-                <p style="text-align: center; color: #666; margin: 1rem 0;">
-          この課題は注意バイアス傾向を測定するために作成されたドットプローブ課題のデモンストレーションです。講義内容の理解を促進するために利用されます。<br>この結果だけで医学的診断を行ったり，あなたの行動傾向を正確に測定することはできませんので注意してください。<br>データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br>
+                <p style="text-align: left; color: #666; margin: 1rem 0;">
+          この課題は注意バイアス傾向を測定するために作成されたドットプローブ課題のデモンストレーションです。講義内容の理解を促進するために利用されます。<br>この結果だけで医学的診断を行ったり，あなたの行動傾向を正確に測定することはできませんので注意してください。<br>この課題はスマホでも体験できますが，レイアウトが崩れる可能性もあるので<strong>コンピュータで体験することをおすすめします。</strong><br>データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br>
           <div class="instruction-text">
           <div style="background: #f5f5f7; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
           <p><strong>課題の進め方</strong></p>
@@ -288,6 +295,63 @@
         
             `,
             choices: ['開始']
+        });
+
+        // 年齢・性別入力
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="title">参加者情報の入力</div>
+                <div style="margin: 2rem 0; max-width: 400px; margin-left: auto; margin-right: auto;">
+                    <div style="margin: 1rem 0;">
+                        <label for="age_input" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">年齢: <span style="color: red;">*</span></label>
+                        <input type="number" id="age_input" min="1" max="120" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px;" />
+                    </div>
+                    <div style="margin: 1rem 0;">
+                        <label for="gender_input" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">性別: <span style="color: red;">*</span></label>
+                        <select id="gender_input" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="">-- 選択 --</option>
+                            <option value="男性">男性</option>
+                            <option value="女性">女性</option>
+                            <option value="その他">その他</option>
+                            <option value="未回答">未回答</option>
+                        </select>
+                    </div>
+                    <div id="error_message" style="color: red; margin-top: 1rem; text-align: center; display: none; font-weight: bold;">
+                        年齢と性別は必須です。
+                    </div>
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button id="submit_btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+                            次へ進む
+                        </button>
+                    </div>
+                </div>
+            `,
+            choices: 'NO_KEYS',
+            on_load: () => {
+                const btn = document.getElementById('submit_btn');
+                const err = document.getElementById('error_message');
+                btn.addEventListener('click', function() {
+                    const ageStr = document.getElementById('age_input').value.trim();
+                    const gender = document.getElementById('gender_input').value;
+                    const ageNum = Number(ageStr);
+                    const ok = Number.isInteger(ageNum) && ageNum >= 1 && ageNum <= 120 && gender !== '';
+                    if (!ok) {
+                        err.textContent = '年齢（1-120の整数）と性別を入力してください。';
+                        err.style.display = 'block';
+                        return;
+                    }
+                    // 検証成功時
+                    jsPsych.data.addProperties({
+                        age: ageNum,
+                        gender: gender
+                    });
+                    jsPsych.finishTrial({
+                        age: ageNum,
+                        gender: gender
+                    });
+                });
+            }
         });
 
         // 練習試行
@@ -490,8 +554,8 @@
             for (let i = 0; i < num_trials; i++) {
                 // 各試行でランダムに感情を決定
                 const is_threat_left = Math.random() > 0.5;
-                const left_emotion = is_threat_left ? threats[Math.floor(Math.random() * threats.length)] : neutrals[Math.floor(Math.random() * neutrals.length)];
-                const right_emotion = !is_threat_left ? threats[Math.floor(Math.random() * threats.length)] : neutrals[Math.floor(Math.random() * neutrals.length)];
+                const left_word = is_threat_left ? threats[Math.floor(Math.random() * threats.length)] : neutrals[Math.floor(Math.random() * neutrals.length)];
+                const right_word = !is_threat_left ? threats[Math.floor(Math.random() * threats.length)] : neutrals[Math.floor(Math.random() * neutrals.length)];
                 
                 const probe_position = positions[Math.floor(Math.random() * positions.length)];
                 const threat_position = is_threat_left ? 'left' : 'right';
@@ -502,20 +566,24 @@
                     type: jsPsychHtmlKeyboardResponse,
                     stimulus: '<div class="fixation">+</div>',
                     choices: 'NO_KEYS',
-                    trial_duration: 500
+                    trial_duration: 500,
+                    data: { phase: 'fixation', practice: is_practice },
+                    on_finish: (d) => { delete d.stimulus; }
                 });
 
-                // 顔ペアの表示
+                // 刺激語ペアの表示
                 trials.push({
                     type: jsPsychHtmlKeyboardResponse,
                     stimulus: `
                         <div class="stimulus-container">
-                            <div class="face-stimulus">${left_emotion}</div>
-                            <div class="face-stimulus">${right_emotion}</div>
+                            <div class="face-stimulus">${left_word}</div>
+                            <div class="face-stimulus">${right_word}</div>
                         </div>
                     `,
                     choices: 'NO_KEYS',
-                    trial_duration: 500
+                    trial_duration: 500,
+                    data: { phase: 'stimulus', practice: is_practice, left_word: left_word, right_word: right_word, threat_position: threat_position },
+                    on_finish: (d) => { delete d.stimulus; }
                 });
 
                 // プローブの表示と反応計測
@@ -533,7 +601,8 @@
                             `;
                         },
                         choices: 'NO_KEYS',
-                        trial_duration: null,
+                        trial_duration: 2000,
+                        data: { phase: 'probe', practice: is_practice, left_word: left_word, right_word: right_word, probe_position: probe_position, threat_position: threat_position, congruent: is_congruent },
                         on_load: function() {
                             const probe = document.getElementById('probe-element');
                             const startTime = performance.now();
@@ -545,13 +614,15 @@
                                 jsPsych.finishTrial({
                                     rt: rt,
                                     response: 'touch',
-                                    practice: is_practice,
-                                    probe_position: probe_position,
-                                    threat_position: threat_position,
-                                    congruent: is_congruent,
                                     correct: true
                                 });
-                            });
+                            }, { once: true });
+                        },
+                        on_finish: function(d) {
+                            if (d.response == null) {
+                                d.correct = false; // タイムアウト
+                            }
+                            delete d.stimulus;
                         }
                     });
                 } else {
@@ -568,7 +639,8 @@
                             `;
                         },
                         choices: [' '],
-                        trial_duration: null,
+                        trial_duration: 2000,
+                        data: { phase: 'probe', practice: is_practice, left_word: left_word, right_word: right_word, probe_position: probe_position, threat_position: threat_position, congruent: is_congruent },
                         on_load: function() {
                             const probe = document.getElementById('probe-element');
                             const startTime = performance.now();
@@ -587,26 +659,22 @@
                                 jsPsych.finishTrial({
                                     rt: rt,
                                     response: 'click',
-                                    practice: is_practice,
-                                    probe_position: probe_position,
-                                    threat_position: threat_position,
-                                    congruent: is_congruent,
                                     correct: true
                                 });
                             };
                             
                             probe.addEventListener('click', handleClick);
                         },
-                        on_finish: function(data) {
+                        on_finish: function(d) {
                             // キーボード（スペースキー）での反応
-                            if (data.response === ' ') {
-                                data.response = 'key';
-                                data.practice = is_practice;
-                                data.probe_position = probe_position;
-                                data.threat_position = threat_position;
-                                data.congruent = is_congruent;
-                                data.correct = true;
+                            if (d.response === ' ') {
+                                d.response = 'key';
+                                d.correct = true;
                             }
+                            if (d.response == null) {
+                                d.correct = false; // タイムアウト
+                            }
+                            delete d.stimulus;
                         }
                     });
                 }

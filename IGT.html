@@ -118,6 +118,7 @@
   </style>
   <script src="https://unpkg.com/jspsych@7.3.4"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-survey@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
 </head>
@@ -222,15 +223,9 @@
   jsPsych.data.addProperties({
     subject_id: subjectId,
     timestamp_start: new Date().toISOString(),
-    start_timestamp: sessionStart,
     browser: systemInfo.browser,
     os: systemInfo.os,
-    user_agent: systemInfo.userAgent,
-    task_name: 'IGT',
-    total_trials: TOTAL_TRIALS,
-    trials_per_block: TRIALS_PER_BLOCK,
-    num_blocks: NUM_BLOCKS,
-    initial_money: INITIAL_MONEY
+    task_name: 'IGT'
   });
 
   // =====================================
@@ -244,7 +239,7 @@
     stimulus: `
       <div class="card" style="max-width: 800px;">
         <h1>🎰 アイオワギャンブリング課題</h1>
-        <p style="text-align: center; color: #666; margin: 1rem 0;">
+        <p style="text-align: left; color: #666; margin: 1rem 0;">
           この課題はアイオワギャンブリング課題を体験するためのデモンストレーション実験であり，講義内容の理解を促進するために利用されます。<br>この結果だけで医学的診断を行ったり，あなたの行動傾向を正確に測定することはできませんので注意してください。<br>データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br>
 
           この課題では、<strong>4つの札の山から繰り返し選択を行い、利益を最大化する</strong>ことを目指します。<br>
@@ -260,12 +255,17 @@
         </div>
       </div>
     `,
-    choices: ['開始']
+    choices: ['開始'],
+    on_finish: (data) => {
+      data.phase = 'welcome';
+      if (data.stimulus) delete data.stimulus;
+      if (data.time_elapsed !== undefined) delete data.time_elapsed;
+    }
   });
 
-  // 年齢・性別入力
+  // 年齢・性別入力（確実に保存するためカスタムボタンで制御）
   timeline.push({
-    type: window.jsPsychHtmlButtonResponse,
+    type: window.jsPsychHtmlKeyboardResponse,
     stimulus: `
       <div class="card" style="max-width: 600px;">
         <h2 style="text-align: center;">参加者情報の入力</h2>
@@ -287,33 +287,47 @@
           <div id="error_message" style="color: red; margin-top: 1rem; text-align: center; display: none; font-weight: bold;">
             年齢と性別は必須です。
           </div>
+          <div style="text-align: center; margin-top: 1.5rem;">
+            <button id="submit_btn" class="jspsych-btn">次へ進む</button>
+          </div>
         </div>
       </div>
     `,
-    choices: ['次へ進む'],
+    choices: 'NO_KEYS',
     on_load: () => {
-      const button = document.querySelector('.jspsych-btn');
-      button.addEventListener('click', (e) => {
-        const age = document.getElementById('age_input')?.value;
-        const gender = document.getElementById('gender_input')?.value;
-        
-        if (!age || !gender || age === '' || gender === '') {
-          e.preventDefault();
-          e.stopPropagation();
-          document.getElementById('error_message').style.display = 'block';
-          return false;
+      const btn = document.getElementById('submit_btn');
+      const submit = (e) => {
+        if (e) e.preventDefault();
+        try {
+          const age = document.getElementById('age_input')?.value?.trim();
+          const gender = document.getElementById('gender_input')?.value;
+          if (!age || !gender) {
+            const err = document.getElementById('error_message');
+            if (err) err.style.display = 'block';
+            return;
+          }
+          jsPsych.data.addProperties({ age: age, gender: gender });
+          jsPsych.finishTrial({ age: age, gender: gender, phase: 'demographics' });
+        } catch (err) {
+          console.error('Demographics submit error:', err);
         }
-      });
+      };
+      if (btn) btn.addEventListener('click', submit, { once: true });
+      // Enterキーでも送信
+      const keyHandler = (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          submit(ev);
+          window.removeEventListener('keydown', keyHandler, true);
+        }
+      };
+      window.addEventListener('keydown', keyHandler, true);
     },
     on_finish: (data) => {
-      const age = document.getElementById('age_input')?.value || '';
-      const gender = document.getElementById('gender_input')?.value || '';
-      data.age = age;
-      data.gender = gender;
-      jsPsych.data.addProperties({
-        age: age,
-        gender: gender
-      });
+      data.phase = data.phase || 'demographics';
+      if (data.stimulus) delete data.stimulus;
+      if (data.time_elapsed !== undefined) delete data.time_elapsed;
+      if (data.response !== undefined) delete data.response;
     }
   });
 
@@ -338,7 +352,14 @@
           <p style="text-align: center; color: #666;">このブロックでは16回の選択を行います。</p>
         </div>
       `,
-      choices: ['開始']
+      choices: ['開始'],
+      on_finish: (data) => {
+        data.phase = 'block_start';
+        data.block = blockNum + 1;
+        if (data.stimulus) delete data.stimulus;
+        if (data.time_elapsed !== undefined) delete data.time_elapsed;
+        if (data.response !== undefined) delete data.response;
+      }
     });
 
     // 16試行のループ
@@ -418,6 +439,7 @@
           const gain = deck.gains[Math.floor(Math.random() * deck.gains.length)];
           const loss = deck.losses[Math.floor(Math.random() * deck.losses.length)];
           const net = gain - loss;
+          const money_before = INITIAL_MONEY + allGains.reduce((a, b) => a + b, 0) - allLosses.reduce((a, b) => a + b, 0);
 
           blockGains.push(gain);
           blockLosses.push(loss);
@@ -430,6 +452,15 @@
           data.loss = loss;
           data.net = net;
           data.choice = choice;
+          data.block = blockNum + 1;
+          data.trial_in_block = trialNum + 1;
+          data.money_before = money_before;
+          data.money_after = money_before + net;
+          data.is_advantageous = (choice === 'C' || choice === 'D');
+          data.phase = 'choice';
+          if (data.stimulus) delete data.stimulus;
+          if (data.time_elapsed !== undefined) delete data.time_elapsed;
+          if (data.response !== undefined) delete data.response;
         }
       });
 
@@ -466,7 +497,15 @@
             </div>
           `;
         },
-        choices: ['次へ']
+        choices: ['次へ'],
+        on_finish: (data) => {
+          data.phase = 'feedback';
+          data.block = blockNum + 1;
+          data.trial_in_block = trialNum + 1;
+          if (data.stimulus) delete data.stimulus;
+          if (data.time_elapsed !== undefined) delete data.time_elapsed;
+          if (data.response !== undefined) delete data.response;
+        }
       });
     }
 
@@ -500,7 +539,14 @@
           </div>
         `;
       },
-      choices: [blockNum === NUM_BLOCKS - 1 ? '最終結果へ' : '次のブロックへ']
+      choices: [blockNum === NUM_BLOCKS - 1 ? '最終結果へ' : '次のブロックへ'],
+      on_finish: (data) => {
+        data.phase = 'block_end';
+        data.block = blockNum + 1;
+        if (data.stimulus) delete data.stimulus;
+        if (data.time_elapsed !== undefined) delete data.time_elapsed;
+        if (data.response !== undefined) delete data.response;
+      }
     });
   }
 
@@ -597,6 +643,10 @@
     },
     choices: ['終了'],
     on_finish: (data) => {
+      data.phase = 'final';
+      if (data.stimulus) delete data.stimulus;
+      if (data.time_elapsed !== undefined) delete data.time_elapsed;
+      if (data.response !== undefined) delete data.response;
       console.log('=== Final results screen completed ===');
       // Redirect after user confirms results
       setTimeout(() => {
