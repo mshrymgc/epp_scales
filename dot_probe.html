@@ -7,6 +7,7 @@
     <script src="./dist/jspsych.js"></script>
     <script src="./dist/plugin-html-button-response.js"></script>
     <script src="./dist/plugin-html-keyboard-response.js"></script>
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
     <link rel="stylesheet" href="./dist/jspsych.css">
     <style>
         /* jsPsychのデフォルトスタイルを完全にオーバーライド */
@@ -204,6 +205,57 @@
             override_safe_mode: true
         });
 
+        // メタデータ設定
+        const subjectId = jsPsych.randomization.randomID(10);
+        const sessionStart = Date.now();
+        
+        function detectSystemInfo() {
+            const ua = navigator.userAgent;
+            let browser = 'Unknown';
+            let os = 'Unknown';
+
+            if (ua.indexOf('Firefox') > -1) {
+                browser = 'Firefox';
+            } else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) {
+                browser = 'Opera';
+            } else if (ua.indexOf('Trident') > -1) {
+                browser = 'Internet Explorer';
+            } else if (ua.indexOf('Edge') > -1 || ua.indexOf('Edg') > -1) {
+                browser = 'Edge';
+            } else if (ua.indexOf('Chrome') > -1) {
+                browser = 'Chrome';
+            } else if (ua.indexOf('Safari') > -1) {
+                browser = 'Safari';
+            }
+
+            if (ua.indexOf('Win') > -1) {
+                os = 'Windows';
+            } else if (ua.indexOf('Mac') > -1) {
+                os = 'macOS';
+            } else if (ua.indexOf('Linux') > -1) {
+                os = 'Linux';
+            } else if (ua.indexOf('Android') > -1) {
+                os = 'Android';
+            } else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) {
+                os = 'iOS';
+            }
+
+            return { browser, os, userAgent: ua };
+        }
+
+        const systemInfo = detectSystemInfo();
+
+        jsPsych.data.addProperties({
+            subject_id: subjectId,
+            timestamp_start: new Date().toISOString(),
+            start_timestamp: sessionStart,
+            browser: systemInfo.browser,
+            os: systemInfo.os,
+            user_agent: systemInfo.userAgent,
+            task_name: 'DotProbe',
+            device_type: isMobile ? 'mobile' : 'desktop'
+        });
+
         // 試行のタイムラインを作成
         const timeline = [];
 
@@ -217,13 +269,23 @@
             type: jsPsychHtmlButtonResponse,
             stimulus: `
                 <div class="title">ドットプローブ課題</div>
-                <div class="subtitle">反応時間測定課題</div>
-                <div class="instruction-text">
-                    <p>2つの単語が表示されます。その後、青い丸が画面に現れます。</p>
-                    <p>${instructionText}</p>
-                    <p>できるだけ速く反応してください。</p>
-                    <div style="font-size: 12px; color: #95a5a6; margin-top: 15px;">【検出デバイス: ${deviceType}】</div>
+                <div class="subtitle">注意バイアスの測定</div>
+                <p style="text-align: center; color: #666; margin: 1rem 0;">
+          この課題は注意バイアス傾向を測定するために作成されたドットプローブ課題のデモンストレーションです。講義内容の理解を促進するために利用されます。<br>この結果だけで医学的診断を行ったり，あなたの行動傾向を正確に測定することはできませんので注意してください。<br>データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br>
+          <div class="instruction-text">
+          <div style="background: #f5f5f7; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+          <p><strong>課題の進め方</strong></p>
+          <ul style="margin: 0.5rem 0; padding-left: 1.5rem; text-align: left;">
+            <li>画面の中央に「+」が表示された後、2つの単語が左右に表示されます。</li>
+            <li>単語が消えた直後、どちらか一方の位置に青い丸が表示されます。</li>
+            <li>青い丸を見つけたら、${instructionText}</li>
+            <li>単語の内容は読まなくて構いません。青い丸への反応に集中してください。</li>
+            <li>${instructionText}</li>
+            <li>できるだけ速く反応してください。</li>
+          </ul>
+          <div style="font-size: 12px; color: #95a5a6; margin-top: 15px;">【検出デバイス: ${deviceType}】</div>
                 </div>
+        
             `,
             choices: ['開始']
         });
@@ -252,6 +314,39 @@
         timeline.push({
             timeline: main_trials,
             randomize_order: true
+        });
+
+        // =====================================
+        // データ保存試行（Datapipe経由）- 結果表示の前に実行
+        // =====================================
+        timeline.push({
+            type: jsPsychPipe,
+            action: 'save',
+            experiment_id: 'H7Xs3i174T6P',
+            filename: () => {
+                try {
+                    const allData = jsPsych.data.get().values();
+                    const subjectId = allData.length > 0 ? allData[0].subject_id : 'unknown_subject';
+                    console.log('=== Pipe trial: filename:', subjectId);
+                    return `${subjectId}.csv`;
+                } catch (e) {
+                    console.error('Filename error:', e);
+                    return 'unknown_subject.csv';
+                }
+            },
+            data_string: () => {
+                try {
+                    const csvData = jsPsych.data.get().csv();
+                    console.log('=== Pipe trial: CSV size:', csvData.length, 'bytes');
+                    return csvData;
+                } catch (e) {
+                    console.error('CSV error:', e);
+                    return '';
+                }
+            },
+            on_finish: () => {
+                console.log('=== Pipe trial on_finish: Data saved successfully ===');
+            }
         });
 
         // 結果表示
