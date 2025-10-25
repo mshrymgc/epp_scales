@@ -1,222 +1,317 @@
 <!doctype html>
 <html lang="ja">
 <head>
- <meta charset="utf-8" />
- <meta name="viewport" content="width=device-width, initial-scale=1" />
- <meta name="robots" content="noindex, nofollow" />
- <title>感情・人格心理学で扱った心理尺度一覧</title>
- <style>
-  body { 
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
-    background: #f5f5f7;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    margin: 0;
-    padding: 20px 12px;
-  }
-   .container {
-     max-width: 800px;
-     width: 100%;
-    margin: 0 auto;
-   }
-   .card {
-     background: #ffffff;
-     border-radius: 12px;
-     padding: 3rem;
-     box-shadow: 0 2px 8px rgba(0,0,0,.08);
-     text-align: center;
-    display: flex;
-    flex-direction: column;
-   }
-   h1 {
-     color: #333;
-     font-size: 2.5rem;
-     margin: 0 0 1rem 0;
-     font-weight: 700;
-   }
-   h2 {
-     color: #1d1d1f;
-     font-size: 1.5rem;
-     margin: 0 0 2rem 0;
-     font-weight: 400;
-   }
-   .description {
-     color: #666;
-     line-height: 1.8;
-     margin-bottom: 2rem;
-     text-align: left;
-   }
-   .features {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-     gap: 1.5rem;
-     margin: 2rem 0;
-     text-align: left;
-   }
-   .feature {
-     padding: 1.5rem;
-     background: #f9f9fb;
-     border-radius: 8px;
-     border-left: 4px solid #0071e3;
-   }
-   .feature h3 {
-     color: #1d1d1f;
-     font-size: 1.1rem;
-     margin: 0 0 0.5rem 0;
-   }
-   .feature p {
-     color: #666;
-     font-size: 0.9rem;
-     margin: 0;
-     line-height: 1.6;
-   }
-   .scale-item {
-     padding: 1.5rem;
-     background: #f9f9fb;
-     border-radius: 8px;
-     border-left: 4px solid #0071e3;
-     text-decoration: none;
-     color: inherit;
-     transition: background 0.2s, transform 0.2s;
-     display: block;
-   }
-   .scale-item:hover {
-     background: #f0f0f2;
-     transform: translateX(4px);
-   }
-   .scale-item h3 {
-     color: #1d1d1f;
-     font-size: 1.1rem;
-     margin: 0 0 0.5rem 0;
-   }
-   .scale-item p {
-     color: #666;
-     font-size: 0.9rem;
-     margin: 0;
-     line-height: 1.6;
-   }
-   .lecture-section {
-     margin-bottom: 2.5rem;
-     text-align: left;
-   }
-   .lecture-title {
-     font-size: 1.2rem;
-     font-weight: 600;
-     color: #1d1d1f;
-     margin-bottom: 1rem;
-     padding-bottom: 0.5rem;
-     border-bottom: 2px solid #0071e3;
-   }
-   .lecture-scales {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-     gap: 1.5rem;
-   }
-   .btn {
-     display: inline-block;
-     background: #0071e3;
-     color: white;
-     padding: 0.75rem 1.5rem;
-     font-size: 1rem;
-     border: none;
-     border-radius: 8px;
-     cursor: pointer;
-     text-decoration: none;
-     transition: background 0.2s;
-     margin-top: 1rem;
-   }
-   .btn:hover {
-     background: #0077cc;
-   }
-   .btn:active {
-     background: #0071e3;
-   }
-  /* footer outside the card and centered across the page */
-  .footer {
-    margin-top: 24px;
-    font-size: 0.85rem;
-    color: #999;
-    text-align: center;
-    width: 100%;
-    max-width: 800px;
-    padding: 12px 0 32px 0;
-  }
-   @media (max-width: 600px) {
-     .card {
-       padding: 2rem 1.5rem;
-     }
-     h1 {
-       font-size: 2rem;
-     }
-     h2 {
-       font-size: 1.2rem;
-     }
-     .features {
-       grid-template-columns: 1fr;
-     }
-   }
- </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>感情・人格心理学で扱った心理尺度・認知課題一覧</title>
+  
+   <style>
+    /* ======================
+       基本スタイル
+       ====================== */
+    
+    body { 
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+      background: #f5f5f7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      margin: 0;
+      padding: 20px 12px;
+    }
+    
+    /* ======================
+       レイアウト
+       ====================== */
+    
+    /* メインコンテナ */
+    .container {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    
+    /* カードコンテナ */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 3rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* ======================
+       タイポグラフィ
+       ====================== */
+    
+    /* ページタイトル */
+    h1 {
+      color: #333;
+      font-size: 2.5rem;
+      margin: 0 0 1rem 0;
+      font-weight: 700;
+    }
+    
+    /* サブタイトル */
+    h2 {
+      color: #1d1d1f;
+      font-size: 1.5rem;
+      margin: 0 0 2rem 0;
+      font-weight: 400;
+    }
+    
+    /* 説明文 */
+    .description {
+      color: #666;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+    
+    /* ======================
+       講義セクション
+       ====================== */
+    
+    /* 各講義のセクション */
+    .lecture-section {
+      margin-bottom: 2.5rem;
+      text-align: left;
+    }
+    
+    /* 講義タイトル（第○回） */
+    .lecture-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #0071e3;
+    }
+    
+    /* 尺度リストのグリッドレイアウト */
+    .lecture-scales {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    /* ======================
+       尺度アイテム
+       ====================== */
+    
+    /* 各尺度のカード */
+    .scale-item {
+      padding: 1.5rem;
+      background: #f9f9fb;
+      border-radius: 8px;
+      border-left: 4px solid #0071e3;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.2s, transform 0.2s;
+      display: block;
+    }
+    
+    /* ホバー時のエフェクト */
+    .scale-item:hover {
+      background: #f0f0f2;
+      transform: translateX(4px);
+    }
+    
+    /* 尺度名 */
+    .scale-item h3 {
+      color: #1d1d1f;
+      font-size: 1.1rem;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    /* 尺度の説明 */
+    .scale-item p {
+      color: #666;
+      font-size: 0.9rem;
+      margin: 0;
+      line-height: 1.6;
+    }
+    
+    /* ======================
+       その他のコンポーネント
+       ====================== */
+    
+    /* 特徴セクション（現在未使用） */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+      text-align: left;
+    }
+    
+    .feature {
+      padding: 1.5rem;
+      background: #f9f9fb;
+      border-radius: 8px;
+      border-left: 4px solid #0071e3;
+    }
+    
+    .feature h3 {
+      color: #1d1d1f;
+      font-size: 1.1rem;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .feature p {
+      color: #666;
+      font-size: 0.9rem;
+      margin: 0;
+      line-height: 1.6;
+    }
+    
+    /* ボタン（現在未使用） */
+    .btn {
+      display: inline-block;
+      background: #0071e3;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+      margin-top: 1rem;
+    }
+    
+    .btn:hover {
+      background: #0077cc;
+    }
+    
+    .btn:active {
+      background: #0071e3;
+    }
+    
+    /* フッター */
+    .footer {
+      margin-top: 24px;
+      font-size: 0.85rem;
+      color: #999;
+      text-align: center;
+      width: 100%;
+      max-width: 800px;
+      padding: 12px 0 32px 0;
+    }
+    
+    /* ======================
+       レスポンシブデザイン
+       ====================== */
+    
+    @media (max-width: 600px) {
+      .card {
+        padding: 2rem 1.5rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      h2 {
+        font-size: 1.2rem;
+      }
+      
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+   </style>
 </head>
+
 <body>
- <div class="container">
-   <div class="card">
-     <h1>感情・人格心理学で扱った<br>心理尺度一覧</h1>
-     <h2></h2>
-     
-     <div class="description">
-       <p>
-         このページで紹介している心理尺度は、「感情・人格心理学」の授業で扱ったものです。各尺度は、特定の心理的特性や行動傾向を評価するために設計されています。医学的診断等を目的としたものではないため，あくまでも講義の内容理解を助けるものとして理解したうえで体験してください。
-       </p>
-     </div>
-
-     <!--
-     <div class="features">
-       <div class="lecture-section">
-        <div class="lecture-title">実験的課題</div>
-         <div class="lecture-scales">
-           <a href="IGT.html" class="scale-item">
-             <h3>🎰 アイオワギャンブリング課題</h3>
-             <p>決定特性とリスク選好傾向を測定する課題。</p>
-           </a>
-         </div><br>
-        -->
+  <!-- メインコンテナ -->
+  <div class="container">
+    
+    <!-- カードコンテナ -->
+    <div class="card">
+      
+      <!-- ページタイトル -->
+      <h1>感情・人格心理学で扱った<br>心理尺度・認知課題一覧</h1>
+      <h2></h2>
+      
+      <!-- 説明文 -->
+      <div class="description">
+        <p>
+          このページで紹介している心理尺度は、「感情・人格心理学」の授業で扱ったものです。各尺度は、特定の心理的特性や行動傾向を評価するために設計されています。医学的診断等を目的としたものではないため，あくまでも講義の内容理解を助けるものとして理解したうえで体験してください。<br>
+          ここで紹介している尺度・課題はすべてオンラインで体験可能です。各尺度名をクリックすると、対応するページに移動します。<br>
+          また、ここで紹介している尺度・課題はすべて公開されている論文などに基づいて山口が独自に作成したものです。そのため、不具合などが混在していることもあるかもしれませんが、大目に見てください。正確な使用方法や詳細な内容については、各尺度・課題の元論文等を参照してください。
+        </p>
+      </div>
+      
+      <!-- 第2回講義の尺度 -->
+      <div class="lecture-section">
         <div class="lecture-title">第2回</div>
-         <div class="lecture-scales">
-           <a href="ecsj.html" class="scale-item">
-             <h3>📊 成人用エフォートフル・コントロール尺度日本語版</h3>
-             <p>エフォートフル・コントロールを測定する尺度。</p>
-           </a>
-         </div><br>
-         <div class="lecture-title">第3回</div>
-         <div class="lecture-scales">
-           <a href="rrq.html" class="scale-item">
-             <h3>📊 Rumination-Reflection Questionnaire日本語版（RRQ）</h3>
-             <p>反芻と省察傾向を測定する尺度。</p>
-           </a>
-         </div><br>
-         <a href="ops.html" class="scale-item">
-             <h3>📊 楽観・悲観性尺度</h3>
-             <p>楽観主義と悲観主義傾向を測定する尺度。</p>
-           </a><br>
-      <!--
+        <div class="lecture-scales">
+          <a href="ecsj.html" class="scale-item">
+            <h3>📊 成人用エフォートフル・コントロール尺度日本語版</h3>
+            <p>エフォートフル・コントロールを測定する尺度。</p>
+          </a>
+        </div>
+      </div>
+      
+      <!-- 第3回講義の尺度・課題 -->
+      <div class="lecture-section">
+        <div class="lecture-title">第3回</div>
+        <div class="lecture-scales" style="display: flex; flex-direction: column; gap: 1rem;">
+          <a href="rrq.html" class="scale-item">
+        <h3>📊 Rumination-Reflection Questionnaire日本語版(RRQ)</h3>
+        <p>反芻と省察傾向を測定する尺度。</p>
+          </a>
+          <a href="ops.html" class="scale-item">
+        <h3>📊 楽観・悲観性尺度</h3>
+        <p>楽観主義と悲観主義傾向を測定する尺度。</p>
+          </a>
+          <a href="dot_probe.html" class="scale-item">
+        <h3>🎯 ドットプローブ課題</h3>
+        <p>注意バイアスを測定する認知課題。</p>
+          </a>
+          <a href="IGT.html" class="scale-item">
+        <h3>🎰 アイオワギャンブリング課題</h3>
+        <p>決定特性とリスク選好傾向を測定する課題。</p>
+          </a>
+        </div>
+      </div>
+      
+      <!-- 第4回講義の尺度
+      <div class="lecture-section">
         <div class="lecture-title">第4回</div>
-          <div class="lecture-scales">
-            <a href="panas.html" class="scale-item">
-              <h3>📊 日本語版PANAS</h3>
-              <p>ポジティブ感情とネガティブ感情の状態を測定する尺度。</p>
-            </a>
-          </div>
-      -->
-       </div>
-     </div>
-   </div>
- </div>
-
-<div class="footer">
-  <p>作成者：大阪教育大学　山口正寛</p>
-</div>
+        <div class="lecture-scales" style="display: flex; flex-direction: column; gap: 1rem;">
+          <a href="bfi2sj.html" class="scale-item">
+            <h3>📊 日本語版BFI-2</h3>
+            <p>ビッグファイブ性格特性を測定する尺度。</p>
+          </a>
+          <a href="hexaco60.html" class="scale-item">
+            <h3>📊 日本語版HEXACO-60</h3>
+            <p>HEXACOモデルに基づく性格特性を測定する尺度。</p>
+          </a>
+          <a href="sd3j.html" class="scale-item">
+            <h3>📊 日本語版SD3</h3>
+            <p>ダークトライアド特性を測定する尺度。</p>
+          </a>
+          <a href="panas.html" class="scale-item">
+            <h3>📊 日本語版PANAS</h3>
+            <p>ポジティブ感情とネガティブ感情の状態を測定する尺度。</p>
+          </a>
+        </div>
+      </div> -->
+      
+    </div><!-- .card -->
+  </div><!-- .container -->
+  
+  <!-- フッター -->
+  <div class="footer">
+    <p>作成者：大阪教育大学　山口正寛</p>
+  </div>
+  
 </body>
 </html>
