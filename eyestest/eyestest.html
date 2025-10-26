@@ -51,12 +51,7 @@
       border-color: #0059b3;
     }
     .status-bar {
-      display: flex;
-      justify-content: space-around;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: #f5f5f7;
-      border-radius: 8px;
+      display: none;
     }
     .status-item {
       text-align: center;
@@ -99,6 +94,34 @@
     .result-value.negative {
       color: #ff3b30;
     }
+    .word-definitions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 2rem;
+      padding: 1.5rem 0 0 0;
+      border-top: 1px solid #e0e0e0;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .definition-item {
+      padding: 0.75rem;
+      background: #f9f9f9;
+      border-left: 3px solid #0071e3;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .definition-word {
+      font-weight: 600;
+      color: #0071e3;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .definition-text {
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -108,6 +131,91 @@
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
   <script>
 (() => {
+  // 言葉の説明文辞書
+  const wordDefinitions = {
+    "哀願している": "切に願い頼む。相手の同情心に訴えて頼む。",
+    "愛情を持っている": "人や物を心から大切に思うあたたかい気持ちを持っている。異性を恋しく思う心を持っている。",
+    "安心させようとしている": "心が安らかに落ち着かせようとしている。不安や心配をなくさせようとしている。",
+    "いらだっている": "思いどおりにならなくて落ち着かない様子。いらいらしている。",
+    "疑いを抱いている": "疑い、怪しみ、不審、疑念を心の中に持っている。",
+    "疑っている": "疑うこと。怪しむこと。不審。疑念。",
+    "うんざりしている": "すっかり飽きていやになるさま。",
+    "うろたえている": "予想外の事態にどうしてよいかわからず、まごまごする。",
+    "横柄な気分である": "人を見下したようなえらそうな態度をとるさま。",
+    "落ち着かない気持ちでいる": "動揺が静まり、安定した状態になる。人の態度や言動が穏やかで冷静である。",
+    "落ち込んでいる": "気分がめいる状態。",
+    "脅している": "恐れさせて自分に従わせようとする。また、こわがらせる。",
+    "おどけている": "滑稽なことを言ったり、したりする。ふざけている。",
+    "おびえている": "怖がってびくびくする。また、恐ろしくて声をたてる。",
+    "面白がっている": "楽しい。愉快だ。興味をそそる。興味深い。こっけいだ。おかしい。心をひかれる。趣が深い。風流だ。",
+    "がっかりしている": "事が思いどおりにいかず、気落ちしているさま。",
+    "考えにふけっている": "ある一つの考えに夢中になっているさま。",
+    "感謝している": "ありがたいと思っている。ありがたさを感じて謝意を表している。",
+    "気がとがめている": "自分の気持ちにやましさを感じている。",
+    "気落ちしている": "がっかりして、力を落とすこと。気の張りがうせること。",
+    "気のあるそぶりをしている": "関心があるふりをする。",
+    "きまりが悪い": "他に対して面目が立たない。恥ずかしい。しまりがつかない。",
+    "興味を持っている": "物事に心がひかれおもしろいと感じること。",
+    "ぎょっとしている": "驚きのあまり心が急に動揺するさま。はっと。びくっと。",
+    "空想にふけっている": "現実にはありそうにもないことをあれこれ頭の中で想像すること。",
+    "悔やんでいる": "失敗したり、うまくゆかなかったりしたことについて、別の処理をしておけばよかった、とあとになって残念に思う。くやしく思う。後悔する。",
+    "警戒している": "好ましくないことや危険なことが起こりそうな際に、未然に防ぐように用心すること。",
+    "決意を固めている": "重大なことについて、とるべき行動や態度をはっきりきめること。また、そのきめた気持ち。",
+    "決心がつかないでいる": "ある物事をしようと心がきまらないこと。決意がつかない。",
+    "元気をなくしている": "活動のもとになる気力がない。",
+    "好奇心を抱いている": "珍しい物事・未知の事柄に対して興味や関心を抱く。",
+    "興奮している": "物事に感じて気持ちが高ぶること。",
+    "困っている": "ある好ましくない事態が発生し、そのうまい対処の方法が見つからずに悩む。",
+    "怖がっている": "ある物や事をひどくおそれる。おびえる。",
+    "混乱している": "何がなんだか分からなくのこと。",
+    "困惑している": "どうしてよいかわからなくてとまどうこと。",
+    "自信に満ちている": "自分の才能・価値をずること。自分自身をずること。",
+    "親しげな気持ちを抱いている": "心が通じている、仲がよい、親密であると思うこと。",
+    "嫉妬している": "人の愛情が他に向けられるのを憎むこと。また、その気持ち。特に、男女間の感情についていう。やきもち。すぐれた者に対して抱くねたみの気持ち。ねたみ。",
+    "自分が優位に立とうとしている": "他の者よりもまさる位置・地位に立とうとしているさま。",
+    "じりじりしている": "待ち切れなくて、しだいにいらだつさま。また、そうすること。",
+    "熟慮している": "十分に考えること。じっくり考えること。",
+    "神経質になっている": "刺激や変化に対し神経が過敏である性質。些細（ささい）なことまで気にかけるさま。",
+    "真剣になっている": "一生懸命に物事をするさま。本気であるさま。",
+    "信じられないと思っている": "疑ってうそだと思い込むこと。",
+    "心配している": "何か起きはしないかと、気にかけること。不安がること。気がかり。",
+    "心配そうにしている": "何か起きはしないかと、気にかけること。不安がること。気がかり。",
+    "信頼できないと思っている": "信じて頼ることができないと思うこと。",
+    "すまながっている": "相手に悪いと思っている。申しわけないと思っている。",
+    "ためらっている": "しようかしまいかと迷う。思い切りがつかなくて行動に移れない。躊躇（ちゅうちょ）する。",
+    "敵意を抱いている": "害を加えようとする心を持っている。敵対する心を持つ。",
+    "同情している": "他人の苦しみ・悲しみ・不幸などを同じように感じ、思いやり・いたわりの心をもつこと。かわいそうに思うこと。",
+    "当惑している": "事の解決に困り途方に暮れること。どうしてよいか分からなくて、戸惑うこと。",
+    "とまどっている": "予想外の事に、どう対処していいかわからずにまごつく。",
+    "内面を見つめている": "精神・心理に関する方面や、物事の内側。外側からは見えない部分を考えている。",
+    "何かを確信している": "かたく信じて疑わないこと。また、その信念を持っている。",
+    "何かを期待している": "よい結果や状態を予期して、その実現を待ち望むこと。",
+    "何かを強く訴えている": "相手の心や感覚に強く働きかけている。",
+    "慰めようとしている": "悲しんだり苦しんだりしている人に、やさしい言葉をかけたりして心をなごやかにさせ、静まらせようとしている。",
+    "励まそうとしている": "元気や勇気を出すようにづけようとする。",
+    "恥ずかしがっている": "どう振る舞ってよいかわからない気持ちだ。照れくさい。",
+    "恥じている": "良心がとがめたり、欠点・誤りに気づいて、他人に顔向けできないと思う。はずかしいと思う。",
+    "非難している": "相手の欠点や過失を取り上げて責めること。",
+    "皮肉な気分である": "相手の欠点や弱点を意地悪く遠まわしに非難したい気分。",
+    "皮肉を言っている": "相手の欠点や弱点を意地悪く遠まわしに非難している。",
+    "開き直っている": "急に態度を変えてきびしくなる。覚悟をきめて、ふてぶてしい態度に変わる。いなおる。",
+    "不安に思っている": "気がかりなこと。心配なこと。これから起こる事態に対する恐れから、気持ちが落ち着かないこと。",
+    "ふざけている": "冗談を言ったり、おどけたことをしたりする。",
+    "不愉快に思っている": "楽しくないこと。気に入らないこと。また、そのさま。",
+    "ほかのことに気を取られている": "ほかのことに注意をうばわれる。",
+    "ほっとしている": "安心して緊張のとけるさま。",
+    "満足している": "望みが達せられて不平のないこと。十分満ち足りていること。",
+    "無関心である": "気にかけないこと。興味を示さないこと。",
+    "申し訳ないと思っている": "相手にすまない気持ちで、弁解のしようがないと思っている。たいへんすまないと思っている。",
+    "黙想している": "黙って思いにふけること。",
+    "物思いにふけっている": "あれこれと思い悩むこと。憂え思うこと。",
+    "用心している": "万一に備えて警戒・注意すること。気をつけること。",
+    "欲望を抱いている": "ほしいと思う心を持っている。不足を満たそうと強く求める気持ちを持つ。",
+    "狼狽している": "予想外の事態にどうしてよいかわからず、まごまごする。",
+    "リラックスしている": "精神や肉体の緊張をほぐすこと。くつろぐこと。",
+    "憎しみを持っている": "激しい恨みを心に持つこと。強い嫌悪感を抱く。"
+  };
+
   function detectSystemInfo() {
     const ua = navigator.userAgent;
     let browser = 'Unknown', os = 'Unknown';
@@ -125,6 +233,21 @@
     return { browser, os, userAgent: ua };
   }
 
+  function buildDefinitionsHTML(options) {
+    let html = '<div class="word-definitions">';
+    options.forEach((word) => {
+      const definition = wordDefinitions[word] || '説明文がありません。';
+      html += `
+        <div class="definition-item">
+          <span class="definition-word">${word}</span>
+          <span class="definition-text">${definition}</span>
+        </div>
+      `;
+    });
+    html += '</div>';
+    return html;
+  }
+
   const jsPsych = window.jsPsychModule.initJsPsych({
     display_element: 'jspsych-target'
   });
@@ -137,7 +260,8 @@
     browser: systemInfo.browser,
     os: systemInfo.os,
     task_name: 'EYES_TEST',
-    total_trials: 36
+    total_trials: 36,
+    practice_trials: 1
   });
 
   function shuffleArray(array) {
@@ -149,52 +273,108 @@
     return shuffled;
   }
 
-  const eyeTrials = [
-    { image: "eyes_pngs/eyes_01.png", correct: 1, options: ["おどけている", "慰めようとしている", "いらだっている", "うんざりしている"] },
-    { image: "eyes_pngs/eyes_02.png", correct: 2, options: ["おびえている", "狼狽している", "横柄な気分である", "不愉快に思っている"] },
-    { image: "eyes_pngs/eyes_03.png", correct: 0, options: ["ふざけている", "うろたえている", "欲望を抱いている", "何かを確言している"] },
-    { image: "eyes_pngs/eyes_04.png", correct: 1, options: ["ふざけている", "何かを強く訴えている", "面白がっている", "リラックスしている"] },
-    { image: "eyes_pngs/eyes_05.png", correct: 2, options: ["いらだっている", "皮肉な気分である", "心配している", "親しげな気持ちを抱いている"] },
-    { image: "eyes_pngs/eyes_06.png", correct: 0, options: ["ぎょっとしている", "空想にふけっている", "じりじりしている", "警戒している"] },
-    { image: "eyes_pngs/eyes_07.png", correct: 3, options: ["すまながっている", "親しげな気持ちを抱いている", "落ち着かない気持ちでいる", "元気をなくしている"] },
-    { image: "eyes_pngs/eyes_08.png", correct: 1, options: ["気落ちしている", "ほっとしている", "恥ずかしがっている", "興奮している"] },
-    { image: "eyes_pngs/eyes_09.png", correct: 3, options: ["不愉快に思っている", "敵意を抱いている", "怖がっている", "ほかのことに気を取られている"] },
-    { image: "eyes_pngs/eyes_10.png", correct: 0, options: ["用心している", "何かを強く訴えている", "うんざりしている", "ぎょっとしている"] },
-    { image: "eyes_pngs/eyes_11.png", correct: 2, options: ["おびえている", "面白がっている", "悔やんでいる", "気のあるそぶりをしている"] },
-    { image: "eyes_pngs/eyes_12.png", correct: 3, options: ["無関心である", "きまりが悪い", "疑いを抱いている", "元気をなくしている"] },
-    { image: "eyes_pngs/eyes_13.png", correct: 0, options: ["決意を固めている", "何かを期待している", "脅している", "恥ずかしがっている"] },
-    { image: "eyes_pngs/eyes_14.png", correct: 2, options: ["いらだっている", "がっかりしている", "落ち込んでいる", "非難している"] },
-    { image: "eyes_pngs/eyes_15.png", correct: 0, options: ["黙想している", "うろたえている", "励まそうとしている", "面白がっている"] },
-    { image: "eyes_pngs/eyes_16.png", correct: 3, options: ["いらだっている", "考えにふけっている", "励まそうとしている", "同情している"] },
-    { image: "eyes_pngs/eyes_17.png", correct: 1, options: ["疑っている", "愛情を持っている", "おどけている", "ぎょっとしている"] },
-    { image: "eyes_pngs/eyes_18.png", correct: 0, options: ["決意を固めている", "面白がっている", "ぎょっとしている", "うんざりしている"] },
-    { image: "eyes_pngs/eyes_19.png", correct: 1, options: ["横柄な気分である", "感謝している", "皮肉を言っている", "ためらっている"] },
-    { image: "eyes_pngs/eyes_20.png", correct: 0, options: ["自分が優位に立とうとしている", "親しげな気持ちを抱いている", "気がとがめている", "怖がっている"] },
-    { image: "eyes_pngs/eyes_21.png", correct: 2, options: ["きまりが悪い", "空想にふけっている", "困惑している", "混乱している"] },
-    { image: "eyes_pngs/eyes_22.png", correct: 3, options: ["ほかのことに気を取られている", "感謝している", "何かを強く訴えている", "哀願している"] },
-    { image: "eyes_pngs/eyes_23.png", correct: 0, options: ["満足している", "申し訳ないと思っている", "開き直っている", "好奇心を抱いている"] },
-    { image: "eyes_pngs/eyes_24.png", correct: 0, options: ["物思いにふけっている", "いらだっている", "興奮している", "敵意を抱いている"] },
-    { image: "eyes_pngs/eyes_25.png", correct: 3, options: ["混乱している", "信じられないと思っている", "気落ちしている", "興味を持っている"] },
-    { image: "eyes_pngs/eyes_26.png", correct: 1, options: ["戒している", "恥ずかしがっている", "敵意を抱いている", "不安に思っている"] },
-    { image: "eyes_pngs/eyes_27.png", correct: 0, options: ["ふざけている", "用心している", "横柄な気分である", "安心させようとしている"] },
-    { image: "eyes_pngs/eyes_28.png", correct: 2, options: ["興味を持っている", "ふざけている", "愛情を持っている", "満足している"] },
-    { image: "eyes_pngs/eyes_29.png", correct: 3, options: ["じりじりしている", "ぎょっとしている", "いらだっている", "内面を見つめている"] },
-    { image: "eyes_pngs/eyes_30.png", correct: 0, options: ["感謝している", "気のあるそぶりをしている", "敵意を抱いている", "がっかりしている"] },
-    { image: "eyes_pngs/eyes_31.png", correct: 0, options: ["恥じている", "自信に満ちている", "ふざけている", "元気をなくしている"] },
-    { image: "eyes_pngs/eyes_32.png", correct: 1, options: ["真剣になっている", "恥じている", "当惑している", "警戒している"] },
-    { image: "eyes_pngs/eyes_33.png", correct: 2, options: ["きまりが悪い", "気がとがめている", "空想にふけっている", "心配そうにしている"] },
-    { image: "eyes_pngs/eyes_34.png", correct: 1, options: ["ぎょっとしている", "とまどっている", "頼できないと思っている", "おびえている"] },
-    { image: "eyes_pngs/eyes_35.png", correct: 3, options: ["困っている", "神経質になっている", "何かを強く訴えている", "熟慮している"] },
-    { image: "eyes_pngs/eyes_36.png", correct: 2, options: ["恥じている", "神経質になっている", "疑っている", "決心がつかないでいる"] },
+  // 正答リスト
+  // 練習: 混乱している
+  // 本試行1-36の正答は選択肢の正答インデックスに対応
+  const newCorrectList = [
+    "混乱している", // 練習
+    "おどけている", // 1
+    "狼狽している", // 2
+    "欲望を抱いている", // 3
+    "何かを強く訴えている", // 4
+    "心配している", // 5
+    "空想にふけっている", // 6
+    "落ち着かない気持ちでいる", // 7
+    "気落ちしている", // 8
+    "ほかのことに気を取られている", // 9
+    "用心している", // 10
+    "悔やんでいる", // 11
+    "疑いを抱いている", // 12
+    "何かを期待している", // 13
+    "非難している", // 14
+    "黙想している", // 15
+    "考えにふけっている", // 16
+    "疑っている", // 17
+    "決意を固めている", // 18
+    "ためらっている", // 19
+    "親しげな気持ちを抱いている", // 20
+    "空想にふけっている", // 21
+    "ほかのことに気を取られている", // 22
+    "開き直っている", // 23
+    "物思いにふけっている", // 24
+    "興味を持っている", // 25
+    "敵意を抱いている", // 26
+    "用心している", // 27
+    "興味を持っている", // 28
+    "内面を見つめている", // 29
+    "気のあるそぶりをしている", // 30
+    "自信に満ちている", // 31
+    "真剣になっている", // 32
+    "心配そうにしている", // 33
+    "信頼できないと思っている", // 34
+    "神経質になっている", // 35
+    "疑っている" // 36
   ];
 
+  const eyeTrials = [
+    { image: "eyes_pngs/eyes_01.png", correct: 1, options: ["嫉妬している", "混乱している", "横柄な気分である", "憎しみを持っている"] },
+    { image: "eyes_pngs/eyes_02.png", correct: 0, options: ["おどけている", "慰めようとしている", "いらだっている", "うんざりしている"] },
+    { image: "eyes_pngs/eyes_03.png", correct: 1, options: ["おびえている", "狼狽している", "横柄な気分である", "不愉快に思っている"] },
+    { image: "eyes_pngs/eyes_04.png", correct: 2, options: ["ふざけている", "うろたえている", "欲望を抱いている", "何かを確信している"] },
+    { image: "eyes_pngs/eyes_05.png", correct: 1, options: ["ふざけている", "何かを強く訴えている", "面白がっている", "リラックスしている"] },
+    { image: "eyes_pngs/eyes_06.png", correct: 2, options: ["いらだっている", "皮肉な気分である", "心配している", "親しげな気持ちを抱いている"] },
+    { image: "eyes_pngs/eyes_07.png", correct: 1, options: ["ぎょっとしている", "空想にふけっている", "じりじりしている", "警戒している"] },
+    { image: "eyes_pngs/eyes_08.png", correct: 2, options: ["すまながっている", "親しげな気持ちを抱いている", "落ち着かない気持ちでいる", "元気をなくしている"] },
+    { image: "eyes_pngs/eyes_09.png", correct: 0, options: ["気落ちしている", "ほっとしている", "恥ずかしがっている", "興奮している"] },
+    { image: "eyes_pngs/eyes_10.png", correct: 3, options: ["不愉快に思っている", "敵意を抱いている", "怖がっている", "ほかのことに気を取られている"] },
+    { image: "eyes_pngs/eyes_11.png", correct: 0, options: ["用心している", "何かを強く訴えている", "うんざりしている", "ぎょっとしている"] },
+    { image: "eyes_pngs/eyes_12.png", correct: 2, options: ["おびえている", "面白がっている", "悔やんでいる", "気のあるそぶりをしている"] },
+    { image: "eyes_pngs/eyes_13.png", correct: 2, options: ["無関心である", "きまりが悪い", "疑いを抱いている", "元気をなくしている"] },
+    { image: "eyes_pngs/eyes_14.png", correct: 1, options: ["決意を固めている", "何かを期待している", "脅している", "恥ずかしがっている"] },
+    { image: "eyes_pngs/eyes_15.png", correct: 3, options: ["いらだっている", "がっかりしている", "落ち込んでいる", "非難している"] },
+    { image: "eyes_pngs/eyes_16.png", correct: 0, options: ["黙想している", "うろたえている", "励まそうとしている", "面白がっている"] },
+    { image: "eyes_pngs/eyes_17.png", correct: 1, options: ["いらだっている", "考えにふけっている", "励まそうとしている", "同情している"] },
+    { image: "eyes_pngs/eyes_18.png", correct: 0, options: ["疑っている", "愛情を持っている", "おどけている", "ぎょっとしている"] },
+    { image: "eyes_pngs/eyes_19.png", correct: 0, options: ["決意を固めている", "面白がっている", "ぎょっとしている", "うんざりしている"] },
+    { image: "eyes_pngs/eyes_20.png", correct: 3, options: ["横柄な気分である", "感謝している", "皮肉を言っている", "ためらっている"] },
+    { image: "eyes_pngs/eyes_21.png", correct: 1, options: ["自分が優位に立とうとしている", "親しげな気持ちを抱いている", "気がとがめている", "怖がっている"] },
+    { image: "eyes_pngs/eyes_22.png", correct: 1, options: ["きまりが悪い", "空想にふけっている", "困惑している", "混乱している"] },
+    { image: "eyes_pngs/eyes_23.png", correct: 0, options: ["ほかのことに気を取られている", "感謝している", "何かを強く訴えている", "哀願している"] },
+    { image: "eyes_pngs/eyes_24.png", correct: 2, options: ["満足している", "申し訳ないと思っている", "開き直っている", "好奇心を抱いている"] },
+    { image: "eyes_pngs/eyes_25.png", correct: 0, options: ["物思いにふけっている", "いらだっている", "興奮している", "敵意を抱いている"] },
+    { image: "eyes_pngs/eyes_26.png", correct: 3, options: ["混乱している", "信じられないと思っている", "気落ちしている", "興味を持っている"] },
+    { image: "eyes_pngs/eyes_27.png", correct: 0, options: ["警戒している", "恥ずかしがっている", "敵意を抱いている", "不安に思っている"] },
+    { image: "eyes_pngs/eyes_28.png", correct: 1, options: ["ふざけている", "用心している", "横柄な気分である", "安心させようとしている"] },
+    { image: "eyes_pngs/eyes_29.png", correct: 0, options: ["興味を持っている", "ふざけている", "愛情を持っている", "満足している"] },
+    { image: "eyes_pngs/eyes_30.png", correct: 3, options: ["じりじりしている", "ぎょっとしている", "いらだっている", "内面を見つめている"] },
+    { image: "eyes_pngs/eyes_31.png", correct: 1, options: ["感謝している", "気のあるそぶりをしている", "敵意を抱いている", "がっかりしている"] },
+    { image: "eyes_pngs/eyes_32.png", correct: 1, options: ["恥じている", "自信に満ちている", "ふざけている", "元気をなくしている"] },
+    { image: "eyes_pngs/eyes_33.png", correct: 0, options: ["真剣になっている", "恥じている", "当惑している", "警戒している"] },
+    { image: "eyes_pngs/eyes_34.png", correct: 3, options: ["きまりが悪い", "気がとがめている", "空想にふけっている", "心配そうにしている"] },
+    { image: "eyes_pngs/eyes_35.png", correct: 2, options: ["ぎょっとしている", "とまどっている", "信頼できないと思っている", "おびえている"] },
+    { image: "eyes_pngs/eyes_36.png", correct: 1, options: ["困っている", "神経質になっている", "何かを強く訴えている", "熟慮している"] },
+    { image: "eyes_pngs/eyes_37.png", correct: 2, options: ["恥じている", "神経質になっている", "疑っている", "決心がつかないでいる"] },
+  ];
+  // 各正答が選択肢に含まれていない場合は警告コメントを出力
+  eyeTrials.forEach((trial, idx) => {
+    const correctWord = newCorrectList[idx];
+    if (!trial.options.includes(correctWord)) {
+      // eslint-disable-next-line no-console
+      console.warn(`警告: 問題${idx+1}の正答「${correctWord}」は選択肢に含まれていません`);
+    }
+  });
+
   const timeline = [];
-  const shuffledTrials = shuffleArray(eyeTrials);
+  
+  // 練習試行（eyes_01.png）と本試行（eyes_02.png〜eyes_37.png）を分離
+  const practiceTrial = eyeTrials[0]; // eyes_01.png
+  const mainTrials = eyeTrials.slice(1); // eyes_02.png〜eyes_37.png
+  const shuffledMainTrials = shuffleArray(mainTrials);
   let responses = [];
 
   timeline.push({
     type: window.jsPsychHtmlButtonResponse,
-    stimulus: '<div class="card"><h1>👁️ EYES TEST</h1><h2>心の読み取り検査</h2><p style="text-align: center; color: #666; margin: 1rem 0;">この課題では、人物の目の領域の画像を見て、その人が何を考えたり、感じたりしているかを推測します。<br>全36問の質問があります。各問題について、最も適切と思われる心理状態や感情を4つの選択肢から選んでください。</p></div>',
+    stimulus: '<div class="card"><h1>👁️ EYES TEST</h1><h2>心の読み取り検査</h2><p style="text-align: center; color: #666; margin: 1rem 0;">これから人の目の部分のみが写った写真を示します。写真の人物が考えていることや感じていると思われることをもっともよく表す言葉を選んでください。一つ以上の言葉が当てはまると思う場合があるかもしれませんが、もっとも適切だと思う言葉を一つだけ選んでください。選ぶ前には、必ず4つの言葉すべてに目を通してください。テストにかかった時間は計りませんが、できるだけ早く答えを出すように試みてください。言葉の意味がわからない場合は、語の意味の説明を参考にしてください。</p></div>',
     choices: ['開始する']
   });
 
@@ -254,15 +434,83 @@
     }
   });
 
-  shuffledTrials.forEach((trial, index) => {
+  // =====================================
+  // 練習試行（eyes_01.png）
+  // =====================================
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: '<div class="card"><h2 style="text-align: center; color: #0071e3;">練習試行</h2><p style="text-align: center; color: #666;">まず練習として1問解いてみましょう。</p></div>',
+    choices: ['練習を開始する']
+  });
+
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: `<div class="card"><h2>練習問題</h2><p style="text-align: center; color: #666;">この人物は何を考えたり、感じたりしていますか？</p><div style="text-align: center;"><img src="${practiceTrial.image}" style="max-width: 400px; height: auto; border-radius: 8px;" alt="eyes" /></div></div>`,
+    choices: practiceTrial.options,
+    button_html: '<button class="jspsych-btn">%choice%</button>',
+    on_finish: (data) => {
+      const chosenLabel = practiceTrial.options[data.response];
+      const correctLabel = practiceTrial.options[practiceTrial.correct];
+      const isCorrect = data.response === practiceTrial.correct;
+      data.chosen_label = chosenLabel;
+      data.correct_label = correctLabel;
+      data.is_correct = isCorrect;
+      data.trial_type_custom = 'practice';
+    },
+    on_load: () => {
+      setTimeout(() => {
+        const jspsychContent = document.querySelector('.jspsych-content');
+        if (jspsychContent) {
+          const definitionsDiv = document.createElement('div');
+          definitionsDiv.innerHTML = buildDefinitionsHTML(practiceTrial.options);
+          jspsychContent.appendChild(definitionsDiv);
+        }
+      }, 0);
+    }
+  });
+
+  // 練習試行のフィードバック
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: function() {
+      const lastTrial = jsPsych.data.get().last(1).values()[0];
+      const isCorrect = lastTrial.is_correct;
+      const feedbackMsg = isCorrect 
+        ? '<p style="color: #34c759; font-size: 1.2rem; font-weight: bold;">✓ 正解です！</p>' 
+        : '<p style="color: #ff3b30; font-size: 1.2rem; font-weight: bold;">✗ 不正解でした</p>';
+      return `<div class="card"><h2>練習試行の結果</h2>${feedbackMsg}<p style="color: #666;">正答は「${lastTrial.correct_label}」でした。</p><p style="color: #666; margin-top: 1.5rem;">それでは本試行を開始します。本試行では36問の質問に答えていただきます。</p></div>`;
+    },
+    choices: ['本試行を開始する']
+  });
+
+  // =====================================
+  // 本試行（eyes_02.png〜eyes_37.png）
+  // =====================================
+  shuffledMainTrials.forEach((trial, index) => {
     timeline.push({
       type: window.jsPsychHtmlButtonResponse,
-      stimulus: `<div class="card"><h2>問題 ${index + 1} / 36</h2><p style="text-align: center; color: #666;">この人物は何を考えたり、感じたりしていますか？</p><div style="text-align: center;"><img src="${trial.image}" style="max-width: 400px; height: auto; border-radius: 8px;" alt="eyes" /></div><div class="status-bar"><div class="status-item"><div class="status-label">進捗</div><div class="status-value">${index + 1}/36</div></div></div></div>`,
+      stimulus: `<div class="card"><h2>問題 ${index + 1} / 36</h2><p style="text-align: center; color: #666;">この人物は何を考えたり、感じたりしていますか？</p><div style="text-align: center;"><img src="${trial.image}" style="max-width: 400px; height: auto; border-radius: 8px;" alt="eyes" /></div></div>`,
       choices: trial.options,
       button_html: '<button class="jspsych-btn">%choice%</button>',
       on_finish: (data) => {
+        const chosenLabel = trial.options[data.response];
+        const correctLabel = trial.options[trial.correct];
         const isCorrect = data.response === trial.correct;
+        data.chosen_label = chosenLabel;
+        data.correct_label = correctLabel;
+        data.is_correct = isCorrect;
+        data.trial_type_custom = 'main';
         responses.push({ trial: index + 1, is_correct: isCorrect, chosen: data.response });
+      },
+      on_load: () => {
+        setTimeout(() => {
+          const jspsychContent = document.querySelector('.jspsych-content');
+          if (jspsychContent) {
+            const definitionsDiv = document.createElement('div');
+            definitionsDiv.innerHTML = buildDefinitionsHTML(trial.options);
+            jspsychContent.appendChild(definitionsDiv);
+          }
+        }, 0);
       }
     });
   });
@@ -316,7 +564,7 @@
     stimulus: function() {
       const correctCount = responses.filter((r) => r.is_correct).length;
       const percentage = Math.round((correctCount / 36) * 100);
-      return `<div class="card"><h1>テスト完了</h1><div class="result-grid"><div class="result-item"><div class="result-label">正答数</div><div class="result-value" style="color: #34c759; font-size: 2rem;">${correctCount} / 36</div></div><div class="result-item"><div class="result-label">正答率</div><div class="result-value" style="font-size: 2rem;">${percentage}%</div></div></div></div>`;
+      return `<div class="card"><h1>テスト完了</h1><div class="result-grid"><div class="result-item"><div class="result-label">正答数</div><div class="result-value" style="color: #34c759; font-size: 2rem;">${correctCount} / 36</div></div><div class="result-item"><div class="result-label">正答率</div><div class="result-value" style="font-size: 2rem;">${percentage}%</div></div></div><p style="text-align: center; color: #666; margin-top: 1rem;">※練習試行は含まれていません</p></div>`;
     },
     choices: ['終了'],
     on_finish: (data) => {
