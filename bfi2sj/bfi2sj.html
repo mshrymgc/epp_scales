@@ -160,7 +160,7 @@
   <script src="./dist/plugin-html-button-response.js"></script>
   <script src="./dist/plugin-survey.js"></script>
   <script src="./dist/plugin-survey-likert.js"></script>
-  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
 </head>
 <body>
   <div id="jspsych-target"></div>
@@ -223,11 +223,16 @@
   // ==========================================
   // グローバルデータにシステム情報を追加
   // ==========================================
+  // メタデータの記録：被験者ID、開始時刻、システム情報など
+  // これらは全トライアルに自動的に付与されます
+  const subjectId = jsPsych.randomization.randomID(10);
+  
   jsPsych.data.addProperties({
+    subject_id: subjectId,                  // 被験者ID（ランダムに生成）
     start_timestamp: SESSION_START,         // 開始時刻（Unixタイムスタンプ）
-    start_time_jst: START_TIME_JST,         // 開始時刻（JST形式）
-    browser: SYSTEM_INFO.browser,           // ブラウザ名
-    os: SYSTEM_INFO.os,                     // OS名
+    start_time_jst: START_TIME_JST,         // 開始時刻（JST形式：YYYY/MM/DD HH:MM:SS）
+    browser: SYSTEM_INFO.browser,           // ブラウザ名（Chrome, Safari, Firefox等）
+    os: SYSTEM_INFO.os,                     // OS名（Windows, macOS, Linux等）
     user_agent: SYSTEM_INFO.userAgent       // ユーザーエージェント文字列
   });
 
@@ -235,23 +240,6 @@
   setProgressLabelToJapanese();
   // Likertラベルにツールチップを設定
   startLikertTooltipObserver();
-
-  // 参加者IDの生成
-  const subjectId = jsPsych.randomization.randomID(10);
-  jsPsych.data.addProperties({ subject_id: subjectId });
-
-  // ==========================================
-  // タイムラインの構築と実行
-  // ==========================================
-  const timeline = [
-    createIntroTrial(),           // 1. イントロページ
-    createDemographicsTrial(),    // 2. 属性情報（年齢・性別）
-    ...PAGE_GROUPS.map((group, index) => createSurveyPage(group, index)),  // 3-5. 質問ページ（3ページ）
-    createSaveTrial(subjectId),   // 6. データ保存
-    createResultsTrial()          // 7. 結果表示
-  ];
-
-  jsPsych.run(timeline);
 
   // ==========================================
   // 1. データ定義
@@ -380,6 +368,19 @@
   let lastSummary = null;
 
   // ==========================================
+  // タイムラインの構築と実行
+  // ==========================================
+  const timeline = [
+    createIntroTrial(),           // 1. イントロページ
+    createDemographicsTrial(),    // 2. 属性情報（年齢・性別）
+    ...PAGE_GROUPS.map((group, index) => createSurveyPage(group, index)),  // 3-5. 質問ページ（3ページ）
+    createSaveTrial(subjectId),   // 6. データ保存
+    createResultsTrial()          // 7. 結果表示
+  ];
+
+  jsPsych.run(timeline);
+
+  // ==========================================
   // 2. DOM 初期化とユーティリティ
   // ==========================================
   
@@ -506,8 +507,9 @@
         if (mutation.addedNodes && mutation.addedNodes.length) {
           for (const node of mutation.addedNodes) {
             if (node.nodeType !== 1) continue; // 要素ノード以外はスキップ
-            // リッカート選択肢のクラスを持つ要素が追加されたか確認
-            if (node.classList?.contains('jspsych-survey-likert-opt') || node.querySelector?.('.jspsych-survey-likert-opt')) {
+            // jsPsych 2.xのリッカート選択肢ラベルクラスを確認
+            if (node.classList?.contains('jspsych-survey-likert-opt-label') || 
+                node.querySelector?.('.jspsych-survey-likert-opt-label')) {
               shouldUpdate = true;
               break;
             }
@@ -527,32 +529,30 @@
   /**
    * ページ内のすべてのリッカート選択肢にツールチップを適用
    * 
-   * この関数は、現在ページに存在するすべてのリッカート尺度の選択肢（ラジオボタン）に対して、
-   * ツールチップ（例: 「全く当てはまらない」「どちらでもない」など）を設定します。
+   * jsPsych 2.xでは、各選択肢ラベルは 'jspsych-survey-likert-opt-label' クラスを持ちます。
+   * この関数はそれらのラベルを取得して、インデックスに基づいてツールチップを適用します。
    * 
    * 処理の流れ：
-   * 1. '.jspsych-survey-likert-opt'クラスを持つすべての要素を取得
-   * 2. 各要素内のラベル要素（.jspsych-survey-likert-opt-label）を探す
+   * 1. '.jspsych-survey-likert-opt-label'クラスを持つすべてのラベル要素を取得
+   * 2. 各ラベル要素の親LI要素を確認してインデックスを計算
    * 3. 見つかった各ラベルに対してapplyTooltip()でツールチップを適用
-   * 4. 内部ラベルがない場合は、外側のlabel要素にツールチップを適用
    * 
    * ツールチップの内容はLIKERT_LABELS配列（5段階の説明文）から取得されます。
    */
   function ensureLikertTooltips() {
-    const options = document.querySelectorAll('.jspsych-survey-likert-opt');
-    if (!options.length) return; // リッカート要素がなければ何もしない
+    const labels = document.querySelectorAll('.jspsych-survey-likert-opt-label');
+    if (!labels.length) return; // リッカート要素がなければ何もしない
 
-    options.forEach((opt) => {
-      // 内部ラベル（複数の場合もある）を探す
-      const innerLabels = opt.querySelectorAll('.jspsych-survey-likert-opt-label');
-      if (innerLabels.length) {
-        innerLabels.forEach((label, index) => applyTooltip(label, index));
-        return;
-      }
+    labels.forEach((label) => {
+      // ラベルの兄弟ラジオボタンを探してインデックスを決定
+      const liParent = label.parentElement;
+      if (!liParent) return;
 
-      // 内部ラベルがない場合、外側のlabelを使用
-      const outerLabel = opt.querySelector('label');
-      if (outerLabel) applyTooltip(outerLabel, 0);
+      // LI内のすべてのラジオボタンの兄弟ラベルをチェック
+      const allLabelsInList = liParent.querySelectorAll('.jspsych-survey-likert-opt-label');
+      const index = Array.from(allLabelsInList).indexOf(label);
+
+      applyTooltip(label, Math.max(0, index));
     });
 
     debugLog('ensureLikertTooltips applied');
@@ -863,7 +863,8 @@
       },
       on_finish: (data) => {
         const response = data.response || {};
-        // 年齢と性別を全トライアルの共通データとして追加
+        // 年齢と性別をメタデータとして全トライアルに追加
+        // これにより、その後の全トライアルに自動的に付与されます
         jsPsych.data.addProperties({
           age: response.age || '',
           gender: response.gender || ''
@@ -945,31 +946,118 @@
       },
       on_finish: (data) => {
         // ==========================================
-        // 各回答に詳細なメタデータを追加
+        // ページ情報と各回答の詳細メタデータを追加
         // ==========================================
-        const resp = data.response || {};
+        
+        // ページ情報を記録
+        data.page_number = pageIndex + 1;           // ページ番号（1-3）
+        data.page_items = questionNames.join(',');  // 'Q1,Q2,Q3,...'
         
         // 各項目について、raw（素点）、scored（換算後）、reversed（逆転フラグ）を記録
-        Object.entries(resp).forEach(([qName, idx]) => {
+        const resp = data.response || {};
+        Object.entries(resp).forEach(([qName, responseValue]) => {
           const match = /^Q(\d+)$/.exec(qName); // Q1, Q2, ... を抽出
           if (!match) return;
           
           const itemNum = Number(match[1]); // 項目番号（1～30）
-          const raw = parseLikertValue(idx);  // 0-based → 1～5に変換
+          // survey-likert プラグインは 0-based index (0-4) を返す
+          // これを 1-5 の Likert スケールに変換して保存
+          const raw_index = typeof responseValue === 'number' ? responseValue : parseInt(responseValue);
+          const raw = raw_index + 1; // 0-4 → 1-5 に変換
+          
           const isReversed = REVERSED_ITEMS.has(itemNum); // 逆転項目かチェック
-          const scored = isReversed ? (6 - raw) : raw; // 逆転処理
+          // 逆転項目は「6 - Likert値」で計算（範囲: 1-5 → 5-1）
+          const scored = isReversed ? (6 - raw) : raw;
           
           // CSVに記録される変数名
-          data[`${qName}_raw`] = raw;           // 素点（1～5）
-          data[`${qName}_scored`] = scored;     // 換算後の得点（逆転処理済み）
+          data[`${qName}_raw`] = raw;           // Likert素点（1～5）
+          data[`${qName}_scored`] = scored;     // 換算後の得点（逆転処理済み、1～5）
           data[`${qName}_reversed`] = isReversed ? 1 : 0;  // 逆転項目フラグ（1=逆転、0=通常）
           data[`${qName}_item_number`] = itemNum;  // 項目番号（1～30）
         });
-        
-        // ページ情報を記録
-        data.page_items = questionNames.join(','); // 'Q1,Q2,Q3,...'
       }
     };
+  }
+
+  /**
+   * 分析用フォーマットのCSV文字列を生成する関数
+   * @param {string} subjectId - 参加者ID
+   * @returns {string} 分析用単一行フォーマットのCSV文字列
+   * 
+   * この関数は、jsPsychの全トライアルデータから、
+   * 分析に適した単一行フォーマット（参加者1名=CSV1行）のデータを生成します。
+   * 
+   * 出力フォーマット（1行）：
+   * subject_id, age, gender, start_time_jst, browser, os,
+   * E_domain, A_domain, C_domain, N_domain, O_domain,
+   * E_社交性, E_自己主張性, ..., O_創造的想像力,
+   * Q1_raw, Q1_scored, ..., Q30_raw, Q30_scored
+   * 
+   * 特徴：
+   * - 参加者単位で集約（各参加者が1行）
+   * - ドメインスコアとファセットスコアを含む
+   * - 各項目の素点と換算後スコアの両方を記録
+   * - 統計分析やデータ可視化に即座に使用可能
+   */
+  function generateAnalysisCsv(subjectId) {
+    // 全30項目の回答を収集
+    const responses = collectResponses();
+    
+    // ドメイン・ファセット平均を計算
+    const summary = computeSummary(responses);
+    const scored = scoreResponses(responses);
+    
+    // グローバルデータから基本情報を取得
+    const allData = jsPsych.data.get().values();
+    // jsPsych 2系では getProperties() が廃止されたため、最初のトライアルから全プロパティを取得
+    const globalProps = allData.length > 0 ? allData[0] : {};
+    
+    // CSV行の値を集めるオブジェクト
+    const row = {};
+    
+    // ======== 基本情報 ========
+    row.subject_id = subjectId;
+    row.age = globalProps.age || '';
+    row.gender = globalProps.gender || '';
+    row.start_time_jst = globalProps.start_time_jst || '';
+    row.browser = globalProps.browser || '';
+    row.os = globalProps.os || '';
+    row.end_time_jst = formatJst(new Date());
+    row.total_duration_sec = globalProps.total_duration_sec || '';
+    row.total_duration_min = globalProps.total_duration_min || '';
+    
+    // ======== ドメイン（5つの領域）スコア ========
+    DOMAIN_ORDER.forEach((domain) => {
+      const key = `${domain}_domain`;
+      row[key] = summary.domainMeans[domain] ? summary.domainMeans[domain].toFixed(2) : '';
+    });
+    
+    // ======== ファセット（15の下位次元）スコア ========
+    FACET_ORDER.forEach((facet) => {
+      const key = facet.replace(/[：\s]/g, '_'); // 日本語コロンと空白をアンダースコアに
+      row[key] = summary.facetMeans[facet] ? summary.facetMeans[facet].toFixed(2) : '';
+    });
+    
+    // ======== 各項目の素点と換算後スコア ========
+    for (let itemNum = 1; itemNum <= TOTAL_ITEMS; itemNum += 1) {
+      const raw = responses[itemNum - 1];
+      const scored_val = scored[itemNum];
+      row[`Q${itemNum}_raw`] = Number.isFinite(raw) ? raw : '';
+      row[`Q${itemNum}_scored`] = Number.isFinite(scored_val) ? scored_val : '';
+    }
+    
+    // CSVのヘッダーと値を生成
+    const headers = Object.keys(row);
+    const values = headers.map((header) => {
+      const value = row[header];
+      // CSVエスケープ：ダブルクォートを含む場合は全体をクォートで囲む
+      if (value && (value.toString().includes(',') || value.toString().includes('"'))) {
+        return `"${value.toString().replace(/"/g, '""')}"`;
+      }
+      return `"${value}"`;
+    });
+    
+    return headers.join(',') + '\n' + values.join(',');
   }
 
   /**
@@ -981,26 +1069,78 @@
    * 実験データをOSF（Open Science Framework）に保存するトライアルを生成します。
    * 
    * 保存内容：
-   * - 全トライアルのデータ（CSV形式）
-   * - 年齢、性別、各項目の回答（raw, scored, reversed, item_number）
-   * - システム情報（browser, os, user_agent, timestamps, duration）
+   * - jsPsychが自動収集したすべてのトライアルデータ（CSV形式）
+   * - 各トライアルのタイムスタンプ、反応時間、回答内容
+   * - システム情報（browser, os, timestamps, duration）
    * 
    * 設定：
    * - action: 'save' （データを保存）
    * - experiment_id: 'd5cclNdXjcZX' （OSF上の実験ID）
-   * - filename: 参加者IDをファイル名にして保存（例: abc123.csv）
-   * - data_string: jsPsych.data.get().csv() でCSV形式のデータを生成
+   * - filename: OSF内のファイル名（auto_filenameがtrueの場合は自動生成）
+   * - data_string: jsPsych.data.get().csv()で完全なデータセットをCSV形式で取得
+   *   ただし、response列とstimulus列は分析に不要なため除外
+   * 
+   * 除外される列：
+   * - response: JSON形式の生の回答オブジェクト（Q1_raw等で記録済み）
+   * - stimulus: HTMLテンプレート（分析に不要）
    * 
    * 注意: このトライアルは画面に何も表示せず、バックグラウンドでデータ保存を実行します。
    */
   function createSaveTrial(subjectId) {
     return {
       type: window.jsPsychPipe,
-      data: { page_number: 'save_data', page_items: [] },
-      action: 'save',
-      experiment_id: 'd5cclNdXjcZX',
+      action: "save",
+      experiment_id: "d5cclNdXjcZX",
       filename: `${subjectId}.csv`,
-      data_string: () => jsPsych.data.get().csv()
+      data_string: () => {
+        // jsPsych 2.x のAPIに合わせてCSV生成
+        // CSVヘッダーから不要なresponse列とstimulus列を除外したものを作成
+        const data = jsPsych.data.get();
+        let csv = data.csv();
+        
+        // CSVから"response"と"stimulus"列を除外
+        const lines = csv.split('\n');
+        const headerLine = lines[0];
+        const headers = headerLine.split(',').map(h => h.replace(/^"|"$/g, ''));
+        
+        // 除外する列のインデックスを取得
+        const responseIdx = headers.indexOf('response');
+        const stimulusIdx = headers.indexOf('stimulus');
+        const excludeIndexes = [responseIdx, stimulusIdx].filter(idx => idx !== -1).sort().reverse();
+        
+        // ヘッダー行から除外列を削除
+        const newHeaders = headers.filter((_, idx) => !excludeIndexes.includes(idx));
+        
+        // データ行から除外列を削除
+        const newLines = [newHeaders.map(h => `"${h}"`).join(',')];
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].trim() === '') continue;
+          
+          // CSVパーサー（簡易版）
+          const row = [];
+          let current = '';
+          let inQuotes = false;
+          for (let j = 0; j < lines[i].length; j++) {
+            const char = lines[i][j];
+            if (char === '"') {
+              inQuotes = !inQuotes;
+              current += char;
+            } else if (char === ',' && !inQuotes) {
+              row.push(current);
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          row.push(current);
+          
+          // 除外列を削除
+          const newRow = row.filter((_, idx) => !excludeIndexes.includes(idx));
+          newLines.push(newRow.join(','));
+        }
+        
+        return newLines.join('\r\n');
+      }
     };
   }
 
@@ -1047,19 +1187,25 @@
         window.location.href = 'https://mshrymgc.github.io/epp_scales/'; // メインページへ
       },
       on_load: () => {
-        updateProgressBar(1); // 進捗バーを100%に
+        updateProgressBar(1); // 進捗バーを100%に更新
+        
+        // ==========================================
+        // 実験終了のメタデータを記録
+        // ==========================================
         const endTimestamp = Date.now();
         const endTimeJst = formatJst(new Date(endTimestamp));
         const durationMs = endTimestamp - SESSION_START;
         const durationSec = Number((durationMs / 1000).toFixed(2));
         const durationMin = Number((durationMs / 60000).toFixed(2));
+        
         jsPsych.data.addProperties({
-          end_timestamp: endTimestamp,
-          end_time_jst: endTimeJst,
-          total_duration_ms: durationMs,
-          total_duration_sec: durationSec,
-          total_duration_min: durationMin
+          end_timestamp: endTimestamp,        // 実験終了時刻（Unixタイムスタンプ）
+          end_time_jst: endTimeJst,           // 実験終了時刻（JST形式：YYYY/MM/DD HH:MM:SS）
+          total_duration_ms: durationMs,      // 実験所要時間（ミリ秒）
+          total_duration_sec: durationSec,    // 実験所要時間（秒）
+          total_duration_min: durationMin     // 実験所要時間（分）
         });
+        
         if (!lastSummary) {
           debugLog('結果の集計が見つかりません');
           return;
