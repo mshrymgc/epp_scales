@@ -638,7 +638,7 @@
             <h3>「感情・人格心理学」受講者用</h3>
             <p class="note">  
               これはHEXACOパーソナリティモデルを評価する
-              60 項目のアンケートであり，講義内容の理解を促進するために利用されます。データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br><br>
+              60 項目のアンケートであり，講義内容の理解を促進するために利用されます。<br   >データは保管されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。<br><br>
               次のページから並んでいる項目の内容について，自分にどの程度あてはまっているか，あてはまっていないかを考えて，各文の下の選択肢から一つを選んでください。なお，<strong>「どちらでもない」はできるだけ選択しないようにしてください。</strong>（どうしてもどちらとも決められない場合にのみ選択してください）<br>
             </p>
             <ul class="small muted">
@@ -784,9 +784,101 @@
     // ------------------------------------------
     // 4. データ保存（OSFへアップロード）
     // ------------------------------------------
+    // CSV出力を心理統計に適した形式に変換する関数
+    function generateAnalysisReadyCSV() {
+      // すべてのトライアルを取得
+      const allTrials = jsPsych.data.get().values();
+      
+      // メタデータを取得
+      const subject_id = allTrials[0]?.subject_id || '';
+      const age = allTrials[0]?.age || '';
+      const gender = allTrials[0]?.gender || '';
+      const browser = allTrials[0]?.browser || '';
+      const os = allTrials[0]?.os || '';
+      const timestamp_start = allTrials[0]?.timestamp_start || '';
+      const timestamp_end = allTrials[allTrials.length - 1]?.timestamp_end || '';
+      
+      // Likert回答データの詳細情報を取得
+      const likertTrials = allTrials.filter(t => t.trial_type === 'survey-likert');
+      
+      // 各項目の情報を保存する連想配列
+      const itemData = {};
+      for (let i = 1; i <= 60; i++) {
+        itemData[i] = {
+          response: null,      // 1-5の回答値
+          page: null,          // 回答ページ（1-6）
+          rt: null,            // 反応時間（ms）
+          reversed: reverseItems.has(i) ? 1 : 0  // 逆転項目フラグ
+        };
+      }
+      
+      // Likertトライアルから情報を抽出
+      likertTrials.forEach(tr => {
+        const resp = tr.response || {};
+        const page = tr.page_number || null;
+        const rt = tr.rt || null;
+        
+        Object.entries(resp).forEach(([name, idx]) => {
+          const n = parseInt(name.replace('Q',''), 10);
+          if (itemData[n]) {
+            itemData[n].response = Number(idx) + 1;  // 0-4 → 1-5
+            itemData[n].page = page;
+            itemData[n].rt = rt;
+          }
+        });
+      });
+      
+      // ==========================================
+      // CSV用のデータオブジェクト（ワイド形式）
+      // ==========================================
+      // 列の順序：メタデータ → Q1, Q1_page, Q1_rt, Q1_reversed, Q2, ...
+      const rowData = {
+        subject_id,
+        age,
+        gender,
+        browser,
+        os,
+        timestamp_start,
+        timestamp_end,
+        total_items: 60,
+        survey_complete: Object.values(itemData).every(d => d.response !== null) ? 1 : 0
+      };
+      
+      // 60個の質問について、詳細情報を追加
+      for (let i = 1; i <= 60; i++) {
+        const data = itemData[i];
+        rowData[`Q${i}`] = data.response !== null ? data.response : '';
+        rowData[`Q${i}_page`] = data.page !== null ? data.page : '';
+        rowData[`Q${i}_rt`] = data.rt !== null ? Math.round(data.rt) : '';
+        rowData[`Q${i}_reversed`] = data.reversed;
+      }
+      
+      // ==========================================
+      // CSV形式で出力（CSVエスケープ処理）
+      // ==========================================
+      const headers = Object.keys(rowData);
+      const headerLine = headers.map(h => `"${h}"`).join(',');
+      
+      // データ行を生成
+      const values = headers.map(h => {
+        const v = rowData[h];
+        if (v === null || v === '') return '';
+        const s = String(v);
+        // ダブルクォート、カンマ、改行を含む場合はエスケープ
+        if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+          return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+      });
+      const dataLine = values.join(',');
+      
+      return headerLine + '\n' + dataLine;
+    }
+    
     // jsPsych Pipeプラグインを使用してOSFにCSVデータを保存
+    // 【修正】SD3j と BFI-2-S-J に合わせてシンプル化
     const save_data = {
-      type: jsPsychPipe,
+      type: window.jsPsychPipe,
       action: 'save',  // 保存アクション
       experiment_id: 'TY0B485foupj',  // OSFのExperiment ID
       filename: filename,  // 保存するファイル名（subject_id.csv）
@@ -796,7 +888,8 @@
           <p class="small muted">数秒お待ちください。</p>
         </div>
       `,
-      data_string: () => jsPsych.data.get().csv(),  // CSV形式でデータを取得
+      // 【修正】SD3j と同じく、jsPsychの全データを直接CSV形式で取得
+      data_string: () => jsPsych.data.get().csv(),
       on_start: () => {
         // 実験終了時刻を記録
         jsPsych.data.addProperties({ timestamp_end: new Date().toISOString() });
@@ -893,10 +986,10 @@
               <tbody>${domRows}</tbody>
             </table>
 
-            <h4 style="margin-top:1rem">レーダーチャート（因子：自分 vs 日本人ノーム）</h4>
+            <h4 style="margin-top:1rem">レーダーチャート（因子：自分 vs 日本人平均）</h4>
             <div class="chart-wrap domain"><canvas id="hexaco-radar-domain"></canvas></div>
 
-            <h4 style="margin-top:1rem">レーダーチャート（ファセット：自分 vs 日本人ノーム）</h4>
+            <h4 style="margin-top:1rem">レーダーチャート（ファセット：自分 vs 日本人基準）</h4>
             <div class="chart-wrap facet"><canvas id="hexaco-radar-facet"></canvas></div>
 
             <details id=\"debug-block\" class=\"small\" style=\"margin-top:1rem\">
@@ -905,7 +998,7 @@
             </details>
 
             <div class="footer muted" style="margin-top:1rem">
-              <div>備考：ノームは HEXACO-60（2~4項目/ファセット, 10項目/ドメイン）の<strong>合計得点の平均値（Table 1 の M）</strong>を用いています。<br>参加者のスコアは HEXACO-60 の<strong>合計得点</strong>（ドメイン=10項目合計、ファセット=該当項目合計）です。<br>※ 尺度の項目数が異なるため絶対値は一致しません。</div>
+              <div>備考：平均は HEXACO-60（2~4項目/ファセット, 10項目/ドメイン）の<strong>合計得点の平均値（Table 1 の M）</strong>を用いています。<br>参加者のスコアは HEXACO-60 の<strong>合計得点</strong>（ドメイン=10項目合計、ファセット=該当項目合計）です。<br>※ 尺度の項目数が異なるため絶対値は一致しません。</div>
               <div>参考：Wakabayashi, A. (2014). A sixth personality domain that is independent of the Big Five domains: The psychometric properties of the HEXACO Personality Inventory in a Japanese sample. Japanese Psychological Research, 56(3), 211–223. https://doi.org/10.1111/jpr.12045</div>
             </div>
           </div>
@@ -1140,6 +1233,11 @@
     // ==========================================
     // 実験の実行
     // ==========================================
+    // グローバルスコープに関数を登録（Datapipe用）
+    window.generateAnalysisReadyCSV = generateAnalysisReadyCSV;
+    window.jsPsych_instance = jsPsych;
+    window.timeline_data = timeline;
+    
     jsPsych.run(timeline);
   })();
   </script>
