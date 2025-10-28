@@ -111,6 +111,9 @@
     auto_update_progress_bar: false 
   });
   
+  // グローバルスコープでアクセス可能にする
+  window.__jsPsych = jsPsych;
+  
   // ==========================================
   // 進捗バーのラベルを日本語化
   // ==========================================
@@ -340,39 +343,53 @@
   };
   
   // 【2】デモグラフィック情報（年齢・性別）の収集
+  // hexaco60.html と同じ方法で jsPsychSurvey を使用
   const demographics = { 
-    type: window.jsPsychSurvey, 
-    survey_json: { 
-      showQuestionNumbers: false, 
+    type: window.jsPsychSurvey,
+    survey_json: {
+      showQuestionNumbers: false,
       pages: [{
-        name: 'demographics', 
+        name: 'demographics',
         elements: [
           {
-            type: 'text', 
-            name: 'age', 
-            title: '年齢', 
-            inputType: 'number', 
+            type: 'text',
+            name: 'age',
+            title: '年齢',
+            inputType: 'number',
+            min: 0,
+            max: 120,
             isRequired: true
-          }, 
+          },
           {
-            type: 'dropdown', 
-            name: 'gender', 
-            title: '性別', 
-            isRequired: true, 
-            choices: ['男性','女性','その他','未回答']
+            type: 'dropdown',
+            name: 'gender',
+            title: '性別',
+            isRequired: true,
+            choices: ['男性', '女性', 'その他', '未回答']
           }
         ]
-      }], 
-      pageNextText: '次へ', 
-      completeText: '次へ' 
-    }, 
-    on_finish: (data) => { 
+      }],
+      pageNextText: '次へ',
+      pagePrevText: '戻る',
+      completeText: '次へ'
+    },
+    on_finish: (data) => {
+      console.log('🟦 Demographics submitted');
+      
+      // 回答データを取得
       const r = data.response || {};
-      jsPsych.data.addProperties({ 
-        age: r.age || '', 
-        gender: r.gender || '' 
-      }); 
-    } 
+      
+      console.log('   age:', r.age);
+      console.log('   gender:', r.gender);
+      
+      // デモグラフィック情報をグローバルデータに追加
+      jsPsych.data.addProperties({
+        subject_demographics_age: r.age || '',
+        subject_demographics_gender: r.gender || ''
+      });
+      
+      console.log('✓ Demographics recorded:', {age: r.age, gender: r.gender});
+    }
   };
   
   // ==========================================
@@ -737,9 +754,22 @@
   // 【7】実験の実行
   // ==========================================
   
+  // デバッグ: タイムラインをログ
+  console.log('🟦 Timeline before jsPsych.run:');
+  console.log('  intro:', intro);
+  console.log('  demographics:', demographics);
+  console.log('  likertPages.length:', likertPages.length);
+  console.log('  save_data:', save_data);
+  console.log('  results:', results);
+  
   // jsPsychタイムラインを順番に実行
   // 1. イントロ画面 → 2. デモグラフィック情報 → 3. Likert尺度3ページ → 4. データ保存 → 5. 結果表示
-  jsPsych.run([intro, demographics, ...likertPages, save_data, results]);
+     const timeline = [intro, demographics, ...likertPages, save_data, results];
+  console.log('🟦 Timeline array length:', timeline.length);
+  console.log('🟦 Timeline[0] (intro):', timeline[0]);
+  console.log('🟦 Timeline[1] (demographics):', timeline[1]);
+  
+  jsPsych.run(timeline);
 })();
   </script>
 </body>
