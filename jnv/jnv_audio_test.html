@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>JNV</title>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+    }
+    .jspsych-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    h1 {
+      color: #1d1d1f;
+      font-size: 1.8rem;
+      margin: 0 0 1rem 0;
+      font-weight: 700;
+      text-align: center;
+    }
+    h2 {
+      color: #0071e3;
+      font-size: 1.3rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+    h3 {
+      color: #1d1d1f;
+      font-size: 1.1rem;
+      margin: 0 0 1rem 0;
+      font-weight: 600;
+    }
+    .license-section {
+      background-color: #f5f5f5;
+      border-left: 4px solid #0071e3;
+      padding: 1.2rem;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #333;
+      border-radius: 6px;
+    }
+    .license-section h4 {
+      margin: 0 0 0.8rem 0;
+      color: #0071e3;
+      font-size: 1rem;
+    }
+    .license-section p {
+      margin: 0.8rem 0;
+    }
+    .license-section a {
+      color: #0071e3;
+      text-decoration: none;
+    }
+    .license-section a:hover {
+      text-decoration: underline;
+    }
+    .attribution-text {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      margin-top: 0.8rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      color: #555;
+      border-radius: 4px;
+    }
+    .jspsych-btn {
+      background-color: #0071e3;
+      color: #fff;
+      border: 1px solid #0071e3;
+      padding: 0.6rem 1.2rem;
+      margin: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+    .jspsych-btn:hover {
+      background-color: #0059b3;
+      border-color: #0059b3;
+    }
+    .status-bar {
+      display: none;
+    }
+    .audio-player-container {
+      background: #f5f5f7;
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+    .audio-control-button {
+      background-color: #34c759;
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1.6rem;
+      margin: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-block;
+    }
+    .audio-control-button:hover {
+      background-color: #30b050;
+    }
+    .audio-control-button:active {
+      transform: scale(0.98);
+    }
+    .audio-control-button.playing {
+      background-color: #ff9500;
+    }
+    .emotion-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    @media (max-width: 600px) {
+      .emotion-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+    .emotion-btn {
+      background-color: #f5f5f7;
+      color: #1d1d1f;
+      border: 2px solid #d0d0d0;
+      padding: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .emotion-btn:hover {
+      background-color: #e5e5e7;
+      border-color: #0071e3;
+    }
+    .emotion-btn.selected {
+      background-color: #0071e3;
+      color: #fff;
+      border-color: #0071e3;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .result-item {
+      background: #f5f5f7;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .result-label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1d1d1f;
+    }
+    .result-value.positive {
+      color: #34c759;
+    }
+    .emotion-label {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    .instruction-text {
+      color: #666;
+      line-height: 1.6;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+  <script src="https://unpkg.com/jspsych@7.3.4"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+  <script>
+(() => {
+  // 基本感情と日本語ラベルのマッピング
+  const emotionMap = {
+    angry: '怒り',
+    disgust: '嫌悪',
+    fear: '恐怖',
+    happy: '幸福',
+    sad: '悲しみ',
+    surprise: '驚き'
+  };
+
+  // 選定されたデモ用音源（accuracy ≥ 0.67を優先）
+  const selectedTrials = [
+    // 本試行: M1
+    { filename: 'M1_angry_00_F.wav', emotion: 'angry', speaker: 'M1', accuracy: 1.0 },
+    { filename: 'M1_disgust_00_F.wav', emotion: 'disgust', speaker: 'M1', accuracy: 1.0 },
+    { filename: 'M1_fear_02_F.wav', emotion: 'fear', speaker: 'M1', accuracy: 1.0 },
+    { filename: 'M1_happy_00_F.wav', emotion: 'happy', speaker: 'M1', accuracy: 1.0 },
+    { filename: 'M1_sad_00_F.wav', emotion: 'sad', speaker: 'M1', accuracy: 0.67 },
+    { filename: 'M1_surprise_00_F.wav', emotion: 'surprise', speaker: 'M1', accuracy: 1.0 },
+    // 本試行: M2
+    { filename: 'M2_angry_00_R.wav', emotion: 'angry', speaker: 'M2', accuracy: 1.0 },
+    { filename: 'M2_disgust_00_F.wav', emotion: 'disgust', speaker: 'M2', accuracy: 1.0 },
+    { filename: 'M2_fear_02_F.wav', emotion: 'fear', speaker: 'M2', accuracy: 1.0 },
+    { filename: 'M2_happy_00_F.wav', emotion: 'happy', speaker: 'M2', accuracy: 1.0 },
+    { filename: 'M2_sad_00_F.wav', emotion: 'sad', speaker: 'M2', accuracy: 1.0 },
+    { filename: 'M2_surprise_02_F.wav', emotion: 'surprise', speaker: 'M2', accuracy: 1.0 },
+    // 本試行: F1
+    { filename: 'F1_angry_00_F.wav', emotion: 'angry', speaker: 'F1', accuracy: 1.0 },
+    { filename: 'F1_disgust_00_F.wav', emotion: 'disgust', speaker: 'F1', accuracy: 0.67 },
+    { filename: 'F1_fear_00_R.wav', emotion: 'fear', speaker: 'F1', accuracy: 1.0 },
+    { filename: 'F1_happy_00_F.wav', emotion: 'happy', speaker: 'F1', accuracy: 1.0 },
+    { filename: 'F1_sad_00_R.wav', emotion: 'sad', speaker: 'F1', accuracy: 0.67 },
+    { filename: 'F1_surprise_00_F.wav', emotion: 'surprise', speaker: 'F1', accuracy: 1.0 },
+    // 本試行: F2
+    { filename: 'F2_angry_00_F.wav', emotion: 'angry', speaker: 'F2', accuracy: 1.0 },
+    { filename: 'F2_disgust_00_F.wav', emotion: 'disgust', speaker: 'F2', accuracy: 1.0 },
+    { filename: 'F2_fear_00_F.wav', emotion: 'fear', speaker: 'F2', accuracy: 0.67 },
+    { filename: 'F2_happy_00_F.wav', emotion: 'happy', speaker: 'F2', accuracy: 1.0 },
+    { filename: 'F2_sad_00_F.wav', emotion: 'sad', speaker: 'F2', accuracy: 0.67 },
+    { filename: 'F2_surprise_00_R.wav', emotion: 'surprise', speaker: 'F2', accuracy: 1.0 },
+  ];
+
+  // 感情の順序
+  const emotionOrder = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise'];
+
+  function detectSystemInfo() {
+    const ua = navigator.userAgent;
+    let browser = 'Unknown', os = 'Unknown';
+    if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+    else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+    else if (ua.indexOf('Trident') > -1) browser = 'Internet Explorer';
+    else if (ua.indexOf('Edge') > -1 || ua.indexOf('Edg') > -1) browser = 'Edge';
+    else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+    if (ua.indexOf('Win') > -1) os = 'Windows';
+    else if (ua.indexOf('Mac') > -1) os = 'macOS';
+    else if (ua.indexOf('Linux') > -1) os = 'Linux';
+    else if (ua.indexOf('Android') > -1) os = 'Android';
+    else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+    
+    // 詳細なシステム情報を取得
+    const screenWidth = window.screen.width || null;
+    const screenHeight = window.screen.height || null;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
+    
+    return { 
+      browser, 
+      os, 
+      userAgent: ua,
+      screen_width: screenWidth,
+      screen_height: screenHeight,
+      timezone: timezone
+    };
+  }
+
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  // 感情選択肢をシャッフル
+  function getShuffledEmotions() {
+    return emotionOrder;
+  }
+
+  const jsPsych = window.jsPsychModule.initJsPsych({
+    display_element: 'jspsych-target'
+  });
+
+  const subjectId = jsPsych.randomization.randomID(10);
+  const systemInfo = detectSystemInfo();
+  jsPsych.data.addProperties({
+    subject_id: subjectId,
+    timestamp_start: new Date().toISOString(),
+    browser: systemInfo.browser,
+    os: systemInfo.os,
+    userAgent: systemInfo.userAgent,
+    screen_width: systemInfo.screen_width,
+    screen_height: systemInfo.screen_height,
+    timezone: systemInfo.timezone,
+    task_name: 'JNV_AUDIO_TEST',
+    total_trials: 24
+  });
+
+  const timeline = [];
+  const shuffledMainTrials = shuffleArray(selectedTrials);
+  let responses = [];
+
+  // 導入画面
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div class="grid">
+        <div class="card">
+          <h1>🎙️ 感情音声の認識テスト</h1>
+          <p style="text-align: center; color: #666; margin: 1rem 0; line-height: 1.6;">これからさまざまな感情を表現した音声を聞いていただきます。<br />各音声を聞いた後、それが何の感情を表現していると思うかを6つの選択肢から選んでください。<br />テストにかかった時間は計りませんが、できるだけ早く答えを出すように試みてください。</p>
+        </div>
+        <div class="card">
+          <h3 style="color: #0071e3; margin-top: 0;">📋 このテストについて</h3>
+          <div style="font-size: 0.95rem; color: #555; line-height: 1.8; display: grid; gap: 1rem;">
+            <div>
+              <strong style="color: #1d1d1f;">⏱️ 目安時間</strong><br />
+              約 3-5 分程度
+            </div>
+            <div>
+              <strong style="color: #1d1d1f;">🎯 利用目的</strong><br />
+              講義内容の理解を促進するために利用されます。データは保存されますが，個人が特定されることはなく，回答の有無が成績に影響することは一切ありません。
+            </div>
+            <div>
+              <strong style="color: #1d1d1f;">🔊 音源の出典</strong><br />
+              <span style="font-family: monospace; background: #f5f5f7; padding: 0.25rem 0.5rem; border-radius: 4px;">JNV corpus: Japanese Nonverbal Vocalizations</span><br />
+              <span style="font-size: 0.9rem;">Xin, Detai, Shinnosuke Takamichi, and Hiroshi Saruwatari. "JNV corpus: A corpus of Japanese nonverbal vocalizations with diverse phrases and emotions." <em>Speech Communication</em> 156 (2024): 103004.</span><br />
+              <span style="font-size: 0.85rem; color: #666;">📄 <a href="https://www.sciencedirect.com/science/article/pii/S0167639323001383" target="_blank" style="color: #0071e3; text-decoration: none;">論文を見る</a></span>
+            </div>
+          </div>
+          <div class="license-section">
+            <h4>📋 ライセンス表記</h4>
+            <p>
+              このテストで使用している音源は、<strong>CC BY-SA 4.0</strong> ライセンスの下で提供されています。
+            </p>
+            <p>
+              <strong>Attribution</strong>
+            </p>
+            <div class="attribution-text">
+              "JNV corpus" by Detai Xin is licensed under CC BY-SA 4.0.
+              https://creativecommons.org/licenses/by-sa/4.0/
+            </div>
+          </div>
+        </div>
+      </div>
+    `,
+    choices: ['開始する']
+  });
+
+  // 年齢・性別入力
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div class="card" style="max-width: 600px;">
+        <h2 style="text-align: center;">参加者情報の入力</h2>
+        <div style="margin: 2rem 0;">
+          <div style="margin: 1rem 0;">
+            <label for="age_input" style="display: block; margin-bottom: 0.5rem;">年齢: <span style="color: red;">*</span></label>
+            <input type="number" id="age_input" min="1" max="150" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px;" />
+          </div>
+          <div style="margin: 1rem 0;">
+            <label for="gender_input" style="display: block; margin-bottom: 0.5rem;">性別: <span style="color: red;">*</span></label>
+            <select id="gender_input" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px;">
+              <option value="">-- 選択 --</option>
+              <option value="男性">男性</option>
+              <option value="女性">女性</option>
+              <option value="その他">その他</option>
+              <option value="未回答">未回答</option>
+            </select>
+          </div>
+          <div id="error_message" style="color: red; margin-top: 1rem; text-align: center; display: none; font-weight: bold;">
+            年齢と性別は必須です。
+          </div>
+        </div>
+      </div>
+    `,
+    choices: ['次へ進む'],
+    on_load: () => {
+      const button = document.querySelector('.jspsych-btn');
+      button.addEventListener('click', (e) => {
+        const age = document.getElementById('age_input')?.value;
+        const gender = document.getElementById('gender_input')?.value;
+        
+        if (!age || !gender || age === '' || gender === '') {
+          e.preventDefault();
+          e.stopPropagation();
+          document.getElementById('error_message').style.display = 'block';
+          return false;
+        }
+        
+        jsPsych.data.addProperties({
+          age: age,
+          gender: gender
+        });
+      });
+    },
+    on_finish: (data) => {
+      const age = document.getElementById('age_input')?.value || '';
+      const gender = document.getElementById('gender_input')?.value || '';
+      data.age = age;
+      data.gender = gender;
+    }
+  });
+
+  // =====================================
+  // 本試行
+  // =====================================
+  shuffledMainTrials.forEach((trial, index) => {
+    const trialEmotions = getShuffledEmotions();
+    const correctIndex = trialEmotions.indexOf(trial.emotion);
+
+    // 音源再生トラッキング用オブジェクト
+    const audioTracking = {
+      played: false,
+      play_count: 0,
+      play_start_time: null,
+      play_end_time: null,
+      last_play_time: null,
+      total_play_duration: 0,
+      first_response_time: null
+    };
+
+    timeline.push({
+      type: window.jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="card">
+          <h2>問題 ${index + 1} / 24</h2>
+          <div class="audio-player-container">
+            <p class="emotion-label">クリックして音声を再生してください</p>
+            <button class="audio-control-button" id="audio-play-btn-${index}">🔊 音声を再生</button>
+            <audio id="audio-element-${index}" preload="auto"></audio>
+          </div>
+          <p style="text-align: center; color: #666; margin: 1.5rem 0; font-weight: 600;">この音声は何の感情を表現していますか？</p>
+        </div>
+      `,
+      choices: trialEmotions.map(e => emotionMap[e]),
+      button_html: '<button class="jspsych-btn emotion-btn">%choice%</button>',
+      on_load: () => {
+        const audioElement = document.getElementById(`audio-element-${index}`);
+        const playBtn = document.getElementById(`audio-play-btn-${index}`);
+        const speaker = trial.speaker;
+        const audioPath = `sounds/${speaker}/${trial.filename}`;
+        
+        audioElement.src = audioPath;
+        
+        playBtn.addEventListener('click', () => {
+          const clickTime = Date.now();
+          
+          if (audioElement.paused) {
+            audioElement.play();
+            playBtn.classList.add('playing');
+            playBtn.textContent = '⏸️ 再生中...';
+            
+            // 再生開始時刻を記録
+            if (!audioTracking.play_start_time) {
+              audioTracking.play_start_time = clickTime;
+            }
+            audioTracking.last_play_time = clickTime;
+            audioTracking.play_count++;
+            audioTracking.played = true;
+          } else {
+            audioElement.pause();
+            playBtn.classList.remove('playing');
+            playBtn.textContent = '🔊 音声を再生';
+            
+            // 再生終了時刻を記録
+            audioTracking.play_end_time = clickTime;
+          }
+        });
+        
+        audioElement.addEventListener('ended', () => {
+          playBtn.classList.remove('playing');
+          playBtn.textContent = '🔊 音声を再生';
+          audioTracking.play_end_time = Date.now();
+        });
+      },
+      on_finish: (data) => {
+        const chosenIndex = data.response;
+        const chosenEmotion = trialEmotions[chosenIndex];
+        const isCorrect = chosenEmotion === trial.emotion;
+        
+        // 応答時刻を記録（rt はジャンロスロの組み込み RT）
+        audioTracking.first_response_time = Date.now();
+        
+        // 最後の再生から応答までの時間を計算
+        let timeFromLastPlayToResponse = null;
+        if (audioTracking.last_play_time) {
+          timeFromLastPlayToResponse = audioTracking.first_response_time - audioTracking.last_play_time;
+        }
+        
+        // 再生時間の合計を計算
+        if (audioTracking.play_start_time && audioTracking.play_end_time) {
+          audioTracking.total_play_duration = audioTracking.play_end_time - audioTracking.play_start_time;
+        }
+        
+        // データに記録
+        data.chosen_emotion = chosenEmotion;
+        data.correct_emotion = trial.emotion;
+        data.is_correct = isCorrect ? 1 : 0;
+        data.trial_type_custom = 'main';
+        data.filename = trial.filename;
+        data.speaker = trial.speaker;
+        data.accuracy = trial.accuracy;
+        
+        // 音源再生トラッキング情報
+        data.audio_played = audioTracking.played ? 1 : 0;
+        data.play_count = audioTracking.play_count;
+        data.play_start_time = audioTracking.play_start_time;
+        data.play_end_time = audioTracking.play_end_time;
+        data.last_play_time = audioTracking.last_play_time;
+        data.total_play_duration = audioTracking.total_play_duration;
+        data.time_from_last_play_to_response = timeFromLastPlayToResponse;
+        
+        responses.push({ trial: index + 1, is_correct: isCorrect });
+      }
+    });
+  });
+
+  // =====================================
+  // データ保存試行（Datapipe経由）
+  // =====================================
+  timeline.push({
+    type: window.jsPsychPipe,
+    action: 'save',
+    experiment_id: 'k0Me77hGbbTB',
+    filename: () => {
+      try {
+        const allData = jsPsych.data.get().values();
+        const subjectId = allData.length > 0 ? allData[0].subject_id : 'unknown_subject';
+        return `${subjectId}_jnv_audio.csv`;
+      } catch (e) {
+        console.error('Filename error:', e);
+        return 'unknown_subject_jnv_audio.csv';
+      }
+    },
+    data_string: () => {
+      try {
+        const csvData = jsPsych.data.get().csv();
+        return csvData;
+      } catch (e) {
+        console.error('CSV error:', e);
+        return '';
+      }
+    },
+    on_finish: () => {
+      console.log('=== Audio Test Data saved successfully ===');
+    }
+  });
+
+  // 結果表示
+  timeline.push({
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: function() {
+      const correctCount = responses.filter((r) => r.is_correct).length;
+      const percentage = Math.round((correctCount / 24) * 100);
+      return `
+        <div class="card">
+          <h1>テスト完了</h1>
+          <div class="result-grid">
+            <div class="result-item">
+              <div class="result-label">正答数</div>
+              <div class="result-value" style="color: #34c759; font-size: 2rem;">${correctCount} / 24</div>
+            </div>
+            <div class="result-item">
+              <div class="result-label">正答率</div>
+              <div class="result-value" style="font-size: 2rem;">${percentage}%</div>
+            </div>
+          </div>
+        </div>
+      `;
+    },
+    choices: ['終了'],
+    on_finish: (data) => {
+      setTimeout(() => {
+        window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+      }, 500);
+    }
+  });
+
+  jsPsych.run(timeline);
+})();
+  </script>
+</body>
+</html>
