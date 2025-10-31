@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IRI-J</title>
+  <link rel="stylesheet" href="../dist/jspsych.css" />
+  <link rel="stylesheet" href="../dist/survey.min.css" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      height: 48vh;
+      max-height: 440px;
+      margin: 0 auto;
+    }
+
+    .chart-wrap canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      padding: 0.4rem 0.3rem;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    .small {
+      font-size: 0.85rem;
+    }
+
+    .muted {
+      color: #666;
+    }
+
+    .likert-label-tooltip {
+      position: relative;
+    }
+
+    .likert-label-tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .likert-label-tooltip:hover::after {
+      opacity: 1;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="../dist/jspsych.js"></script>
+  <script src="../dist/plugin-html-button-response.js"></script>
+  <script src="../dist/plugin-survey.js"></script>
+  <script src="../dist/plugin-survey-likert.js"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+  <script>
+(function(){
+  const jsPsych = window.jsPsychModule.initJsPsych({
+    display_element: 'jspsych-target',
+    show_progress_bar: true,
+    auto_update_progress_bar: false
+  });
+
+  window.__jsPsych = jsPsych;
+
+  // 進捗バーのラベルを日本語化
+  (function setProgressLabel(){
+    const setLabel = () => {
+      const span = document.querySelector('#jspsych-progressbar-container span');
+      if (span) {
+        span.innerHTML = '進捗状況';
+        return true;
+      }
+      return false;
+    };
+
+    if (!setLabel()) {
+      const observer = new MutationObserver(() => {
+        if (setLabel()) {
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, {childList: true, subtree: true});
+    }
+  })();
+
+  const PAPER_MEANS = {
+    FS: 3.16, // Fantasy Scale
+    EC: 3.31, // Empathic Concern
+    PT: 3.02, // Perspective Taking（7項目版）
+    PD: 3.17  // Personal Distress
+  };
+
+  const DOMAIN_LABELS = {
+    FS: '想像性',
+    EC: '共感的関心',
+    PT: '視点取得',
+    PD: '個人的苦痛'
+  };
+
+  const DOMAIN_ORDER = ['FS', 'EC', 'PT', 'PD'];
+
+  const LIKERT_TOOLTIPS = [
+    '全く当てはまらない',
+    'あまり当てはまらない',
+    'どちらともいえない',
+    'やや当てはまる',
+    '非常によく当てはまる'
+  ];
+
+  const RAW_ITEMS = [
+    {idx: 1, domain: 'FS', text: '自分の身に起こりそうな出来事について、空想にふけることが多い。', reverse: false},
+    {idx: 2, domain: 'EC', text: '自分より不運な人たちを心配し、気にかけることが多い。', reverse: false},
+    {idx: 3, domain: 'PT', text: '他の人の視点から物事を見るのは難しいと感じることがある。', reverse: true},
+    {idx: 4, domain: 'EC', text: '他の人たちが困っているのを見て、気の毒に思わないことがある。', reverse: true},
+    {idx: 5, domain: 'FS', text: '小説に登場する人物の気持ちに深く入り込んでしまう。', reverse: false},
+    {idx: 6, domain: 'PD', text: '非常事態では、不安で落ち着かなくなる。', reverse: false},
+    {idx: 7, domain: 'FS', text: '映画や劇をみるときはたいてい、引き込まれてしまうことはなく、客観的である。', reverse: true},
+    {idx: 8, domain: 'PT', text: '何かを決める前には、自分と意見が異なる立場のすべてに目を向けるようにしている。', reverse: false},
+    {idx: 9, domain: 'EC', text: '誰かがいいように利用されているのをみると、その人を守ってあげたいような気持ちになる。', reverse: false},
+    {idx: 10, domain: 'PD', text: '激しく感情的になっている場面では、何をしたらいいか分からなくなることがある。', reverse: false},
+    {idx: 11, domain: 'PT', text: '友達のことをよく知ろうとして、その人からどのように物事がみえているか想像する。', reverse: false},
+    {idx: 12, domain: 'FS', text: 'よい本や映画にすっかり入り込んでしまうことはめったにない。', reverse: true},
+    {idx: 13, domain: 'PD', text: '誰かが傷つけられているのを見たとき、落ち着いていられる方だ。', reverse: true},
+    {idx: 14, domain: 'EC', text: '他の人たちが不運な目にあっているのはたいてい、それほど気にならない。', reverse: true},
+    {idx: 15, domain: 'PT', text: '自分が正しいと思える時には、他の人の言い分を聞くようなことには時間を使わない。', reverse: true},
+    {idx: 16, domain: 'FS', text: '演劇や映画を観た後は、自分が登場人物のひとりになりきっている感じがする。', reverse: false},
+    {idx: 17, domain: 'PD', text: '気持ちが張り詰めた状況にいると、恐ろしくなってしまう。', reverse: false},
+    {idx: 18, domain: 'EC', text: '誰かが不公平な扱いをされているのをみたときに、そんなにかわいそうだと思わないことがある。', reverse: true},
+    {idx: 19, domain: 'PD', text: '緊急事態には、たいていはうまく対処できる。', reverse: true},
+    {idx: 20, domain: 'EC', text: '自分が見聞きした出来事に、心を強く動かされることが多い。', reverse: false},
+    {idx: 21, domain: 'PT', text: 'すべての問題点には2つの立場があると思っており、その両者に目を向けるようにしている。', reverse: false},
+    {idx: 22, domain: 'EC', text: '自分は思いやりの気持ちが強い人だと思う。', reverse: false},
+    {idx: 23, domain: 'FS', text: 'よい映画をみるとき、自分を物語の中心人物に置き換えることが簡単にできる。', reverse: false},
+    {idx: 24, domain: 'PD', text: '切迫した状況では、自分をコントロールできなくなる方だ。', reverse: false},
+    {idx: 25, domain: 'PT', text: '誰かにいらいらしているときにはたいてい、しばらくその人の身になって考えるようにしている。', reverse: false},
+    {idx: 26, domain: 'FS', text: '面白い物語や小説を読んでいると、その話の出来事がもし自分の身に起こったらどんな気持ちになるだろうと想像する。', reverse: false},
+    {idx: 27, domain: 'PD', text: '差し迫った助けが必要な人を見ると、混乱してどうしたらいいかわからなくなる。', reverse: false},
+    {idx: 28, domain: 'PT', text: '誰かを批判する前には、自分が批判される相手の立場だったらどう感じるか想像しようとする。', reverse: false}
+  ];
+
+  const REVERSED = new Set(RAW_ITEMS.filter(item => item.reverse).map(item => item.idx));
+
+  function getSystemInfo() {
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    let os = 'Unknown';
+
+    if (ua.indexOf('Edg') > -1) browser = 'Edge';
+    else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+    else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+    else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+
+    if (ua.indexOf('Win') > -1) os = 'Windows';
+    else if (ua.indexOf('Mac') > -1) os = 'macOS';
+    else if (ua.indexOf('Linux') > -1) os = 'Linux';
+    else if (ua.indexOf('Android') > -1) os = 'Android';
+    else if (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+
+    return {browser, os, user_agent: ua};
+  }
+
+  function getJapanTime(timestamp) {
+    const date = timestamp ? new Date(timestamp) : new Date();
+    return date.toLocaleString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '/').replace(',', '');
+  }
+
+  const updateProgressBar = (fraction) => {
+    const barInner = document.querySelector('#jspsych-progressbar-inner');
+    if (barInner) {
+      const clamped = Math.max(0, Math.min(1, fraction));
+      barInner.style.width = `${Math.round(clamped * 100)}%`;
+    }
+  };
+
+  const domainCounters = {FS: 0, EC: 0, PT: 0, PD: 0};
+  const allItems = RAW_ITEMS.map(item => {
+    const order = ++domainCounters[item.domain];
+    return Object.assign({}, item, {
+      order,
+      name: `${item.domain}${order}`
+    });
+  });
+
+  const NAME_TO_ITEM = {};
+  allItems.forEach(item => {
+    NAME_TO_ITEM[item.name] = item;
+  });
+
+  const DOMAIN_ITEM_INDEXES = Object.keys(domainCounters).reduce((acc, domain) => {
+    acc[domain] = allItems.filter(item => item.domain === domain).map(item => item.idx);
+    return acc;
+  }, {});
+
+  function computeScores(responses) {
+    const scores = {};
+    Object.entries(DOMAIN_ITEM_INDEXES).forEach(([domain, indices]) => {
+      let sum = 0;
+      let count = 0;
+      indices.forEach(idx => {
+        const raw = responses[idx - 1];
+        if (raw != null) {
+          const scored = REVERSED.has(idx) ? 6 - raw : raw;
+          sum += scored;
+          count += 1;
+        }
+      });
+      scores[domain] = count ? sum / count : null;
+    });
+    return scores;
+  }
+
+  function collectResponses() {
+    const responses = new Array(allItems.length).fill(null);
+    const trials = jsPsych.data.get().filter({trial_type: 'survey-likert'}).values();
+    trials.forEach(trial => {
+      const resp = trial.response || {};
+      Object.entries(resp).forEach(([name, idx]) => {
+        const item = NAME_TO_ITEM[name];
+        if (!item) return;
+        responses[item.idx - 1] = Number(idx) + 1;
+      });
+    });
+    return responses;
+  }
+
+  function addTooltipLabels() {
+    setTimeout(() => {
+      document.querySelectorAll('.jspsych-survey-likert-opt-label').forEach((label, i) => {
+        if (!label.classList.contains('likert-label-tooltip')) {
+          label.classList.add('likert-label-tooltip');
+        }
+        label.setAttribute('data-tooltip', LIKERT_TOOLTIPS[i % LIKERT_TOOLTIPS.length]);
+      });
+    }, 100);
+  }
+
+  const systemInfo = getSystemInfo();
+  const startTimestamp = Date.now();
+  const startTimeJST = getJapanTime(startTimestamp);
+
+  jsPsych.data.addProperties({
+    browser: systemInfo.browser,
+    os: systemInfo.os,
+    user_agent: systemInfo.user_agent,
+    start_time_jst: startTimeJST,
+    start_timestamp: startTimestamp
+  });
+
+  const TOTAL_ITEMS = allItems.length;
+  const PAGE_SIZE = 7;
+  const shuffledItems = allItems.slice();
+
+  // Fisher–Yates shuffle
+  for (let i = shuffledItems.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+  }
+
+  const pages = [];
+  for (let i = 0; i < shuffledItems.length; i += PAGE_SIZE) {
+    pages.push(shuffledItems.slice(i, i + PAGE_SIZE));
+  }
+
+  const intro = {
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div class="card">
+        <h2>IRI-J</h2>
+        <h3>日本語版対人反応性指標</h3>
+        <p class="small muted" style="margin-top:0.5rem;">
+          各項目について「どの程度自分に当てはまるか」を 1 (全く当てはまらない) 〜 5 (非常によく当てはまる) の中からお答えください。<br>
+          研究・教育目的での利用を想定した実施フォームです。回答は匿名で保存され、成績等には影響しません。
+        </p>
+        <ul class="small muted" style="margin-top:0.75rem; line-height:1.6;">
+          <li>回答時間の目安：5〜7分</li>
+          <li>出典：日道俊之ほか (2017) 日本語版対人反応性指標の作成. 心理学研究, 88, 61-71.</li>
+          <li>教示・項目：日道俊之 (2020). 日本語版対人反応性指標 PDF.</li>
+        </ul>
+      </div>
+    `,
+    choices: ['開始']
+  };
+
+  const demographics = {
+    type: window.jsPsychSurvey,
+    survey_json: {
+      showQuestionNumbers: false,
+      pages: [{
+        name: 'demographics',
+        elements: [
+          {
+            type: 'text',
+            name: 'age',
+            title: '年齢',
+            inputType: 'number',
+            min: 0,
+            max: 120,
+            isRequired: true
+          },
+          {
+            type: 'dropdown',
+            name: 'gender',
+            title: '性別',
+            isRequired: true,
+            choices: ['男性', '女性', 'その他', '未回答']
+          }
+        ]
+      }],
+      pageNextText: '次へ',
+      pagePrevText: '戻る',
+      completeText: '次へ'
+    },
+    on_finish: (data) => {
+      const r = data.response || {};
+      jsPsych.data.addProperties({
+        subject_demographics_age: r.age || '',
+        subject_demographics_gender: r.gender || ''
+      });
+    }
+  };
+
+  const likertPages = pages.map((items, pageIndex) => ({
+    type: window.jsPsychSurveyLikert,
+    preamble: `
+      <div class="card">
+        <b>質問 ${pageIndex * PAGE_SIZE + 1}–${pageIndex * PAGE_SIZE + items.length} / ${TOTAL_ITEMS}</b>
+        <p style="margin:0.5rem 0 0; font-size:0.95rem; line-height:1.6;">
+          各文を読み、もっとも当てはまる選択肢を 1〜5 から選んでください。<br>
+          1=全く当てはまらない／2=あまり当てはまらない／3=どちらともいえない／4=やや当てはまる／5=非常によく当てはまる
+        </p>
+      </div>
+    `,
+    questions: items.map(item => ({
+      prompt: item.text,
+      labels: ['1', '2', '3', '4', '5'],
+      name: item.name,
+      required: true
+    })),
+    button_label: pageIndex === pages.length - 1 ? '結果を見る' : '次へ',
+    on_load: () => {
+      addTooltipLabels();
+      const answered = pageIndex * PAGE_SIZE + items.length;
+      updateProgressBar(answered / TOTAL_ITEMS);
+    },
+    on_finish: (data) => {
+      const resp = data.response || {};
+      data.page_number = pageIndex + 1;
+      data.page_items = items.map(item => item.idx).join(',');
+      Object.entries(resp).forEach(([name, idx]) => {
+        const item = NAME_TO_ITEM[name];
+        if (!item) return;
+        const rawScore = Number(idx) + 1;
+        const scored = item.reverse ? 6 - rawScore : rawScore;
+        data[`${name}_raw`] = rawScore;
+        data[`${name}_scored`] = scored;
+        data[`${name}_item_index`] = item.idx;
+        data[`${name}_domain`] = item.domain;
+      });
+    }
+  }));
+
+  const subject_id = jsPsych.randomization.randomID(10);
+  let cachedScores = null;
+  const save_data = {
+    type: window.jsPsychPipe,
+    action: 'save',
+    experiment_id: 'DUMMY_EXPERIMENT_ID',
+    filename: `${subject_id}.csv`,
+    on_start: () => {
+      const responses = collectResponses();
+      cachedScores = computeScores(responses);
+      jsPsych.data.addProperties({
+        iri_fs: cachedScores.FS,
+        iri_ec: cachedScores.EC,
+        iri_pt: cachedScores.PT,
+        iri_pd: cachedScores.PD
+      });
+    },
+    data_string: () => jsPsych.data.get().csv()
+  };
+
+  const results = {
+    type: window.jsPsychHtmlButtonResponse,
+    stimulus: () => {
+      const responses = collectResponses();
+      const scores = cachedScores || computeScores(responses);
+
+      const fmt = (v) => (v == null ? '-' : v.toFixed(2));
+      const rows = DOMAIN_ORDER.map(domain => `
+        <tr>
+          <td>${DOMAIN_LABELS[domain]}</td>
+          <td>${fmt(scores[domain])}</td>
+          <td>${fmt(PAPER_MEANS[domain])}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="card">
+          <h2>結果</h2>
+          <div class="chart-wrap">
+            <canvas id="iri-radar"></canvas>
+          </div>
+          <div class="small muted" style="margin-top:0.5rem;">
+            注：平均値は日道俊之ほか (2017) 日本語版対人反応性指標の作成 (心理学研究, 88, 61-71) の web 調査 (n = 416) に基づきます。
+          </div>
+          <table style="margin-top:0.75rem;">
+            <thead>
+              <tr><th>下位尺度</th><th>あなた</th><th>研究平均</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    },
+    choices: ['終了'],
+    on_load: () => {
+      const responses = collectResponses();
+      const scores = cachedScores || computeScores(responses);
+
+      const palette = {
+        selfBorder: '#1976D2',
+        selfFill: 'rgba(25,118,210,0.18)',
+        normBorder: '#D32F2F',
+        normFill: 'rgba(211,47,47,0.18)'
+      };
+
+      const canvas = document.getElementById('iri-radar');
+      if (canvas) {
+        const wrap = canvas.parentElement;
+        canvas.width = wrap.offsetWidth;
+        canvas.height = wrap.offsetHeight;
+      }
+
+      const scoreValues = DOMAIN_ORDER.map(domain => scores[domain]);
+      const normValues = DOMAIN_ORDER.map(domain => PAPER_MEANS[domain]);
+
+      new Chart(document.getElementById('iri-radar').getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: DOMAIN_ORDER.map(domain => DOMAIN_LABELS[domain]),
+          datasets: [
+            {
+              label: 'あなた',
+              data: scoreValues,
+              fill: true,
+              borderColor: palette.selfBorder,
+              backgroundColor: palette.selfFill,
+              borderWidth: 2.2,
+              tension: 0,
+              pointRadius: 2.5
+            },
+            {
+              label: '研究平均',
+              data: normValues,
+              fill: true,
+              borderColor: palette.normBorder,
+              backgroundColor: palette.normFill,
+              borderWidth: 2.2,
+              tension: 0,
+              pointRadius: 2.5
+            }
+          ]
+        },
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 1,
+              max: 5,
+              ticks: {stepSize: 1}
+            }
+          },
+          plugins: {
+            legend: {position: 'bottom'}
+          },
+          elements: {
+            line: {tension: 0}
+          }
+        }
+      });
+    },
+    on_finish: () => {
+      const endTimestamp = Date.now();
+      const endTimeJST = getJapanTime(endTimestamp);
+      const durationMs = endTimestamp - startTimestamp;
+      const durationSec = durationMs / 1000;
+      const durationMin = durationSec / 60;
+
+      jsPsych.data.addProperties({
+        end_time_jst: endTimeJST,
+        end_timestamp: endTimestamp,
+        total_duration_ms: durationMs,
+        total_duration_sec: parseFloat(durationSec.toFixed(2)),
+        total_duration_min: parseFloat(durationMin.toFixed(2))
+      });
+
+      window.location.href = 'https://mshrymgc.github.io/epp_scales/';
+    }
+  };
+
+  const timeline = [intro, demographics, ...likertPages, save_data, results];
+  jsPsych.run(timeline);
+})();
+  </script>
+</body>
+</html>
